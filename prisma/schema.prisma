@@ -1,0 +1,188 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------- ENUMS ----------
+
+enum UserRole {
+  ADMIN
+  EMPLOYEE
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  HALF_DAY
+  ON_LEAVE
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// ---------- MASTERS ----------
+
+model Department {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  employees Employee[]
+
+  @@map("departments")
+}
+
+model Designation {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  employees Employee[]
+
+  @@map("designations")
+}
+
+model EmployeeType {
+  id           String     @id @default(cuid())
+  name         String     @unique
+  noticePeriod Int        @default(30)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  employees    Employee[]
+
+  @@map("employee_types")
+}
+
+model Holiday {
+  id        String   @id @default(cuid())
+  name      String
+  date      DateTime
+  createdAt DateTime @default(now())
+
+  @@map("holidays")
+}
+
+model AttendanceSettings {
+  id            String   @id @default(cuid())
+  weeklyOffDays Int[]    @default([0])
+  updatedAt     DateTime @updatedAt
+
+  @@map("attendance_settings")
+}
+
+model LeaveType {
+  id                 String   @id @default(cuid())
+  name               String   @unique
+  code               String   @unique
+  defaultAnnualQuota Int      @default(12)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  balances           LeaveBalance[]
+
+  @@map("leave_types")
+}
+
+// ---------- CORE ----------
+
+model Employee {
+  id             String    @id @default(cuid())
+  employeeCode   Int       @unique @default(autoincrement())
+  fullName       String
+  email          String    @unique
+  passwordHash   String
+  mobile         String?
+  gender         String?
+  role           UserRole  @default(EMPLOYEE)
+  isActive       Boolean   @default(true)
+
+  departmentId   String?
+  department     Department?   @relation(fields: [departmentId], references: [id])
+
+  designationId  String?
+  designation    Designation?  @relation(fields: [designationId], references: [id])
+
+  employeeTypeId String?
+  employeeType   EmployeeType? @relation(fields: [employeeTypeId], references: [id])
+
+  createdById    String?
+  createdBy      Employee?     @relation("EmployeeCreatedBy", fields: [createdById], references: [id])
+  createdEmployees Employee[]  @relation("EmployeeCreatedBy")
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  attendances    Attendance[]
+  approvalsMade  Approval[]    @relation("ApprovalActor")
+  auditLogs      AuditLog[]
+  leaveBalances  LeaveBalance[]
+
+  @@map("employees")
+}
+
+model Attendance {
+  id         String            @id @default(cuid())
+  employeeId String
+  employee   Employee          @relation(fields: [employeeId], references: [id])
+  date       DateTime          @db.Date
+  timeIn     DateTime?
+  timeOut    DateTime?
+  status     AttendanceStatus  @default(ABSENT)
+  reason     String?
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  @@unique([employeeId, date])
+  @@map("attendance")
+}
+
+model Approval {
+  id         String         @id @default(cuid())
+  type       String
+  refId      String?
+  details    Json?
+  status     ApprovalStatus @default(PENDING)
+  actorId    String
+  actor      Employee       @relation("ApprovalActor", fields: [actorId], references: [id])
+  remarks    String?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  @@map("approvals")
+}
+
+model LeaveBalance {
+  id          String    @id @default(cuid())
+  employeeId  String
+  employee    Employee  @relation(fields: [employeeId], references: [id])
+  leaveTypeId String
+  leaveType   LeaveType @relation(fields: [leaveTypeId], references: [id])
+  year        Int
+  allocated   Int
+  used        Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([employeeId, leaveTypeId, year])
+  @@map("leave_balances")
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  employeeId String?
+  employee   Employee? @relation(fields: [employeeId], references: [id])
+  action     String
+  entity     String?
+  entityId   String?
+  metadata   Json?
+  createdAt  DateTime  @default(now())
+
+  @@map("audit_logs")
+}
