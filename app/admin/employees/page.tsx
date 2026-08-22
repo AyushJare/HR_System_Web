@@ -179,7 +179,7 @@ export default function EmployeesPage() {
                     </td>
                     <td className="px-6 py-4 text-sm">
                       <button
-                        onClick={() => router.push(`/admin/employees/${emp.id}`)}
+                        onClick={() => router.push(`/admin/employees/${emp.id}/edit`)}
                         className="text-blue-600 hover:text-blue-800 font-medium mr-4"
                       >
                         Edit
