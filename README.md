@@ -46,7 +46,7 @@ Both the web admin panel and a planned future mobile app are designed as clients
 
 1. Clone the repository
 ```bash
-   git clone https://github.com/AyushJare/HR_Management_System_Web.git
+   git clone https://github.com/AyushJare/HR_System_Web.git
    cd HR_Management_System_Web
 ```
 
