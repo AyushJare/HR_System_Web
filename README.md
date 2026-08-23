@@ -1,9 +1,9 @@
 # HR Management System
-https://img.shields.io/badge/Next.js-16-black
-https://img.shields.io/badge/TypeScript-5-blue
-https://img.shields.io/badge/PostgreSQL-14+-336791
-https://img.shields.io/badge/Prisma-7-2D3748
-https://img.shields.io/badge/license-MIT-green
+![Next.js](https://img.shields.io/badge/Next.js-16-black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14%2B-336791)
+![Prisma](https://img.shields.io/badge/Prisma-7-2D3748)
+![License](https://img.shields.io/badge/license-MIT-green)
 
 > A role-based HR management platform built for a real institution's admin workflows — employee records, attendance, leave, and approvals in one auditable system.
 
