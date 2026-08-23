@@ -305,6 +305,7 @@ export type EmployeeWhereInput = {
   approvalsMade?: Prisma.ApprovalListRelationFilter
   auditLogs?: Prisma.AuditLogListRelationFilter
   leaveBalances?: Prisma.LeaveBalanceListRelationFilter
+  sessions?: Prisma.SessionListRelationFilter
 }
 
 export type EmployeeOrderByWithRelationInput = {
@@ -332,6 +333,7 @@ export type EmployeeOrderByWithRelationInput = {
   approvalsMade?: Prisma.ApprovalOrderByRelationAggregateInput
   auditLogs?: Prisma.AuditLogOrderByRelationAggregateInput
   leaveBalances?: Prisma.LeaveBalanceOrderByRelationAggregateInput
+  sessions?: Prisma.SessionOrderByRelationAggregateInput
 }
 
 export type EmployeeWhereUniqueInput = Prisma.AtLeast<{
@@ -362,6 +364,7 @@ export type EmployeeWhereUniqueInput = Prisma.AtLeast<{
   approvalsMade?: Prisma.ApprovalListRelationFilter
   auditLogs?: Prisma.AuditLogListRelationFilter
   leaveBalances?: Prisma.LeaveBalanceListRelationFilter
+  sessions?: Prisma.SessionListRelationFilter
 }, "id" | "employeeCode" | "email">
 
 export type EmployeeOrderByWithAggregationInput = {
@@ -429,6 +432,7 @@ export type EmployeeCreateInput = {
   approvalsMade?: Prisma.ApprovalCreateNestedManyWithoutActorInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutEmployeeInput
   leaveBalances?: Prisma.LeaveBalanceCreateNestedManyWithoutEmployeeInput
+  sessions?: Prisma.SessionCreateNestedManyWithoutEmployeeInput
 }
 
 export type EmployeeUncheckedCreateInput = {
@@ -452,6 +456,7 @@ export type EmployeeUncheckedCreateInput = {
   approvalsMade?: Prisma.ApprovalUncheckedCreateNestedManyWithoutActorInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutEmployeeInput
   leaveBalances?: Prisma.LeaveBalanceUncheckedCreateNestedManyWithoutEmployeeInput
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutEmployeeInput
 }
 
 export type EmployeeUpdateInput = {
@@ -474,6 +479,7 @@ export type EmployeeUpdateInput = {
   approvalsMade?: Prisma.ApprovalUpdateManyWithoutActorNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutEmployeeNestedInput
   leaveBalances?: Prisma.LeaveBalanceUpdateManyWithoutEmployeeNestedInput
+  sessions?: Prisma.SessionUpdateManyWithoutEmployeeNestedInput
 }
 
 export type EmployeeUncheckedUpdateInput = {
@@ -497,6 +503,7 @@ export type EmployeeUncheckedUpdateInput = {
   approvalsMade?: Prisma.ApprovalUncheckedUpdateManyWithoutActorNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutEmployeeNestedInput
   leaveBalances?: Prisma.LeaveBalanceUncheckedUpdateManyWithoutEmployeeNestedInput
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutEmployeeNestedInput
 }
 
 export type EmployeeCreateManyInput = {
@@ -884,6 +891,20 @@ export type EmployeeUpdateOneWithoutAuditLogsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.EmployeeUpdateToOneWithWhereWithoutAuditLogsInput, Prisma.EmployeeUpdateWithoutAuditLogsInput>, Prisma.EmployeeUncheckedUpdateWithoutAuditLogsInput>
 }
 
+export type EmployeeCreateNestedOneWithoutSessionsInput = {
+  create?: Prisma.XOR<Prisma.EmployeeCreateWithoutSessionsInput, Prisma.EmployeeUncheckedCreateWithoutSessionsInput>
+  connectOrCreate?: Prisma.EmployeeCreateOrConnectWithoutSessionsInput
+  connect?: Prisma.EmployeeWhereUniqueInput
+}
+
+export type EmployeeUpdateOneRequiredWithoutSessionsNestedInput = {
+  create?: Prisma.XOR<Prisma.EmployeeCreateWithoutSessionsInput, Prisma.EmployeeUncheckedCreateWithoutSessionsInput>
+  connectOrCreate?: Prisma.EmployeeCreateOrConnectWithoutSessionsInput
+  upsert?: Prisma.EmployeeUpsertWithoutSessionsInput
+  connect?: Prisma.EmployeeWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.EmployeeUpdateToOneWithWhereWithoutSessionsInput, Prisma.EmployeeUpdateWithoutSessionsInput>, Prisma.EmployeeUncheckedUpdateWithoutSessionsInput>
+}
+
 export type EmployeeCreateWithoutDepartmentInput = {
   id?: string
   employeeCode?: number
@@ -904,6 +925,7 @@ export type EmployeeCreateWithoutDepartmentInput = {
   approvalsMade?: Prisma.ApprovalCreateNestedManyWithoutActorInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutEmployeeInput
   leaveBalances?: Prisma.LeaveBalanceCreateNestedManyWithoutEmployeeInput
+  sessions?: Prisma.SessionCreateNestedManyWithoutEmployeeInput
 }
 
 export type EmployeeUncheckedCreateWithoutDepartmentInput = {
@@ -926,6 +948,7 @@ export type EmployeeUncheckedCreateWithoutDepartmentInput = {
   approvalsMade?: Prisma.ApprovalUncheckedCreateNestedManyWithoutActorInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutEmployeeInput
   leaveBalances?: Prisma.LeaveBalanceUncheckedCreateNestedManyWithoutEmployeeInput
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutEmployeeInput
 }
 
 export type EmployeeCreateOrConnectWithoutDepartmentInput = {
@@ -995,6 +1018,7 @@ export type EmployeeCreateWithoutDesignationInput = {
   approvalsMade?: Prisma.ApprovalCreateNestedManyWithoutActorInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutEmployeeInput
   leaveBalances?: Prisma.LeaveBalanceCreateNestedManyWithoutEmployeeInput
+  sessions?: Prisma.SessionCreateNestedManyWithoutEmployeeInput
 }
 
 export type EmployeeUncheckedCreateWithoutDesignationInput = {
@@ -1017,6 +1041,7 @@ export type EmployeeUncheckedCreateWithoutDesignationInput = {
   approvalsMade?: Prisma.ApprovalUncheckedCreateNestedManyWithoutActorInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutEmployeeInput
   leaveBalances?: Prisma.LeaveBalanceUncheckedCreateNestedManyWithoutEmployeeInput
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutEmployeeInput
 }
 
 export type EmployeeCreateOrConnectWithoutDesignationInput = {
@@ -1065,6 +1090,7 @@ export type EmployeeCreateWithoutEmployeeTypeInput = {
   approvalsMade?: Prisma.ApprovalCreateNestedManyWithoutActorInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutEmployeeInput
   leaveBalances?: Prisma.LeaveBalanceCreateNestedManyWithoutEmployeeInput
+  sessions?: Prisma.SessionCreateNestedManyWithoutEmployeeInput
 }
 
 export type EmployeeUncheckedCreateWithoutEmployeeTypeInput = {
@@ -1087,6 +1113,7 @@ export type EmployeeUncheckedCreateWithoutEmployeeTypeInput = {
   approvalsMade?: Prisma.ApprovalUncheckedCreateNestedManyWithoutActorInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutEmployeeInput
   leaveBalances?: Prisma.LeaveBalanceUncheckedCreateNestedManyWithoutEmployeeInput
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutEmployeeInput
 }
 
 export type EmployeeCreateOrConnectWithoutEmployeeTypeInput = {
@@ -1135,6 +1162,7 @@ export type EmployeeCreateWithoutCreatedEmployeesInput = {
   approvalsMade?: Prisma.ApprovalCreateNestedManyWithoutActorInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutEmployeeInput
   leaveBalances?: Prisma.LeaveBalanceCreateNestedManyWithoutEmployeeInput
+  sessions?: Prisma.SessionCreateNestedManyWithoutEmployeeInput
 }
 
 export type EmployeeUncheckedCreateWithoutCreatedEmployeesInput = {
@@ -1157,6 +1185,7 @@ export type EmployeeUncheckedCreateWithoutCreatedEmployeesInput = {
   approvalsMade?: Prisma.ApprovalUncheckedCreateNestedManyWithoutActorInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutEmployeeInput
   leaveBalances?: Prisma.LeaveBalanceUncheckedCreateNestedManyWithoutEmployeeInput
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutEmployeeInput
 }
 
 export type EmployeeCreateOrConnectWithoutCreatedEmployeesInput = {
@@ -1184,6 +1213,7 @@ export type EmployeeCreateWithoutCreatedByInput = {
   approvalsMade?: Prisma.ApprovalCreateNestedManyWithoutActorInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutEmployeeInput
   leaveBalances?: Prisma.LeaveBalanceCreateNestedManyWithoutEmployeeInput
+  sessions?: Prisma.SessionCreateNestedManyWithoutEmployeeInput
 }
 
 export type EmployeeUncheckedCreateWithoutCreatedByInput = {
@@ -1206,6 +1236,7 @@ export type EmployeeUncheckedCreateWithoutCreatedByInput = {
   approvalsMade?: Prisma.ApprovalUncheckedCreateNestedManyWithoutActorInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutEmployeeInput
   leaveBalances?: Prisma.LeaveBalanceUncheckedCreateNestedManyWithoutEmployeeInput
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutEmployeeInput
 }
 
 export type EmployeeCreateOrConnectWithoutCreatedByInput = {
@@ -1248,6 +1279,7 @@ export type EmployeeUpdateWithoutCreatedEmployeesInput = {
   approvalsMade?: Prisma.ApprovalUpdateManyWithoutActorNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutEmployeeNestedInput
   leaveBalances?: Prisma.LeaveBalanceUpdateManyWithoutEmployeeNestedInput
+  sessions?: Prisma.SessionUpdateManyWithoutEmployeeNestedInput
 }
 
 export type EmployeeUncheckedUpdateWithoutCreatedEmployeesInput = {
@@ -1270,6 +1302,7 @@ export type EmployeeUncheckedUpdateWithoutCreatedEmployeesInput = {
   approvalsMade?: Prisma.ApprovalUncheckedUpdateManyWithoutActorNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutEmployeeNestedInput
   leaveBalances?: Prisma.LeaveBalanceUncheckedUpdateManyWithoutEmployeeNestedInput
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutEmployeeNestedInput
 }
 
 export type EmployeeUpsertWithWhereUniqueWithoutCreatedByInput = {
@@ -1308,6 +1341,7 @@ export type EmployeeCreateWithoutAttendancesInput = {
   approvalsMade?: Prisma.ApprovalCreateNestedManyWithoutActorInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutEmployeeInput
   leaveBalances?: Prisma.LeaveBalanceCreateNestedManyWithoutEmployeeInput
+  sessions?: Prisma.SessionCreateNestedManyWithoutEmployeeInput
 }
 
 export type EmployeeUncheckedCreateWithoutAttendancesInput = {
@@ -1330,6 +1364,7 @@ export type EmployeeUncheckedCreateWithoutAttendancesInput = {
   approvalsMade?: Prisma.ApprovalUncheckedCreateNestedManyWithoutActorInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutEmployeeInput
   leaveBalances?: Prisma.LeaveBalanceUncheckedCreateNestedManyWithoutEmployeeInput
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutEmployeeInput
 }
 
 export type EmployeeCreateOrConnectWithoutAttendancesInput = {
@@ -1367,6 +1402,7 @@ export type EmployeeUpdateWithoutAttendancesInput = {
   approvalsMade?: Prisma.ApprovalUpdateManyWithoutActorNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutEmployeeNestedInput
   leaveBalances?: Prisma.LeaveBalanceUpdateManyWithoutEmployeeNestedInput
+  sessions?: Prisma.SessionUpdateManyWithoutEmployeeNestedInput
 }
 
 export type EmployeeUncheckedUpdateWithoutAttendancesInput = {
@@ -1389,6 +1425,7 @@ export type EmployeeUncheckedUpdateWithoutAttendancesInput = {
   approvalsMade?: Prisma.ApprovalUncheckedUpdateManyWithoutActorNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutEmployeeNestedInput
   leaveBalances?: Prisma.LeaveBalanceUncheckedUpdateManyWithoutEmployeeNestedInput
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutEmployeeNestedInput
 }
 
 export type EmployeeCreateWithoutApprovalsMadeInput = {
@@ -1411,6 +1448,7 @@ export type EmployeeCreateWithoutApprovalsMadeInput = {
   attendances?: Prisma.AttendanceCreateNestedManyWithoutEmployeeInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutEmployeeInput
   leaveBalances?: Prisma.LeaveBalanceCreateNestedManyWithoutEmployeeInput
+  sessions?: Prisma.SessionCreateNestedManyWithoutEmployeeInput
 }
 
 export type EmployeeUncheckedCreateWithoutApprovalsMadeInput = {
@@ -1433,6 +1471,7 @@ export type EmployeeUncheckedCreateWithoutApprovalsMadeInput = {
   attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutEmployeeInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutEmployeeInput
   leaveBalances?: Prisma.LeaveBalanceUncheckedCreateNestedManyWithoutEmployeeInput
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutEmployeeInput
 }
 
 export type EmployeeCreateOrConnectWithoutApprovalsMadeInput = {
@@ -1470,6 +1509,7 @@ export type EmployeeUpdateWithoutApprovalsMadeInput = {
   attendances?: Prisma.AttendanceUpdateManyWithoutEmployeeNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutEmployeeNestedInput
   leaveBalances?: Prisma.LeaveBalanceUpdateManyWithoutEmployeeNestedInput
+  sessions?: Prisma.SessionUpdateManyWithoutEmployeeNestedInput
 }
 
 export type EmployeeUncheckedUpdateWithoutApprovalsMadeInput = {
@@ -1492,6 +1532,7 @@ export type EmployeeUncheckedUpdateWithoutApprovalsMadeInput = {
   attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutEmployeeNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutEmployeeNestedInput
   leaveBalances?: Prisma.LeaveBalanceUncheckedUpdateManyWithoutEmployeeNestedInput
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutEmployeeNestedInput
 }
 
 export type EmployeeCreateWithoutLeaveBalancesInput = {
@@ -1514,6 +1555,7 @@ export type EmployeeCreateWithoutLeaveBalancesInput = {
   attendances?: Prisma.AttendanceCreateNestedManyWithoutEmployeeInput
   approvalsMade?: Prisma.ApprovalCreateNestedManyWithoutActorInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutEmployeeInput
+  sessions?: Prisma.SessionCreateNestedManyWithoutEmployeeInput
 }
 
 export type EmployeeUncheckedCreateWithoutLeaveBalancesInput = {
@@ -1536,6 +1578,7 @@ export type EmployeeUncheckedCreateWithoutLeaveBalancesInput = {
   attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutEmployeeInput
   approvalsMade?: Prisma.ApprovalUncheckedCreateNestedManyWithoutActorInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutEmployeeInput
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutEmployeeInput
 }
 
 export type EmployeeCreateOrConnectWithoutLeaveBalancesInput = {
@@ -1573,6 +1616,7 @@ export type EmployeeUpdateWithoutLeaveBalancesInput = {
   attendances?: Prisma.AttendanceUpdateManyWithoutEmployeeNestedInput
   approvalsMade?: Prisma.ApprovalUpdateManyWithoutActorNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutEmployeeNestedInput
+  sessions?: Prisma.SessionUpdateManyWithoutEmployeeNestedInput
 }
 
 export type EmployeeUncheckedUpdateWithoutLeaveBalancesInput = {
@@ -1595,6 +1639,7 @@ export type EmployeeUncheckedUpdateWithoutLeaveBalancesInput = {
   attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutEmployeeNestedInput
   approvalsMade?: Prisma.ApprovalUncheckedUpdateManyWithoutActorNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutEmployeeNestedInput
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutEmployeeNestedInput
 }
 
 export type EmployeeCreateWithoutAuditLogsInput = {
@@ -1617,6 +1662,7 @@ export type EmployeeCreateWithoutAuditLogsInput = {
   attendances?: Prisma.AttendanceCreateNestedManyWithoutEmployeeInput
   approvalsMade?: Prisma.ApprovalCreateNestedManyWithoutActorInput
   leaveBalances?: Prisma.LeaveBalanceCreateNestedManyWithoutEmployeeInput
+  sessions?: Prisma.SessionCreateNestedManyWithoutEmployeeInput
 }
 
 export type EmployeeUncheckedCreateWithoutAuditLogsInput = {
@@ -1639,6 +1685,7 @@ export type EmployeeUncheckedCreateWithoutAuditLogsInput = {
   attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutEmployeeInput
   approvalsMade?: Prisma.ApprovalUncheckedCreateNestedManyWithoutActorInput
   leaveBalances?: Prisma.LeaveBalanceUncheckedCreateNestedManyWithoutEmployeeInput
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutEmployeeInput
 }
 
 export type EmployeeCreateOrConnectWithoutAuditLogsInput = {
@@ -1676,6 +1723,7 @@ export type EmployeeUpdateWithoutAuditLogsInput = {
   attendances?: Prisma.AttendanceUpdateManyWithoutEmployeeNestedInput
   approvalsMade?: Prisma.ApprovalUpdateManyWithoutActorNestedInput
   leaveBalances?: Prisma.LeaveBalanceUpdateManyWithoutEmployeeNestedInput
+  sessions?: Prisma.SessionUpdateManyWithoutEmployeeNestedInput
 }
 
 export type EmployeeUncheckedUpdateWithoutAuditLogsInput = {
@@ -1697,6 +1745,114 @@ export type EmployeeUncheckedUpdateWithoutAuditLogsInput = {
   createdEmployees?: Prisma.EmployeeUncheckedUpdateManyWithoutCreatedByNestedInput
   attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutEmployeeNestedInput
   approvalsMade?: Prisma.ApprovalUncheckedUpdateManyWithoutActorNestedInput
+  leaveBalances?: Prisma.LeaveBalanceUncheckedUpdateManyWithoutEmployeeNestedInput
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutEmployeeNestedInput
+}
+
+export type EmployeeCreateWithoutSessionsInput = {
+  id?: string
+  employeeCode?: number
+  fullName: string
+  email: string
+  passwordHash: string
+  mobile?: string | null
+  gender?: string | null
+  role?: $Enums.UserRole
+  isActive?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  department?: Prisma.DepartmentCreateNestedOneWithoutEmployeesInput
+  designation?: Prisma.DesignationCreateNestedOneWithoutEmployeesInput
+  employeeType?: Prisma.EmployeeTypeCreateNestedOneWithoutEmployeesInput
+  createdBy?: Prisma.EmployeeCreateNestedOneWithoutCreatedEmployeesInput
+  createdEmployees?: Prisma.EmployeeCreateNestedManyWithoutCreatedByInput
+  attendances?: Prisma.AttendanceCreateNestedManyWithoutEmployeeInput
+  approvalsMade?: Prisma.ApprovalCreateNestedManyWithoutActorInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutEmployeeInput
+  leaveBalances?: Prisma.LeaveBalanceCreateNestedManyWithoutEmployeeInput
+}
+
+export type EmployeeUncheckedCreateWithoutSessionsInput = {
+  id?: string
+  employeeCode?: number
+  fullName: string
+  email: string
+  passwordHash: string
+  mobile?: string | null
+  gender?: string | null
+  role?: $Enums.UserRole
+  isActive?: boolean
+  departmentId?: string | null
+  designationId?: string | null
+  employeeTypeId?: string | null
+  createdById?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  createdEmployees?: Prisma.EmployeeUncheckedCreateNestedManyWithoutCreatedByInput
+  attendances?: Prisma.AttendanceUncheckedCreateNestedManyWithoutEmployeeInput
+  approvalsMade?: Prisma.ApprovalUncheckedCreateNestedManyWithoutActorInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutEmployeeInput
+  leaveBalances?: Prisma.LeaveBalanceUncheckedCreateNestedManyWithoutEmployeeInput
+}
+
+export type EmployeeCreateOrConnectWithoutSessionsInput = {
+  where: Prisma.EmployeeWhereUniqueInput
+  create: Prisma.XOR<Prisma.EmployeeCreateWithoutSessionsInput, Prisma.EmployeeUncheckedCreateWithoutSessionsInput>
+}
+
+export type EmployeeUpsertWithoutSessionsInput = {
+  update: Prisma.XOR<Prisma.EmployeeUpdateWithoutSessionsInput, Prisma.EmployeeUncheckedUpdateWithoutSessionsInput>
+  create: Prisma.XOR<Prisma.EmployeeCreateWithoutSessionsInput, Prisma.EmployeeUncheckedCreateWithoutSessionsInput>
+  where?: Prisma.EmployeeWhereInput
+}
+
+export type EmployeeUpdateToOneWithWhereWithoutSessionsInput = {
+  where?: Prisma.EmployeeWhereInput
+  data: Prisma.XOR<Prisma.EmployeeUpdateWithoutSessionsInput, Prisma.EmployeeUncheckedUpdateWithoutSessionsInput>
+}
+
+export type EmployeeUpdateWithoutSessionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  mobile?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  department?: Prisma.DepartmentUpdateOneWithoutEmployeesNestedInput
+  designation?: Prisma.DesignationUpdateOneWithoutEmployeesNestedInput
+  employeeType?: Prisma.EmployeeTypeUpdateOneWithoutEmployeesNestedInput
+  createdBy?: Prisma.EmployeeUpdateOneWithoutCreatedEmployeesNestedInput
+  createdEmployees?: Prisma.EmployeeUpdateManyWithoutCreatedByNestedInput
+  attendances?: Prisma.AttendanceUpdateManyWithoutEmployeeNestedInput
+  approvalsMade?: Prisma.ApprovalUpdateManyWithoutActorNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutEmployeeNestedInput
+  leaveBalances?: Prisma.LeaveBalanceUpdateManyWithoutEmployeeNestedInput
+}
+
+export type EmployeeUncheckedUpdateWithoutSessionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  employeeCode?: Prisma.IntFieldUpdateOperationsInput | number
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  mobile?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  departmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  designationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  employeeTypeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdEmployees?: Prisma.EmployeeUncheckedUpdateManyWithoutCreatedByNestedInput
+  attendances?: Prisma.AttendanceUncheckedUpdateManyWithoutEmployeeNestedInput
+  approvalsMade?: Prisma.ApprovalUncheckedUpdateManyWithoutActorNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutEmployeeNestedInput
   leaveBalances?: Prisma.LeaveBalanceUncheckedUpdateManyWithoutEmployeeNestedInput
 }
 
@@ -1736,6 +1892,7 @@ export type EmployeeUpdateWithoutDepartmentInput = {
   approvalsMade?: Prisma.ApprovalUpdateManyWithoutActorNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutEmployeeNestedInput
   leaveBalances?: Prisma.LeaveBalanceUpdateManyWithoutEmployeeNestedInput
+  sessions?: Prisma.SessionUpdateManyWithoutEmployeeNestedInput
 }
 
 export type EmployeeUncheckedUpdateWithoutDepartmentInput = {
@@ -1758,6 +1915,7 @@ export type EmployeeUncheckedUpdateWithoutDepartmentInput = {
   approvalsMade?: Prisma.ApprovalUncheckedUpdateManyWithoutActorNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutEmployeeNestedInput
   leaveBalances?: Prisma.LeaveBalanceUncheckedUpdateManyWithoutEmployeeNestedInput
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutEmployeeNestedInput
 }
 
 export type EmployeeUncheckedUpdateManyWithoutDepartmentInput = {
@@ -1813,6 +1971,7 @@ export type EmployeeUpdateWithoutDesignationInput = {
   approvalsMade?: Prisma.ApprovalUpdateManyWithoutActorNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutEmployeeNestedInput
   leaveBalances?: Prisma.LeaveBalanceUpdateManyWithoutEmployeeNestedInput
+  sessions?: Prisma.SessionUpdateManyWithoutEmployeeNestedInput
 }
 
 export type EmployeeUncheckedUpdateWithoutDesignationInput = {
@@ -1835,6 +1994,7 @@ export type EmployeeUncheckedUpdateWithoutDesignationInput = {
   approvalsMade?: Prisma.ApprovalUncheckedUpdateManyWithoutActorNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutEmployeeNestedInput
   leaveBalances?: Prisma.LeaveBalanceUncheckedUpdateManyWithoutEmployeeNestedInput
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutEmployeeNestedInput
 }
 
 export type EmployeeUncheckedUpdateManyWithoutDesignationInput = {
@@ -1890,6 +2050,7 @@ export type EmployeeUpdateWithoutEmployeeTypeInput = {
   approvalsMade?: Prisma.ApprovalUpdateManyWithoutActorNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutEmployeeNestedInput
   leaveBalances?: Prisma.LeaveBalanceUpdateManyWithoutEmployeeNestedInput
+  sessions?: Prisma.SessionUpdateManyWithoutEmployeeNestedInput
 }
 
 export type EmployeeUncheckedUpdateWithoutEmployeeTypeInput = {
@@ -1912,6 +2073,7 @@ export type EmployeeUncheckedUpdateWithoutEmployeeTypeInput = {
   approvalsMade?: Prisma.ApprovalUncheckedUpdateManyWithoutActorNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutEmployeeNestedInput
   leaveBalances?: Prisma.LeaveBalanceUncheckedUpdateManyWithoutEmployeeNestedInput
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutEmployeeNestedInput
 }
 
 export type EmployeeUncheckedUpdateManyWithoutEmployeeTypeInput = {
@@ -1967,6 +2129,7 @@ export type EmployeeUpdateWithoutCreatedByInput = {
   approvalsMade?: Prisma.ApprovalUpdateManyWithoutActorNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutEmployeeNestedInput
   leaveBalances?: Prisma.LeaveBalanceUpdateManyWithoutEmployeeNestedInput
+  sessions?: Prisma.SessionUpdateManyWithoutEmployeeNestedInput
 }
 
 export type EmployeeUncheckedUpdateWithoutCreatedByInput = {
@@ -1989,6 +2152,7 @@ export type EmployeeUncheckedUpdateWithoutCreatedByInput = {
   approvalsMade?: Prisma.ApprovalUncheckedUpdateManyWithoutActorNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutEmployeeNestedInput
   leaveBalances?: Prisma.LeaveBalanceUncheckedUpdateManyWithoutEmployeeNestedInput
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutEmployeeNestedInput
 }
 
 export type EmployeeUncheckedUpdateManyWithoutCreatedByInput = {
@@ -2019,6 +2183,7 @@ export type EmployeeCountOutputType = {
   approvalsMade: number
   auditLogs: number
   leaveBalances: number
+  sessions: number
 }
 
 export type EmployeeCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2027,6 +2192,7 @@ export type EmployeeCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensio
   approvalsMade?: boolean | EmployeeCountOutputTypeCountApprovalsMadeArgs
   auditLogs?: boolean | EmployeeCountOutputTypeCountAuditLogsArgs
   leaveBalances?: boolean | EmployeeCountOutputTypeCountLeaveBalancesArgs
+  sessions?: boolean | EmployeeCountOutputTypeCountSessionsArgs
 }
 
 /**
@@ -2074,6 +2240,13 @@ export type EmployeeCountOutputTypeCountLeaveBalancesArgs<ExtArgs extends runtim
   where?: Prisma.LeaveBalanceWhereInput
 }
 
+/**
+ * EmployeeCountOutputType without action
+ */
+export type EmployeeCountOutputTypeCountSessionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.SessionWhereInput
+}
+
 
 export type EmployeeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -2100,6 +2273,7 @@ export type EmployeeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   approvalsMade?: boolean | Prisma.Employee$approvalsMadeArgs<ExtArgs>
   auditLogs?: boolean | Prisma.Employee$auditLogsArgs<ExtArgs>
   leaveBalances?: boolean | Prisma.Employee$leaveBalancesArgs<ExtArgs>
+  sessions?: boolean | Prisma.Employee$sessionsArgs<ExtArgs>
   _count?: boolean | Prisma.EmployeeCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["employee"]>
 
@@ -2176,6 +2350,7 @@ export type EmployeeInclude<ExtArgs extends runtime.Types.Extensions.InternalArg
   approvalsMade?: boolean | Prisma.Employee$approvalsMadeArgs<ExtArgs>
   auditLogs?: boolean | Prisma.Employee$auditLogsArgs<ExtArgs>
   leaveBalances?: boolean | Prisma.Employee$leaveBalancesArgs<ExtArgs>
+  sessions?: boolean | Prisma.Employee$sessionsArgs<ExtArgs>
   _count?: boolean | Prisma.EmployeeCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type EmployeeIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2203,6 +2378,7 @@ export type $EmployeePayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     approvalsMade: Prisma.$ApprovalPayload<ExtArgs>[]
     auditLogs: Prisma.$AuditLogPayload<ExtArgs>[]
     leaveBalances: Prisma.$LeaveBalancePayload<ExtArgs>[]
+    sessions: Prisma.$SessionPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -2623,6 +2799,7 @@ export interface Prisma__EmployeeClient<T, Null = never, ExtArgs extends runtime
   approvalsMade<T extends Prisma.Employee$approvalsMadeArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Employee$approvalsMadeArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ApprovalPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   auditLogs<T extends Prisma.Employee$auditLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Employee$auditLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   leaveBalances<T extends Prisma.Employee$leaveBalancesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Employee$leaveBalancesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LeaveBalancePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  sessions<T extends Prisma.Employee$sessionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Employee$sessionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3261,6 +3438,30 @@ export type Employee$leaveBalancesArgs<ExtArgs extends runtime.Types.Extensions.
   take?: number
   skip?: number
   distinct?: Prisma.LeaveBalanceScalarFieldEnum | Prisma.LeaveBalanceScalarFieldEnum[]
+}
+
+/**
+ * Employee.sessions
+ */
+export type Employee$sessionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Session
+   */
+  select?: Prisma.SessionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Session
+   */
+  omit?: Prisma.SessionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SessionInclude<ExtArgs> | null
+  where?: Prisma.SessionWhereInput
+  orderBy?: Prisma.SessionOrderByWithRelationInput | Prisma.SessionOrderByWithRelationInput[]
+  cursor?: Prisma.SessionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.SessionScalarFieldEnum | Prisma.SessionScalarFieldEnum[]
 }
 
 /**

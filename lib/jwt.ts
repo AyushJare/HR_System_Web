@@ -5,13 +5,17 @@ const secret = new TextEncoder().encode(process.env.JWT_SECRET);
 export type TokenPayload = {
   sub: string;   // employee id
   role: "ADMIN" | "EMPLOYEE";
+  type?: "access" | "refresh";  // ← NEW: distinguishes token type
 };
 
-export async function signToken(payload: TokenPayload): Promise<string> {
+export async function signToken(
+  payload: TokenPayload,
+  expiresIn: string = "8h"  // ← NEW: configurable expiry (default 8h for now)
+): Promise<string> {
   return new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
-    .setExpirationTime("8h")
+    .setExpirationTime(expiresIn)  // ← CHANGED: uses parameter instead of hardcoded
     .sign(secret);
 }
 

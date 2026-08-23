@@ -123,6 +123,7 @@ model Employee {
   approvalsMade  Approval[]    @relation("ApprovalActor")
   auditLogs      AuditLog[]
   leaveBalances  LeaveBalance[]
+  sessions       Session[]      // ← ADD THIS LINE
 
   @@map("employees")
 }
@@ -185,4 +186,15 @@ model AuditLog {
   createdAt  DateTime  @default(now())
 
   @@map("audit_logs")
+}
+
+model Session {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  employeeId String
+  employee  Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+
+  @@map("sessions")
 }

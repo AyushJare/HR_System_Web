@@ -96,3 +96,8 @@ export type LeaveBalance = Prisma.LeaveBalanceModel
  * 
  */
 export type AuditLog = Prisma.AuditLogModel
+/**
+ * Model Session
+ * 
+ */
+export type Session = Prisma.SessionModel
