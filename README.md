@@ -104,7 +104,7 @@ Transaction-wrapped leave approval — approving a leave, updating attendance, a
 Change this immediately in any environment beyond local development.
 
 ## Project Structure
-
+```text
 app/
 ├── admin/
 │   ├── dashboard/           Live stats, pending approvals, recent activity
@@ -115,13 +115,23 @@ app/
 │   ├── audit-log/           Full system activity log
 │   ├── reports/             Summary & consolidated attendance reports
 │   └── AdminShell.tsx       Sidebar navigation shell
+│
 ├── api/
-│   ├── auth/                login, logout, me
-│   ├── employees/           CRUD + attendance-summary
-│   ├── departments/         designations/ employee-types/ holidays/ leave-types/
-│   ├── attendance/          attendance-settings/
-│   ├── approvals/           leave-balances/
-│   ├── audit-logs/          reports/  dashboard/
+│   ├── auth/                Login, logout, me
+│   ├── employees/           CRUD + attendance summary
+│   ├── departments/         Department management
+│   ├── designations/        Designation management
+│   ├── employee-types/      Employee type management
+│   ├── holidays/            Holiday management
+│   ├── leave-types/         Leave type management
+│   ├── attendance/          Attendance management
+│   ├── attendance-settings/ Attendance configuration
+│   ├── approvals/           Leave & attendance correction approvals
+│   ├── leave-balances/      Leave balance management
+│   ├── audit-logs/          Full system activity logs
+│   ├── reports/             Attendance & leave reports
+│   └── dashboard/           Dashboard statistics
+│
 └── login/                   Login page
 
 lib/
@@ -129,13 +139,13 @@ lib/
 ├── auth.ts                  Session + requireAdmin() guard
 ├── jwt.ts                   Sign/verify JWT
 ├── password.ts              bcrypt hash/verify
-├── dateOnly.ts               UTC-safe date parsing
-└── leaveBalance.ts           Leave balance lookup/creation
+├── dateOnly.ts              UTC-safe date parsing
+└── leaveBalance.ts          Leave balance lookup/creation
 
 prisma/
 ├── schema.prisma            Database schema (11 models)
 └── seed.ts                  Initial admin seed script
-
+```
 
 ## Roadmap / Future Scope
 
