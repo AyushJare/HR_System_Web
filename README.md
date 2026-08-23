@@ -1,4 +1,9 @@
 # HR Management System
+![Next.js](https://img.shields.io/badge/Next.js-16-black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14%2B-336791)
+![Prisma](https://img.shields.io/badge/Prisma-7-2D3748)
+![License](https://img.shields.io/badge/license-MIT-green)
 
 > A role-based HR management platform built for a real institution's admin workflows — employee records, attendance, leave, and approvals in one auditable system.
 
@@ -7,6 +12,14 @@
 This is a full-stack HR administration system built with Next.js and PostgreSQL, designed around a single API layer that both the web admin panel and a future mobile app will share — no client ever touches the database directly. Every write action is enforced server-side by role and logged to a permanent audit trail, not just hidden behind UI buttons.
 
 The system was built from a real internal architecture spec (employee management, attendance, masters, approvals, audit logging, reporting) and has grown to include configurable leave-type balance tracking, weekly-off/holiday-aware attendance calculations, and per-employee monthly attendance views.
+
+## Why This Architecture
+
+Single API, multiple future clients — a mobile app can plug into the exact same endpoints already built and tested for web, with zero duplicated backend logic.
+No client ever touches the database directly — every read and write is routed through an authenticated API layer, so access rules are enforced in exactly one place, not scattered across UIs.
+Server-enforced role checks, not UI-hidden buttons — an admin-only action rejects unauthorized requests at the API level, verified even if the UI were bypassed entirely.
+Audit logging built into the schema from day one — every create/update/delete/approval writes to a permanent, queryable audit trail.
+JWT over cookie-only sessions — chosen specifically so a future mobile client (which can't use browser cookies) requires no rewrite of the auth system.
 
 ## Key Features
 
@@ -33,7 +46,11 @@ The system was built from a real internal architecture spec (employee management
 
 ## Architecture
 
-Both the web admin panel and a planned future mobile app are designed as clients of a single API layer (Next.js Route Handlers). Neither client queries the database directly — every read and write goes through an authenticated, role-checked API route. This means access rules, audit logging, and business logic (like leave balance enforcement) live in exactly one place, regardless of which client is calling them.
+Driver-adapter Prisma Client — required by Prisma 7; connection pooling handled through a single shared client instance
+jose over jsonwebtoken — works natively in both Node and Edge runtimes, avoiding a rewrite if auth checks move into Middleware later
+bcryptjs over bcrypt — pure JavaScript, no native compilation step required at install time
+Computed, not stored, attendance status — weekly-off and holiday exclusions are calculated at read-time against admin-configurable rules, not pre-written per day
+Transaction-wrapped leave approval — approving a leave, updating attendance, and decrementing the leave balance happen atomically, preventing race conditions on shared balances
 
 ## Getting Started
 
@@ -87,22 +104,63 @@ Both the web admin panel and a planned future mobile app are designed as clients
 Change this immediately in any environment beyond local development.
 
 ## Project Structure
-
+```text
 app/
-  admin/          Admin panel pages (employees, attendance, masters, approvals, reports, dashboard)
-  api/            All backend API routes
-  login/          Login page
-lib/              Shared utilities (Prisma client, auth, JWT, date handling)
+├── admin/
+│   ├── dashboard/           Live stats, pending approvals, recent activity
+│   ├── employees/           List, add, per-employee detail + edit
+│   ├── attendance/          Daily attendance marking
+│   ├── masters/             Departments, Designations, Employee Types, Holidays, Leave Types, Weekly Off
+│   ├── approvals/           Leave & attendance correction review queue
+│   ├── audit-log/           Full system activity log
+│   ├── reports/             Summary & consolidated attendance reports
+│   └── AdminShell.tsx       Sidebar navigation shell
+│
+├── api/
+│   ├── auth/                Login, logout, me
+│   ├── employees/           CRUD + attendance summary
+│   ├── departments/         Department management
+│   ├── designations/        Designation management
+│   ├── employee-types/      Employee type management
+│   ├── holidays/            Holiday management
+│   ├── leave-types/         Leave type management
+│   ├── attendance/          Attendance management
+│   ├── attendance-settings/ Attendance configuration
+│   ├── approvals/           Leave & attendance correction approvals
+│   ├── leave-balances/      Leave balance management
+│   ├── audit-logs/          Full system activity logs
+│   ├── reports/             Attendance & leave reports
+│   └── dashboard/           Dashboard statistics
+│
+└── login/                   Login page
+
+lib/
+├── prisma.ts                Shared Prisma client (driver adapter)
+├── auth.ts                  Session + requireAdmin() guard
+├── jwt.ts                   Sign/verify JWT
+├── password.ts              bcrypt hash/verify
+├── dateOnly.ts              UTC-safe date parsing
+└── leaveBalance.ts          Leave balance lookup/creation
+
 prisma/
-  schema.prisma   Database schema
-  seed.ts         Initial admin seed script
-  
+├── schema.prisma            Database schema (11 models)
+└── seed.ts                  Initial admin seed script
+```
+
 ## Roadmap / Future Scope
 
 - **Mobile app** — employee self-service check-in/check-out, reusing the existing API
 - **GPS-based attendance verification** — geofenced check-in with fraud detection (mock-location, impossible-travel checks), integrating with the existing Approval workflow for flagged check-ins
 - **Security hardening** — rate limiting on authentication, refresh tokens, and a password reset flow before any production deployment
 - **Employee self-service portal** — leave requests and attendance corrections submitted directly by employees, not just admin-managed
+
+## Known Limitations
+
+--> No automated tests — reasonable for the current build stage, but real test coverage is needed before production, given the system handles employee PII
+--> No rate limiting or refresh tokens yet — tracked in the security hardening phase above
+--> No password reset flow — admin must currently reset credentials manually via the database
+--> Local PostgreSQL only — no managed hosting or automated backup strategy configured yet
+--> Admin-managed attendance marking — until employee self-service exists, all attendance is entered by an admin rather than self-reported
 
 ## License
 
