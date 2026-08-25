@@ -32,6 +32,10 @@ JWT over cookie-only sessions — chosen specifically so a future mobile client 
 - **Masters configuration** — departments, designations, employee types, holidays, and weekly-off days are all admin-configurable, not hardcoded
 - **Reports** — per-employee summary totals and a full monthly consolidated attendance grid
 - **Admin dashboard** — live headcount, today's attendance breakdown (correctly blank on week-offs/holidays), pending approvals, upcoming holidays, and recent activity
+- - **Bulk data import** — Excel-based bulk upload for employees and holidays, with downloadable templates and row-level validation before import
+- **Input validation layer** — RFC-compliant email validation, password strength enforcement with secure auto-generation, and India-formatted phone validation
+- **Session security** — refresh-token-based sessions with revocation support
+- **Rate limiting** — protection against abuse on sensitive endpoints, alongside standard security headers
 
 ## Tech Stack
 
@@ -163,7 +167,6 @@ prisma/
 ## Known Limitations
 
 --> No automated tests — reasonable for the current build stage, but real test coverage is needed before production, given the system handles employee PII
---> No rate limiting or refresh tokens yet — tracked in the security hardening phase above
 --> No password reset flow — admin must currently reset credentials manually via the database
 --> Local PostgreSQL only — no managed hosting or automated backup strategy configured yet
 --> Admin-managed attendance marking — until employee self-service exists, all attendance is entered by an admin rather than self-reported
