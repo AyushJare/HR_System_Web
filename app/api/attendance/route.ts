@@ -4,100 +4,211 @@ import { requireAdmin } from "@/lib/auth";
 import { toDateOnlyUTC } from "@/lib/dateOnly";
 
 export async function GET(request: NextRequest) {
-  const auth = await requireAdmin();
-  if (!auth.ok) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
-  }
+  try {
+    const auth = await requireAdmin();
 
-  const { searchParams } = new URL(request.url);
-  const dateParam = searchParams.get("date");
+    if (!auth.ok) {
+      return NextResponse.json(
+        { error: auth.error },
+        { status: auth.status }
+      );
+    }
 
-  if (!dateParam) {
-    return NextResponse.json({ error: "date is required" }, { status: 400 });
-  }
+    const { searchParams } = new URL(request.url);
+    const dateParam = searchParams.get("date");
 
-  const date = toDateOnlyUTC(dateParam);
+    if (!dateParam) {
+      return NextResponse.json(
+        { error: "date is required" },
+        { status: 400 }
+      );
+    }
 
-  const employees = await prisma.employee.findMany({
-    where: { isActive: true },
-    orderBy: { employeeCode: "asc" },
-    select: {
-      id: true,
-      employeeCode: true,
-      fullName: true,
-      attendances: {
-        where: { date },
-        select: {
-          id: true,
-          timeIn: true,
-          timeOut: true,
-          status: true,
-          reason: true,
+    const date = toDateOnlyUTC(dateParam);
+
+    const employees = await prisma.employee.findMany({
+      where: {
+        isActive: true,
+      },
+
+      orderBy: {
+        employeeCode: "asc",
+      },
+
+      select: {
+        id: true,
+        employeeCode: true,
+        fullName: true,
+
+        attendances: {
+          where: {
+            date,
+            deletedAt: null,
+          },
+
+          select: {
+            id: true,
+            checkInTime: true,
+            checkOutTime: true,
+            status: true,
+            reason: true,
+          },
         },
       },
-    },
-  });
+    });
 
-  const result = employees.map((emp) => ({
-    employeeId: emp.id,
-    employeeCode: emp.employeeCode,
-    fullName: emp.fullName,
-    attendance: emp.attendances[0] || null,
-  }));
+    /*
+     * Keep the response shape expected by
+     * app/admin/attendance/page.tsx.
+     *
+     * Prisma:
+     *   checkInTime  -> API: timeIn
+     *   checkOutTime -> API: timeOut
+     */
+    const result = employees.map((emp) => {
+      const attendance = emp.attendances[0] || null;
 
-  return NextResponse.json(result);
+      return {
+        employeeId: emp.id,
+        employeeCode: emp.employeeCode,
+        fullName: emp.fullName,
+
+        attendance: attendance
+          ? {
+            id: attendance.id,
+            timeIn: attendance.checkInTime,
+            timeOut: attendance.checkOutTime,
+            status: attendance.status,
+            reason: attendance.reason,
+          }
+          : null,
+      };
+    });
+
+    return NextResponse.json(result);
+  } catch (error) {
+    console.error("GET /api/attendance error:", error);
+
+    return NextResponse.json(
+      {
+        error: "Failed to load attendance",
+        details:
+          error instanceof Error
+            ? error.message
+            : "Unknown server error",
+      },
+      {
+        status: 500,
+      }
+    );
+  }
 }
 
 export async function POST(request: Request) {
-  const auth = await requireAdmin();
-  if (!auth.ok) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
-  }
+  try {
+    const auth = await requireAdmin();
 
-  const body = await request.json();
-  const { employeeId, date, timeIn, timeOut, status, reason } = body;
+    if (!auth.ok) {
+      return NextResponse.json(
+        { error: auth.error },
+        { status: auth.status }
+      );
+    }
 
-  if (!employeeId || !date) {
-    return NextResponse.json(
-      { error: "employeeId and date are required" },
-      { status: 400 }
-    );
-  }
+    const body = await request.json();
 
-  const attendanceDate = toDateOnlyUTC(date);
+    const {
+      employeeId,
+      date,
+      timeIn,
+      timeOut,
+      status,
+      reason,
+    } = body;
 
-  const attendance = await prisma.attendance.upsert({
-    where: {
-      employeeId_date: {
+    if (!employeeId || !date) {
+      return NextResponse.json(
+        {
+          error: "employeeId and date are required",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    const attendanceDate = toDateOnlyUTC(date);
+
+    const attendance = await prisma.attendance.upsert({
+      where: {
+        employeeId_date: {
+          employeeId,
+          date: attendanceDate,
+        },
+      },
+
+      update: {
+        checkInTime: timeIn
+          ? new Date(`${date}T${timeIn}:00`)
+          : undefined,
+
+        checkOutTime: timeOut
+          ? new Date(`${date}T${timeOut}:00`)
+          : null,
+
+        status: status || "PRESENT",
+        reason: reason || null,
+        modifiedBy: auth.session.sub,
+      },
+
+      create: {
         employeeId,
         date: attendanceDate,
+
+        checkInTime: timeIn
+          ? new Date(`${date}T${timeIn}:00`)
+          : new Date(),
+
+        checkOutTime: timeOut
+          ? new Date(`${date}T${timeOut}:00`)
+          : null,
+
+        status: status || "PRESENT",
+        reason: reason || null,
+        modifiedBy: auth.session.sub,
       },
-    },
-    update: {
-      timeIn: timeIn ? new Date(`${date}T${timeIn}:00`) : null,
-      timeOut: timeOut ? new Date(`${date}T${timeOut}:00`) : null,
-      status: status || "PRESENT",
-      reason: reason || null,
-    },
-    create: {
-      employeeId,
-      date: attendanceDate,
-      timeIn: timeIn ? new Date(`${date}T${timeIn}:00`) : null,
-      timeOut: timeOut ? new Date(`${date}T${timeOut}:00`) : null,
-      status: status || "PRESENT",
-      reason: reason || null,
-    },
-  });
+    });
 
-  await prisma.auditLog.create({
-    data: {
-      employeeId: auth.session.sub,
-      action: "ATTENDANCE_MARKED",
-      entity: "Attendance",
-      entityId: attendance.id,
-      metadata: { forEmployeeId: employeeId, date, status: status || "PRESENT" },
-    },
-  });
+    await prisma.auditLog.create({
+      data: {
+        employeeId: auth.session.sub,
+        action: "ATTENDANCE_MARKED",
+        entity: "Attendance",
+        entityId: attendance.id,
 
-  return NextResponse.json(attendance);
+        metadata: {
+          forEmployeeId: employeeId,
+          date,
+          status: status || "PRESENT",
+        },
+      },
+    });
+
+    return NextResponse.json(attendance);
+  } catch (error) {
+    console.error("POST /api/attendance error:", error);
+
+    return NextResponse.json(
+      {
+        error: "Failed to save attendance",
+        details:
+          error instanceof Error
+            ? error.message
+            : "Unknown server error",
+      },
+      {
+        status: 500,
+      }
+    );
+  }
 }

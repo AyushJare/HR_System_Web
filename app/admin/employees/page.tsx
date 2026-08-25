@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -80,12 +80,21 @@ export default function EmployeesPage() {
             Manage all employees in the system
           </p>
         </div>
-        <button
-          onClick={() => router.push("/admin/employees/add")}
-          className="bg-blue-700 hover:bg-blue-800 text-white font-medium py-2 px-6 rounded-lg transition"
-        >
-          + Add Employee
-        </button>
+        <div className="flex gap-4">
+
+          <button
+            onClick={() => router.push("/admin/employees/bulk-upload")}
+            className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded-lg transition flex items-center gap-2"
+          >
+            ⬆️ Bulk Upload
+          </button>
+          <button
+            onClick={() => router.push("/admin/employees/add")}
+            className="bg-blue-700 hover:bg-blue-800 text-white font-medium py-2 px-6 rounded-lg transition"
+          >
+            + Add Employee
+          </button>
+        </div>
       </div>
 
       {/* Search Bar */}
@@ -168,11 +177,10 @@ export default function EmployeesPage() {
                     </td>
                     <td className="px-6 py-4 text-sm">
                       <span
-                        className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          emp.isActive
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
+                        className={`px-3 py-1 rounded-full text-xs font-medium ${emp.isActive
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                          }`}
                       >
                         {emp.isActive ? "Active" : "Inactive"}
                       </span>

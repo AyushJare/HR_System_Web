@@ -123,25 +123,31 @@ model Employee {
   approvalsMade  Approval[]    @relation("ApprovalActor")
   auditLogs      AuditLog[]
   leaveBalances  LeaveBalance[]
-  sessions       Session[]      // ← ADD THIS LINE
+  sessions       Session[]      // ✅ ADD THIS LINE - Was missing!
 
   @@map("employees")
 }
 
 model Attendance {
-  id         String            @id @default(cuid())
-  employeeId String
-  employee   Employee          @relation(fields: [employeeId], references: [id])
-  date       DateTime          @db.Date
-  timeIn     DateTime?
-  timeOut    DateTime?
-  status     AttendanceStatus  @default(ABSENT)
-  reason     String?
-  createdAt  DateTime          @default(now())
-  updatedAt  DateTime          @updatedAt
-
-  @@unique([employeeId, date])
-  @@map("attendance")
+  id                    String    @id @default(cuid())
+  employeeId            String
+  employee              Employee  @relation(fields: [employeeId], references: [id])
+  
+  date                  DateTime  @db.Date  // IMPORTANT: Use DATE type
+  checkInTime           DateTime  @default(now()) // Immutable
+  checkOutTime          DateTime?
+  
+  status                String    @default("PRESENT")
+  modifiedAt            DateTime  @updatedAt
+  modifiedBy            String?
+  reason                String?
+  
+  createdAt             DateTime  @default(now())
+  deletedAt             DateTime?
+  
+  @@unique([employeeId, date]) // Only one check-in per day per employee
+  @@index([date])
+  @@index([employeeId, date])
 }
 
 model Approval {
@@ -178,13 +184,16 @@ model LeaveBalance {
 model AuditLog {
   id         String   @id @default(cuid())
   employeeId String?
-  employee   Employee? @relation(fields: [employeeId], references: [id])
-  action     String
-  entity     String?
-  entityId   String?
-  metadata   Json?
+  employee   Employee? @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+  action     String    // e.g., "LOGIN_SUCCESS", "LOGIN_FAILED"
+  entity     String?   // e.g., "Employee", "Attendance"
+  entityId   String?   // Reference to the entity
+  metadata   Json?     // Additional details (email, reason, etc.)
   createdAt  DateTime  @default(now())
 
+  @@index([employeeId])
+  @@index([action])
+  @@index([createdAt])
   @@map("audit_logs")
 }
 

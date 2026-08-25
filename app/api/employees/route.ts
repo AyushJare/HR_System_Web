@@ -2,6 +2,9 @@
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/password";
 import { requireAdmin } from "@/lib/auth";
+import { validateEmail } from "@/lib/validators/email";
+import { validatePassword } from "@/lib/validators/password";
+import { validatePhoneNumber } from "@/lib/validators/phone";
 
 export async function GET() {
   const auth = await requireAdmin();
@@ -35,6 +38,34 @@ export async function POST(request: Request) {
 
   const body = await request.json();
   const { fullName, email, password, mobile, gender, departmentId, designationId, employeeTypeId, role } = body;
+
+  // ADD VALIDATION:
+  const emailValidation = validateEmail(body.email);
+  if (!emailValidation.valid) {
+    return NextResponse.json(
+      { error: "Wrong email fommat", errors: emailValidation.error },
+      { status: 422 }
+    );
+  }
+  
+  const passwordValidation = validatePassword(body.password);
+  if (!passwordValidation.valid) {
+    return NextResponse.json(
+      { error: "Password requirements not met", errors: passwordValidation.errors },
+      { status: 422 }
+    );
+  }
+  
+  if (body.phone) {
+    const phoneValidation = validatePhoneNumber(body.phone);
+    if (!phoneValidation.valid) {
+      return NextResponse.json(
+        { error: "Enter a correct phone number", errors: phoneValidation.error },
+        { status: 422 }
+      );
+    }
+    body.phone = phoneValidation.formatted;
+  }
 
   if (!fullName || !email || !password) {
     return NextResponse.json(

@@ -1442,12 +1442,14 @@ export const AttendanceScalarFieldEnum = {
   id: 'id',
   employeeId: 'employeeId',
   date: 'date',
-  timeIn: 'timeIn',
-  timeOut: 'timeOut',
+  checkInTime: 'checkInTime',
+  checkOutTime: 'checkOutTime',
   status: 'status',
+  modifiedAt: 'modifiedAt',
+  modifiedBy: 'modifiedBy',
   reason: 'reason',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  deletedAt: 'deletedAt'
 } as const
 
 export type AttendanceScalarFieldEnum = (typeof AttendanceScalarFieldEnum)[keyof typeof AttendanceScalarFieldEnum]
@@ -1613,20 +1615,6 @@ export type ListEnumUserRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$Pri
  * Reference to a field of type 'Boolean'
  */
 export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
-    
-
-
-/**
- * Reference to a field of type 'AttendanceStatus'
- */
-export type EnumAttendanceStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AttendanceStatus'>
-    
-
-
-/**
- * Reference to a field of type 'AttendanceStatus[]'
- */
-export type ListEnumAttendanceStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AttendanceStatus[]'>
     
 
 

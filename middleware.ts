@@ -1,22 +1,27 @@
-﻿import { NextRequest, NextResponse } from "next/server";
-import { verifyToken } from "@/lib/jwt";
+﻿import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-export async function middleware(request: NextRequest) {
-  const token = request.cookies.get("session")?.value;
-  const isLoginPage = request.nextUrl.pathname === "/login";
-  const payload = token ? await verifyToken(token) : null;
+export function middleware(request: NextRequest) {
+  const response = NextResponse.next();
 
-  if (!payload && !isLoginPage) {
-    return NextResponse.redirect(new URL("/login", request.url));
+  // Security Headers
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("X-XSS-Protection", "1; mode=block");
+  response.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  response.headers.set("Content-Security-Policy", "default-src 'self'");
+
+  // CORS
+  if (process.env.NODE_ENV === "production") {
+    const origin = request.headers.get("origin");
+    if (origin === process.env.NEXTAUTH_URL) {
+      response.headers.set("Access-Control-Allow-Origin", origin);
+    }
   }
 
-  if (payload && isLoginPage) {
-    return NextResponse.redirect(new URL("/admin/employees", request.url));
-  }
-
-  return NextResponse.next();
+  return response;
 }
 
 export const config = {
-  matcher: ["/", "/admin/:path*", "/login"],
+  matcher: ["/api/:path*", "/admin/:path*"],
 };

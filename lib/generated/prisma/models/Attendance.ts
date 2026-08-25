@@ -28,36 +28,42 @@ export type AttendanceMinAggregateOutputType = {
   id: string | null
   employeeId: string | null
   date: Date | null
-  timeIn: Date | null
-  timeOut: Date | null
-  status: $Enums.AttendanceStatus | null
+  checkInTime: Date | null
+  checkOutTime: Date | null
+  status: string | null
+  modifiedAt: Date | null
+  modifiedBy: string | null
   reason: string | null
   createdAt: Date | null
-  updatedAt: Date | null
+  deletedAt: Date | null
 }
 
 export type AttendanceMaxAggregateOutputType = {
   id: string | null
   employeeId: string | null
   date: Date | null
-  timeIn: Date | null
-  timeOut: Date | null
-  status: $Enums.AttendanceStatus | null
+  checkInTime: Date | null
+  checkOutTime: Date | null
+  status: string | null
+  modifiedAt: Date | null
+  modifiedBy: string | null
   reason: string | null
   createdAt: Date | null
-  updatedAt: Date | null
+  deletedAt: Date | null
 }
 
 export type AttendanceCountAggregateOutputType = {
   id: number
   employeeId: number
   date: number
-  timeIn: number
-  timeOut: number
+  checkInTime: number
+  checkOutTime: number
   status: number
+  modifiedAt: number
+  modifiedBy: number
   reason: number
   createdAt: number
-  updatedAt: number
+  deletedAt: number
   _all: number
 }
 
@@ -66,36 +72,42 @@ export type AttendanceMinAggregateInputType = {
   id?: true
   employeeId?: true
   date?: true
-  timeIn?: true
-  timeOut?: true
+  checkInTime?: true
+  checkOutTime?: true
   status?: true
+  modifiedAt?: true
+  modifiedBy?: true
   reason?: true
   createdAt?: true
-  updatedAt?: true
+  deletedAt?: true
 }
 
 export type AttendanceMaxAggregateInputType = {
   id?: true
   employeeId?: true
   date?: true
-  timeIn?: true
-  timeOut?: true
+  checkInTime?: true
+  checkOutTime?: true
   status?: true
+  modifiedAt?: true
+  modifiedBy?: true
   reason?: true
   createdAt?: true
-  updatedAt?: true
+  deletedAt?: true
 }
 
 export type AttendanceCountAggregateInputType = {
   id?: true
   employeeId?: true
   date?: true
-  timeIn?: true
-  timeOut?: true
+  checkInTime?: true
+  checkOutTime?: true
   status?: true
+  modifiedAt?: true
+  modifiedBy?: true
   reason?: true
   createdAt?: true
-  updatedAt?: true
+  deletedAt?: true
   _all?: true
 }
 
@@ -175,12 +187,14 @@ export type AttendanceGroupByOutputType = {
   id: string
   employeeId: string
   date: Date
-  timeIn: Date | null
-  timeOut: Date | null
-  status: $Enums.AttendanceStatus
+  checkInTime: Date
+  checkOutTime: Date | null
+  status: string
+  modifiedAt: Date
+  modifiedBy: string | null
   reason: string | null
   createdAt: Date
-  updatedAt: Date
+  deletedAt: Date | null
   _count: AttendanceCountAggregateOutputType | null
   _min: AttendanceMinAggregateOutputType | null
   _max: AttendanceMaxAggregateOutputType | null
@@ -208,12 +222,14 @@ export type AttendanceWhereInput = {
   id?: Prisma.StringFilter<"Attendance"> | string
   employeeId?: Prisma.StringFilter<"Attendance"> | string
   date?: Prisma.DateTimeFilter<"Attendance"> | Date | string
-  timeIn?: Prisma.DateTimeNullableFilter<"Attendance"> | Date | string | null
-  timeOut?: Prisma.DateTimeNullableFilter<"Attendance"> | Date | string | null
-  status?: Prisma.EnumAttendanceStatusFilter<"Attendance"> | $Enums.AttendanceStatus
+  checkInTime?: Prisma.DateTimeFilter<"Attendance"> | Date | string
+  checkOutTime?: Prisma.DateTimeNullableFilter<"Attendance"> | Date | string | null
+  status?: Prisma.StringFilter<"Attendance"> | string
+  modifiedAt?: Prisma.DateTimeFilter<"Attendance"> | Date | string
+  modifiedBy?: Prisma.StringNullableFilter<"Attendance"> | string | null
   reason?: Prisma.StringNullableFilter<"Attendance"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Attendance"> | Date | string
-  updatedAt?: Prisma.DateTimeFilter<"Attendance"> | Date | string
+  deletedAt?: Prisma.DateTimeNullableFilter<"Attendance"> | Date | string | null
   employee?: Prisma.XOR<Prisma.EmployeeScalarRelationFilter, Prisma.EmployeeWhereInput>
 }
 
@@ -221,12 +237,14 @@ export type AttendanceOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   employeeId?: Prisma.SortOrder
   date?: Prisma.SortOrder
-  timeIn?: Prisma.SortOrderInput | Prisma.SortOrder
-  timeOut?: Prisma.SortOrderInput | Prisma.SortOrder
+  checkInTime?: Prisma.SortOrder
+  checkOutTime?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
+  modifiedAt?: Prisma.SortOrder
+  modifiedBy?: Prisma.SortOrderInput | Prisma.SortOrder
   reason?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
-  updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   employee?: Prisma.EmployeeOrderByWithRelationInput
 }
 
@@ -238,12 +256,14 @@ export type AttendanceWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.AttendanceWhereInput | Prisma.AttendanceWhereInput[]
   employeeId?: Prisma.StringFilter<"Attendance"> | string
   date?: Prisma.DateTimeFilter<"Attendance"> | Date | string
-  timeIn?: Prisma.DateTimeNullableFilter<"Attendance"> | Date | string | null
-  timeOut?: Prisma.DateTimeNullableFilter<"Attendance"> | Date | string | null
-  status?: Prisma.EnumAttendanceStatusFilter<"Attendance"> | $Enums.AttendanceStatus
+  checkInTime?: Prisma.DateTimeFilter<"Attendance"> | Date | string
+  checkOutTime?: Prisma.DateTimeNullableFilter<"Attendance"> | Date | string | null
+  status?: Prisma.StringFilter<"Attendance"> | string
+  modifiedAt?: Prisma.DateTimeFilter<"Attendance"> | Date | string
+  modifiedBy?: Prisma.StringNullableFilter<"Attendance"> | string | null
   reason?: Prisma.StringNullableFilter<"Attendance"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Attendance"> | Date | string
-  updatedAt?: Prisma.DateTimeFilter<"Attendance"> | Date | string
+  deletedAt?: Prisma.DateTimeNullableFilter<"Attendance"> | Date | string | null
   employee?: Prisma.XOR<Prisma.EmployeeScalarRelationFilter, Prisma.EmployeeWhereInput>
 }, "id" | "employeeId_date">
 
@@ -251,12 +271,14 @@ export type AttendanceOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   employeeId?: Prisma.SortOrder
   date?: Prisma.SortOrder
-  timeIn?: Prisma.SortOrderInput | Prisma.SortOrder
-  timeOut?: Prisma.SortOrderInput | Prisma.SortOrder
+  checkInTime?: Prisma.SortOrder
+  checkOutTime?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
+  modifiedAt?: Prisma.SortOrder
+  modifiedBy?: Prisma.SortOrderInput | Prisma.SortOrder
   reason?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
-  updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.AttendanceCountOrderByAggregateInput
   _max?: Prisma.AttendanceMaxOrderByAggregateInput
   _min?: Prisma.AttendanceMinOrderByAggregateInput
@@ -269,23 +291,27 @@ export type AttendanceScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"Attendance"> | string
   employeeId?: Prisma.StringWithAggregatesFilter<"Attendance"> | string
   date?: Prisma.DateTimeWithAggregatesFilter<"Attendance"> | Date | string
-  timeIn?: Prisma.DateTimeNullableWithAggregatesFilter<"Attendance"> | Date | string | null
-  timeOut?: Prisma.DateTimeNullableWithAggregatesFilter<"Attendance"> | Date | string | null
-  status?: Prisma.EnumAttendanceStatusWithAggregatesFilter<"Attendance"> | $Enums.AttendanceStatus
+  checkInTime?: Prisma.DateTimeWithAggregatesFilter<"Attendance"> | Date | string
+  checkOutTime?: Prisma.DateTimeNullableWithAggregatesFilter<"Attendance"> | Date | string | null
+  status?: Prisma.StringWithAggregatesFilter<"Attendance"> | string
+  modifiedAt?: Prisma.DateTimeWithAggregatesFilter<"Attendance"> | Date | string
+  modifiedBy?: Prisma.StringNullableWithAggregatesFilter<"Attendance"> | string | null
   reason?: Prisma.StringNullableWithAggregatesFilter<"Attendance"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Attendance"> | Date | string
-  updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Attendance"> | Date | string
+  deletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Attendance"> | Date | string | null
 }
 
 export type AttendanceCreateInput = {
   id?: string
   date: Date | string
-  timeIn?: Date | string | null
-  timeOut?: Date | string | null
-  status?: $Enums.AttendanceStatus
+  checkInTime?: Date | string
+  checkOutTime?: Date | string | null
+  status?: string
+  modifiedAt?: Date | string
+  modifiedBy?: string | null
   reason?: string | null
   createdAt?: Date | string
-  updatedAt?: Date | string
+  deletedAt?: Date | string | null
   employee: Prisma.EmployeeCreateNestedOneWithoutAttendancesInput
 }
 
@@ -293,23 +319,27 @@ export type AttendanceUncheckedCreateInput = {
   id?: string
   employeeId: string
   date: Date | string
-  timeIn?: Date | string | null
-  timeOut?: Date | string | null
-  status?: $Enums.AttendanceStatus
+  checkInTime?: Date | string
+  checkOutTime?: Date | string | null
+  status?: string
+  modifiedAt?: Date | string
+  modifiedBy?: string | null
   reason?: string | null
   createdAt?: Date | string
-  updatedAt?: Date | string
+  deletedAt?: Date | string | null
 }
 
 export type AttendanceUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  timeIn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  timeOut?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  status?: Prisma.EnumAttendanceStatusFieldUpdateOperationsInput | $Enums.AttendanceStatus
+  checkInTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  checkOutTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  modifiedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  modifiedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   employee?: Prisma.EmployeeUpdateOneRequiredWithoutAttendancesNestedInput
 }
 
@@ -317,47 +347,55 @@ export type AttendanceUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   employeeId?: Prisma.StringFieldUpdateOperationsInput | string
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  timeIn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  timeOut?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  status?: Prisma.EnumAttendanceStatusFieldUpdateOperationsInput | $Enums.AttendanceStatus
+  checkInTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  checkOutTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  modifiedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  modifiedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type AttendanceCreateManyInput = {
   id?: string
   employeeId: string
   date: Date | string
-  timeIn?: Date | string | null
-  timeOut?: Date | string | null
-  status?: $Enums.AttendanceStatus
+  checkInTime?: Date | string
+  checkOutTime?: Date | string | null
+  status?: string
+  modifiedAt?: Date | string
+  modifiedBy?: string | null
   reason?: string | null
   createdAt?: Date | string
-  updatedAt?: Date | string
+  deletedAt?: Date | string | null
 }
 
 export type AttendanceUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  timeIn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  timeOut?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  status?: Prisma.EnumAttendanceStatusFieldUpdateOperationsInput | $Enums.AttendanceStatus
+  checkInTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  checkOutTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  modifiedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  modifiedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type AttendanceUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   employeeId?: Prisma.StringFieldUpdateOperationsInput | string
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  timeIn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  timeOut?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  status?: Prisma.EnumAttendanceStatusFieldUpdateOperationsInput | $Enums.AttendanceStatus
+  checkInTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  checkOutTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  modifiedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  modifiedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type AttendanceListRelationFilter = {
@@ -379,36 +417,42 @@ export type AttendanceCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   employeeId?: Prisma.SortOrder
   date?: Prisma.SortOrder
-  timeIn?: Prisma.SortOrder
-  timeOut?: Prisma.SortOrder
+  checkInTime?: Prisma.SortOrder
+  checkOutTime?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  modifiedAt?: Prisma.SortOrder
+  modifiedBy?: Prisma.SortOrder
   reason?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
-  updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
 }
 
 export type AttendanceMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   employeeId?: Prisma.SortOrder
   date?: Prisma.SortOrder
-  timeIn?: Prisma.SortOrder
-  timeOut?: Prisma.SortOrder
+  checkInTime?: Prisma.SortOrder
+  checkOutTime?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  modifiedAt?: Prisma.SortOrder
+  modifiedBy?: Prisma.SortOrder
   reason?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
-  updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
 }
 
 export type AttendanceMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   employeeId?: Prisma.SortOrder
   date?: Prisma.SortOrder
-  timeIn?: Prisma.SortOrder
-  timeOut?: Prisma.SortOrder
+  checkInTime?: Prisma.SortOrder
+  checkOutTime?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  modifiedAt?: Prisma.SortOrder
+  modifiedBy?: Prisma.SortOrder
   reason?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
-  updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
 }
 
 export type AttendanceCreateNestedManyWithoutEmployeeInput = {
@@ -457,30 +501,30 @@ export type NullableDateTimeFieldUpdateOperationsInput = {
   set?: Date | string | null
 }
 
-export type EnumAttendanceStatusFieldUpdateOperationsInput = {
-  set?: $Enums.AttendanceStatus
-}
-
 export type AttendanceCreateWithoutEmployeeInput = {
   id?: string
   date: Date | string
-  timeIn?: Date | string | null
-  timeOut?: Date | string | null
-  status?: $Enums.AttendanceStatus
+  checkInTime?: Date | string
+  checkOutTime?: Date | string | null
+  status?: string
+  modifiedAt?: Date | string
+  modifiedBy?: string | null
   reason?: string | null
   createdAt?: Date | string
-  updatedAt?: Date | string
+  deletedAt?: Date | string | null
 }
 
 export type AttendanceUncheckedCreateWithoutEmployeeInput = {
   id?: string
   date: Date | string
-  timeIn?: Date | string | null
-  timeOut?: Date | string | null
-  status?: $Enums.AttendanceStatus
+  checkInTime?: Date | string
+  checkOutTime?: Date | string | null
+  status?: string
+  modifiedAt?: Date | string
+  modifiedBy?: string | null
   reason?: string | null
   createdAt?: Date | string
-  updatedAt?: Date | string
+  deletedAt?: Date | string | null
 }
 
 export type AttendanceCreateOrConnectWithoutEmployeeInput = {
@@ -516,56 +560,66 @@ export type AttendanceScalarWhereInput = {
   id?: Prisma.StringFilter<"Attendance"> | string
   employeeId?: Prisma.StringFilter<"Attendance"> | string
   date?: Prisma.DateTimeFilter<"Attendance"> | Date | string
-  timeIn?: Prisma.DateTimeNullableFilter<"Attendance"> | Date | string | null
-  timeOut?: Prisma.DateTimeNullableFilter<"Attendance"> | Date | string | null
-  status?: Prisma.EnumAttendanceStatusFilter<"Attendance"> | $Enums.AttendanceStatus
+  checkInTime?: Prisma.DateTimeFilter<"Attendance"> | Date | string
+  checkOutTime?: Prisma.DateTimeNullableFilter<"Attendance"> | Date | string | null
+  status?: Prisma.StringFilter<"Attendance"> | string
+  modifiedAt?: Prisma.DateTimeFilter<"Attendance"> | Date | string
+  modifiedBy?: Prisma.StringNullableFilter<"Attendance"> | string | null
   reason?: Prisma.StringNullableFilter<"Attendance"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Attendance"> | Date | string
-  updatedAt?: Prisma.DateTimeFilter<"Attendance"> | Date | string
+  deletedAt?: Prisma.DateTimeNullableFilter<"Attendance"> | Date | string | null
 }
 
 export type AttendanceCreateManyEmployeeInput = {
   id?: string
   date: Date | string
-  timeIn?: Date | string | null
-  timeOut?: Date | string | null
-  status?: $Enums.AttendanceStatus
+  checkInTime?: Date | string
+  checkOutTime?: Date | string | null
+  status?: string
+  modifiedAt?: Date | string
+  modifiedBy?: string | null
   reason?: string | null
   createdAt?: Date | string
-  updatedAt?: Date | string
+  deletedAt?: Date | string | null
 }
 
 export type AttendanceUpdateWithoutEmployeeInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  timeIn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  timeOut?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  status?: Prisma.EnumAttendanceStatusFieldUpdateOperationsInput | $Enums.AttendanceStatus
+  checkInTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  checkOutTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  modifiedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  modifiedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type AttendanceUncheckedUpdateWithoutEmployeeInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  timeIn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  timeOut?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  status?: Prisma.EnumAttendanceStatusFieldUpdateOperationsInput | $Enums.AttendanceStatus
+  checkInTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  checkOutTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  modifiedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  modifiedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type AttendanceUncheckedUpdateManyWithoutEmployeeInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  timeIn?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  timeOut?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  status?: Prisma.EnumAttendanceStatusFieldUpdateOperationsInput | $Enums.AttendanceStatus
+  checkInTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  checkOutTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  modifiedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  modifiedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 
@@ -574,12 +628,14 @@ export type AttendanceSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   id?: boolean
   employeeId?: boolean
   date?: boolean
-  timeIn?: boolean
-  timeOut?: boolean
+  checkInTime?: boolean
+  checkOutTime?: boolean
   status?: boolean
+  modifiedAt?: boolean
+  modifiedBy?: boolean
   reason?: boolean
   createdAt?: boolean
-  updatedAt?: boolean
+  deletedAt?: boolean
   employee?: boolean | Prisma.EmployeeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["attendance"]>
 
@@ -587,12 +643,14 @@ export type AttendanceSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   id?: boolean
   employeeId?: boolean
   date?: boolean
-  timeIn?: boolean
-  timeOut?: boolean
+  checkInTime?: boolean
+  checkOutTime?: boolean
   status?: boolean
+  modifiedAt?: boolean
+  modifiedBy?: boolean
   reason?: boolean
   createdAt?: boolean
-  updatedAt?: boolean
+  deletedAt?: boolean
   employee?: boolean | Prisma.EmployeeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["attendance"]>
 
@@ -600,12 +658,14 @@ export type AttendanceSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   id?: boolean
   employeeId?: boolean
   date?: boolean
-  timeIn?: boolean
-  timeOut?: boolean
+  checkInTime?: boolean
+  checkOutTime?: boolean
   status?: boolean
+  modifiedAt?: boolean
+  modifiedBy?: boolean
   reason?: boolean
   createdAt?: boolean
-  updatedAt?: boolean
+  deletedAt?: boolean
   employee?: boolean | Prisma.EmployeeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["attendance"]>
 
@@ -613,15 +673,17 @@ export type AttendanceSelectScalar = {
   id?: boolean
   employeeId?: boolean
   date?: boolean
-  timeIn?: boolean
-  timeOut?: boolean
+  checkInTime?: boolean
+  checkOutTime?: boolean
   status?: boolean
+  modifiedAt?: boolean
+  modifiedBy?: boolean
   reason?: boolean
   createdAt?: boolean
-  updatedAt?: boolean
+  deletedAt?: boolean
 }
 
-export type AttendanceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "employeeId" | "date" | "timeIn" | "timeOut" | "status" | "reason" | "createdAt" | "updatedAt", ExtArgs["result"]["attendance"]>
+export type AttendanceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "employeeId" | "date" | "checkInTime" | "checkOutTime" | "status" | "modifiedAt" | "modifiedBy" | "reason" | "createdAt" | "deletedAt", ExtArgs["result"]["attendance"]>
 export type AttendanceInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   employee?: boolean | Prisma.EmployeeDefaultArgs<ExtArgs>
 }
@@ -641,12 +703,14 @@ export type $AttendancePayload<ExtArgs extends runtime.Types.Extensions.Internal
     id: string
     employeeId: string
     date: Date
-    timeIn: Date | null
-    timeOut: Date | null
-    status: $Enums.AttendanceStatus
+    checkInTime: Date
+    checkOutTime: Date | null
+    status: string
+    modifiedAt: Date
+    modifiedBy: string | null
     reason: string | null
     createdAt: Date
-    updatedAt: Date
+    deletedAt: Date | null
   }, ExtArgs["result"]["attendance"]>
   composites: {}
 }
@@ -1074,12 +1138,14 @@ export interface AttendanceFieldRefs {
   readonly id: Prisma.FieldRef<"Attendance", 'String'>
   readonly employeeId: Prisma.FieldRef<"Attendance", 'String'>
   readonly date: Prisma.FieldRef<"Attendance", 'DateTime'>
-  readonly timeIn: Prisma.FieldRef<"Attendance", 'DateTime'>
-  readonly timeOut: Prisma.FieldRef<"Attendance", 'DateTime'>
-  readonly status: Prisma.FieldRef<"Attendance", 'AttendanceStatus'>
+  readonly checkInTime: Prisma.FieldRef<"Attendance", 'DateTime'>
+  readonly checkOutTime: Prisma.FieldRef<"Attendance", 'DateTime'>
+  readonly status: Prisma.FieldRef<"Attendance", 'String'>
+  readonly modifiedAt: Prisma.FieldRef<"Attendance", 'DateTime'>
+  readonly modifiedBy: Prisma.FieldRef<"Attendance", 'String'>
   readonly reason: Prisma.FieldRef<"Attendance", 'String'>
   readonly createdAt: Prisma.FieldRef<"Attendance", 'DateTime'>
-  readonly updatedAt: Prisma.FieldRef<"Attendance", 'DateTime'>
+  readonly deletedAt: Prisma.FieldRef<"Attendance", 'DateTime'>
 }
     
 
