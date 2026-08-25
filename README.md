@@ -63,7 +63,7 @@ Transaction-wrapped leave approval — approving a leave, updating attendance, a
 
 1. Clone the repository
 ```bash
-   git clone https://github.com/AyushJare/HR_Management_System_Web.git
+   git clone https://github.com/AyushJare/HR_System_Web.git
    cd HR_Management_System_Web
 ```
 
@@ -147,11 +147,17 @@ prisma/
 └── seed.ts                  Initial admin seed script
 ```
 
+## Auth & Security ✅
+
+- **JWT-based authentication** — access tokens (1h) + refresh tokens (7d) with revocation
+- **Session management** — secure DB-backed sessions, invalidate on logout
+- **Works for both web and mobile** — httpOnly cookies for web, JWT headers for mobile
+
 ## Roadmap / Future Scope
 
 - **Mobile app** — employee self-service check-in/check-out, reusing the existing API
 - **GPS-based attendance verification** — geofenced check-in with fraud detection (mock-location, impossible-travel checks), integrating with the existing Approval workflow for flagged check-ins
-- **Security hardening** — rate limiting on authentication, refresh tokens, and a password reset flow before any production deployment
+- **Security hardening** — rate limiting on authentication and a password reset flow before any production deployment
 - **Employee self-service portal** — leave requests and attendance corrections submitted directly by employees, not just admin-managed
 
 ## Known Limitations
