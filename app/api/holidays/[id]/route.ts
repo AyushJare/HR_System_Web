@@ -43,37 +43,61 @@ export async function PUT(
     );
   }
 
-  const updatedHoliday = await prisma.holiday.update({
-    where: { id },
-    data: {
-      name,
-      description:
-        typeof description === "string" &&
-          description.trim() !== ""
-          ? description.trim()
-          : null,
-      date: new Date(date),
-    },
-  });
-
-  await prisma.auditLog.create({
-    data: {
-      employeeId: auth.session.sub,
-      action: "HOLIDAY_UPDATED",
-      entity: "Holiday",
-      entityId: id,
-      metadata: {
-        oldName: holiday.name,
-        oldDate: holiday.date,
-        oldDescription: holiday.description,
-        newName: updatedHoliday.name,
-        newDate: updatedHoliday.date,
-        newDescription: updatedHoliday.description,
+  try {
+    const updatedHoliday = await prisma.holiday.update({
+      where: { id },
+      data: {
+        name,
+        description:
+          typeof description === "string" &&
+            description.trim() !== ""
+            ? description.trim()
+            : null,
+        date: new Date(date),
       },
-    },
-  });
+    });
 
-  return NextResponse.json(updatedHoliday);
+    await prisma.auditLog.create({
+      data: {
+        employeeId: auth.session.sub,
+        action: "HOLIDAY_UPDATED",
+        entity: "Holiday",
+        entityId: id,
+        metadata: {
+          oldName: holiday.name,
+          oldDate: holiday.date,
+          oldDescription: holiday.description,
+          newName: updatedHoliday.name,
+          newDate: updatedHoliday.date,
+          newDescription: updatedHoliday.description,
+        },
+      },
+    });
+
+    return NextResponse.json(updatedHoliday);
+  } catch (error) {
+    // Duplicate holiday: same name + same date
+    if (
+      error &&
+      typeof error === "object" &&
+      "code" in error &&
+      error.code === "P2002"
+    ) {
+      return NextResponse.json(
+        {
+          error: `A holiday named "${name}" already exists on ${date}.`,
+        },
+        { status: 409 }
+      );
+    }
+
+    console.error("Holiday update error:", error);
+
+    return NextResponse.json(
+      { error: "Failed to update holiday" },
+      { status: 500 }
+    );
+  }
 }
 
 export async function DELETE(
