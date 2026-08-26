@@ -56,8 +56,8 @@ export default function WeeklyOffTab() {
               onClick={() => toggleDay(index)}
               className={
                 selectedDays.includes(index)
-                  ? "rounded-md border-2 border-blue-700 bg-blue-50 text-blue-700 text-sm font-medium py-3 text-center"
-                  : "rounded-md border-2 border-slate-200 bg-white text-slate-600 text-sm font-medium py-3 text-center hover:border-slate-300"
+                  ? "rounded-md border-2 border-slate-900 bg-slate-50 text-slate-950 text-sm font-semibold py-3 text-center transition-all duration-200"
+                  : "rounded-md border-2 border-slate-200 bg-white text-slate-600 text-sm font-medium py-3 text-center hover:border-slate-300 transition-all duration-200"
               }
             >
               {name}
@@ -67,7 +67,7 @@ export default function WeeklyOffTab() {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="bg-blue-700 hover:bg-blue-800 text-white text-sm font-medium px-5 py-2 rounded-md disabled:opacity-60"
+          className="bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2.5 px-6 rounded-lg transition-all duration-200 hover:shadow-md disabled:opacity-60"
         >
           {saving ? "Saving..." : "Save Weekly Off Days"}
         </button>

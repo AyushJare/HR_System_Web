@@ -76,7 +76,7 @@ export default function ApprovalsPage() {
     }
     setSubmitting(true);
     try {
-            if (formType === "LEAVE" && !formLeaveTypeId) {
+      if (formType === "LEAVE" && !formLeaveTypeId) {
         toast.error("Please select a leave type");
         setSubmitting(false);
         return;
@@ -96,7 +96,7 @@ export default function ApprovalsPage() {
         const err = await res.json();
         throw new Error(err.error || "Failed to create request");
       }
-            toast.success("Request logged");
+      toast.success("Request logged");
       setShowForm(false);
       setFormEmployeeId("");
       setFormDate("");
@@ -113,7 +113,7 @@ export default function ApprovalsPage() {
   };
 
   const handleDecision = async (id: string, decision: "APPROVED" | "REJECTED") => {
-  const res = await fetch(`/api/approvals/${id}`, {
+    const res = await fetch(`/api/approvals/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ decision }),
@@ -138,7 +138,7 @@ export default function ApprovalsPage() {
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="bg-blue-700 hover:bg-blue-800 text-white text-sm font-medium px-4 py-2 rounded-md"
+          className="bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2.5 px-6 rounded-lg transition-all duration-200 hover:shadow-md"
         >
           {showForm ? "Cancel" : "+ Log New Request"}
         </button>
@@ -152,7 +152,7 @@ export default function ApprovalsPage() {
               <select
                 value={formType}
                 onChange={(e) => setFormType(e.target.value as "LEAVE" | "ATTENDANCE_CORRECTION")}
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
               >
                 <option value="LEAVE">Leave Request</option>
                 <option value="ATTENDANCE_CORRECTION">Attendance Correction</option>
@@ -163,7 +163,7 @@ export default function ApprovalsPage() {
               <select
                 value={formEmployeeId}
                 onChange={(e) => setFormEmployeeId(e.target.value)}
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
               >
                 <option value="">Select employee</option>
                 {employees.map((e) => (
@@ -179,7 +179,7 @@ export default function ApprovalsPage() {
                 type="date"
                 value={formDate}
                 onChange={(e) => setFormDate(e.target.value)}
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
               />
             </div>
 
@@ -190,7 +190,7 @@ export default function ApprovalsPage() {
                   <select
                     value={formLeaveTypeId}
                     onChange={(e) => setFormLeaveTypeId(e.target.value)}
-                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
                   >
                     <option value="">Select leave type</option>
                     {leaveTypes.map((lt) => {
@@ -210,7 +210,7 @@ export default function ApprovalsPage() {
                     value={formReason}
                     onChange={(e) => setFormReason(e.target.value)}
                     placeholder="e.g. Family function"
-                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
                   />
                 </div>
               </>
@@ -223,7 +223,7 @@ export default function ApprovalsPage() {
                   <select
                     value={formStatus}
                     onChange={(e) => setFormStatus(e.target.value)}
-                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
                   >
                     <option value="PRESENT">Present</option>
                     <option value="ABSENT">Absent</option>
@@ -237,7 +237,7 @@ export default function ApprovalsPage() {
                     type="time"
                     value={formTimeIn}
                     onChange={(e) => setFormTimeIn(e.target.value)}
-                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
                   />
                 </div>
                 <div>
@@ -246,7 +246,7 @@ export default function ApprovalsPage() {
                     type="time"
                     value={formTimeOut}
                     onChange={(e) => setFormTimeOut(e.target.value)}
-                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
                   />
                 </div>
               </>
@@ -256,7 +256,7 @@ export default function ApprovalsPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="bg-blue-700 hover:bg-blue-800 text-white text-sm font-medium px-4 py-2 rounded-md disabled:opacity-60"
+            className="bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2.5 px-6 rounded-lg transition-all duration-200 hover:shadow-md disabled:opacity-60"
           >
             {submitting ? "Submitting..." : "Submit Request"}
           </button>
@@ -270,7 +270,7 @@ export default function ApprovalsPage() {
             onClick={() => setFilter(f)}
             className={
               filter === f
-                ? "px-3 py-1.5 rounded-md text-sm font-medium bg-blue-700 text-white"
+                ? "px-3 py-1.5 rounded-md text-sm font-semibold bg-slate-900 text-white"
                 : "px-3 py-1.5 rounded-md text-sm font-medium bg-white border border-slate-300 text-slate-600"
             }
           >
@@ -281,13 +281,13 @@ export default function ApprovalsPage() {
 
       <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 border-b border-slate-200">
+          <thead className="bg-slate-50 border-b-2 border-slate-200">
             <tr>
-              <th className="text-left px-4 py-3 font-medium text-slate-600">Employee</th>
-              <th className="text-left px-4 py-3 font-medium text-slate-600">Type</th>
-              <th className="text-left px-4 py-3 font-medium text-slate-600">Details</th>
-              <th className="text-left px-4 py-3 font-medium text-slate-600">Status</th>
-              <th className="text-left px-4 py-3 font-medium text-slate-600 w-40">Action</th>
+              <th className="text-left px-4 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide">Employee</th>
+              <th className="text-left px-4 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide">Type</th>
+              <th className="text-left px-4 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide">Details</th>
+              <th className="text-left px-4 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide">Status</th>
+              <th className="text-left px-4 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide w-40">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -298,7 +298,7 @@ export default function ApprovalsPage() {
               <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-400">No requests found.</td></tr>
             )}
             {filtered.map((a) => (
-              <tr key={a.id} className="border-b border-slate-100 last:border-0">
+              <tr key={a.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors duration-200">
                 <td className="px-4 py-3 text-slate-700">
                   {a.actor.fullName} <span className="text-slate-400 text-xs">#{a.actor.employeeCode}</span>
                 </td>
@@ -319,10 +319,10 @@ export default function ApprovalsPage() {
                   <span
                     className={
                       a.status === "PENDING"
-                        ? "inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200"
+                        ? "inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200"
                         : a.status === "APPROVED"
-                        ? "inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200"
-                        : "inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200"
+                          ? "inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200"
+                          : "inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-red-50 text-red-700 border border-red-200"
                     }
                   >
                     {a.status}

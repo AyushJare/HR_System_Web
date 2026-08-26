@@ -144,7 +144,7 @@ export default function DesignationsTab() {
             setNewName(e.target.value)
           }
           placeholder="New designation name"
-          className="flex-1 max-w-sm rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="flex-1 max-w-sm rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
         />
 
         <input
@@ -155,10 +155,10 @@ export default function DesignationsTab() {
             )
           }
           placeholder="Description"
-          className="flex-1 max-w-sm rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="flex-1 max-w-sm rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
         />
 
-        <button className="bg-blue-700 hover:bg-blue-800 text-white text-sm font-medium px-4 py-2 rounded-md">
+        <button className="bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2.5 px-6 rounded-lg transition-all duration-200 hover:shadow-md">
           Add
         </button>
       </form>
@@ -166,17 +166,17 @@ export default function DesignationsTab() {
       {/* Designation Table */}
       <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 border-b border-slate-200">
+          <thead className="bg-slate-50 border-b-2 border-slate-200">
             <tr>
-              <th className="text-left px-4 py-3 font-medium text-slate-600 w-28">
+              <th className="text-left px-4 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide w-28">
                 Action
               </th>
 
-              <th className="text-left px-4 py-3 font-medium text-slate-600">
+              <th className="text-left px-4 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide">
                 Designation Name
               </th>
 
-              <th className="text-left px-4 py-3 font-medium text-slate-600">
+              <th className="text-left px-4 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide">
                 Description
               </th>
             </tr>
@@ -209,7 +209,7 @@ export default function DesignationsTab() {
             {items.map((item) => (
               <tr
                 key={item.id}
-                className="border-b border-slate-100 last:border-0"
+                className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors duration-200"
               >
                 <td className="px-4 py-2.5">
                   {editingId === item.id ? (
@@ -244,7 +244,7 @@ export default function DesignationsTab() {
                           item.description || ""
                         );
                       }}
-                      className="text-blue-600 text-xs font-medium mr-3"
+                      className="text-slate-700 hover:text-slate-900 text-xs font-medium mr-3"
                     >
                       Edit
                     </button>

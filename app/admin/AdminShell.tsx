@@ -29,39 +29,41 @@ export default function AdminShell({ user, children }: { user: User; children: R
 
   return (
     <div className="min-h-screen flex bg-slate-50">
-      <aside className="w-64 bg-white border-r border-slate-200 flex flex-col">
-        <div className="h-16 flex items-center px-6 border-b border-slate-200">
-          <span className="font-semibold text-slate-800">HR Management</span>
+      <aside className="w-64 bg-white border-r-2 border-slate-900 flex flex-col shadow-sm">
+        <div className="h-16 flex items-center px-6 border-b border-slate-100">
+          <span className="font-bold text-lg text-slate-950 tracking-tight">HR Management</span>
         </div>
-        <nav className="flex-1 py-4">
+        <nav className="flex-1 py-2">
           {navItems.map((item) => {
             const active = pathname.startsWith(item.href);
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={active
-                  ? "block px-6 py-2.5 text-sm font-medium transition bg-blue-50 text-blue-700 border-r-2 border-blue-700"
-                  : "block px-6 py-2.5 text-sm font-medium transition text-slate-600 hover:bg-slate-50"}
+                className={
+                  active
+                    ? "block px-6 py-3 text-sm font-semibold transition-all duration-200 bg-slate-50 text-slate-950 border-l-4 border-slate-900 ml-0"
+                    : "block px-6 py-3 text-sm font-medium transition-all duration-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 border-l-4 border-transparent"
+                }
               >
                 {item.label}
               </Link>
             );
           })}
         </nav>
-        <div className="p-4 border-t border-slate-200">
-          <p className="text-sm font-medium text-slate-800">{user.fullName}</p>
-          <p className="text-xs text-slate-500 mb-3">{user.role}</p>
+        <div className="p-4 border-t border-slate-100">
+          <p className="text-sm font-semibold text-slate-950">{user.fullName}</p>
+          <p className="text-xs text-slate-500 mb-3 mt-0.5">{user.role}</p>
           <button
             onClick={handleLogout}
             disabled={loggingOut}
-            className="text-xs font-medium text-red-600 hover:text-red-700"
+            className="text-xs font-medium text-red-600 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition-all duration-200"
           >
             {loggingOut ? "Signing out..." : "Sign out"}
           </button>
         </div>
       </aside>
-      <main className="flex-1 overflow-auto">{children}</main>
+      <main className="flex-1 overflow-auto bg-white">{children}</main>
     </div>
   );
 }

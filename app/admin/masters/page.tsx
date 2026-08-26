@@ -91,11 +91,11 @@ export default function MastersPage() {
     <div className="p-8">
       <div className="mb-6 flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">
+          <h1 className="text-3xl font-bold text-slate-950 tracking-tight">
             Masters
           </h1>
 
-          <p className="text-slate-600 mt-1">
+          <p className="text-slate-500 mt-2 font-normal">
             Manage the reference data used throughout the system.
           </p>
         </div>
@@ -108,7 +108,7 @@ export default function MastersPage() {
             setUploadError(null);
             setUploadResult(null);
           }}
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          className="bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2.5 px-6 rounded-lg transition-all duration-200 hover:shadow-md"
         >
           Bulk Upload
         </button>
@@ -121,8 +121,8 @@ export default function MastersPage() {
             onClick={() => setActive(tab.key)}
             className={
               active === tab.key
-                ? "pb-3 text-sm font-medium text-blue-700 border-b-2 border-blue-700"
-                : "pb-3 text-sm font-medium text-slate-500 hover:text-slate-700"
+                ? "pb-3 text-sm font-semibold text-slate-950 border-b-2 border-slate-900 transition-colors duration-200"
+                : "pb-3 text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors duration-200"
             }
           >
             {tab.label}
@@ -139,15 +139,15 @@ export default function MastersPage() {
 
       {showBulkUpload && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-xl rounded-lg bg-white p-6 shadow-xl">
+          <div className="w-full max-w-xl rounded-lg bg-white p-6 border border-slate-200 shadow-sm">
 
             <div className="flex items-start justify-between">
               <div>
-                <h2 className="text-xl font-semibold text-slate-900">
+                <h2 className="text-lg font-semibold text-slate-950 tracking-tight">
                   Bulk Upload Master Data
                 </h2>
 
-                <p className="mt-1 text-sm text-slate-600">
+                <p className="mt-1 text-sm text-slate-500 font-normal">
                   Upload Departments, Designations, Employee Types,
                   Holidays, Leave Types and Weekly Off data using one Excel file.
                 </p>
@@ -157,25 +157,25 @@ export default function MastersPage() {
                 type="button"
                 onClick={() => setShowBulkUpload(false)}
                 disabled={uploading}
-                className="text-xl text-slate-400 hover:text-slate-700"
+                className="text-xl text-slate-400 hover:text-slate-600 transition-colors duration-200"
               >
                 ×
               </button>
             </div>
 
-            <div className="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
-              <p className="text-sm font-medium text-slate-800">
+            <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-4">
+              <p className="text-sm font-medium text-slate-900">
                 Need the template?
               </p>
 
-              <p className="mt-1 text-sm text-slate-600">
+              <p className="mt-1 text-sm text-slate-500 font-normal">
                 Download the Excel template, fill the required sheets,
                 and upload it here.
               </p>
 
-              <a
-                href="/api/templates/masters"
-                className="mt-3 inline-block rounded-md border border-blue-600 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100"
+
+              <a href="/api/templates/masters"
+                className="mt-3 inline-block border border-slate-300 text-slate-900 font-semibold py-2.5 px-6 rounded-lg hover:bg-slate-50 hover:border-slate-400 transition-all duration-200"
               >
                 Download Excel Template
               </a>
@@ -208,7 +208,7 @@ export default function MastersPage() {
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="flex w-full flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 px-6 py-10 text-center hover:border-blue-500 hover:bg-slate-50"
+                    className="flex w-full flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 px-6 py-10 text-center hover:border-slate-400 hover:bg-slate-50 transition-all duration-200"
                   >
                     <span className="text-sm font-medium text-slate-700">
                       {selectedFile
@@ -233,7 +233,7 @@ export default function MastersPage() {
                     type="button"
                     onClick={() => setShowBulkUpload(false)}
                     disabled={uploading}
-                    className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                    className="border border-slate-300 text-slate-900 font-semibold py-2.5 px-6 rounded-lg hover:bg-slate-50 hover:border-slate-400 transition-all duration-200"
                   >
                     Cancel
                   </button>
@@ -242,7 +242,7 @@ export default function MastersPage() {
                     type="button"
                     onClick={handleBulkUpload}
                     disabled={!selectedFile || uploading}
-                    className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2.5 px-6 rounded-lg transition-all duration-200 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {uploading ? "Uploading..." : "Upload Data"}
                   </button>
@@ -252,19 +252,19 @@ export default function MastersPage() {
 
             {uploadResult && (
               <div className="mt-6">
-                <div className="rounded-md border border-green-200 bg-green-50 p-4">
-                  <h3 className="font-medium text-green-800">
+                <div className="rounded-md border border-emerald-200 bg-emerald-50 p-4">
+                  <h3 className="font-medium text-emerald-800">
                     Master Data Uploaded Successfully
                   </h3>
 
-                  <p className="mt-1 text-sm text-green-700">
+                  <p className="mt-1 text-sm text-emerald-700">
                     Created: {uploadResult.summary.created} ·
                     Updated: {uploadResult.summary.updated} ·
                     Skipped: {uploadResult.summary.skipped}
                   </p>
                 </div>
 
-                <div className="mt-4 space-y-2 text-sm">
+                <div className="mt-4 space-y-2 text-sm text-slate-600">
                   <div>
                     Departments — Created: {uploadResult.details.departments.created},
                     Updated: {uploadResult.details.departments.updated},
@@ -309,7 +309,7 @@ export default function MastersPage() {
                       setShowBulkUpload(false);
                       window.location.reload();
                     }}
-                    className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                    className="bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2.5 px-6 rounded-lg transition-all duration-200 hover:shadow-md"
                   >
                     Done
                   </button>
@@ -318,7 +318,8 @@ export default function MastersPage() {
             )}
           </div>
         </div>
-      )}
-    </div>
+      )
+      }
+    </div >
   );
 }

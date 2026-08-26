@@ -488,7 +488,7 @@ export default function HolidaysTab() {
           <button
             type="button"
             onClick={handleDownloadTemplate}
-            className="rounded-md border border-slate-300 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+            className="rounded-lg border border-slate-300 bg-slate-50 px-6 py-2.5 text-sm font-semibold text-slate-900 hover:bg-slate-100 hover:border-slate-400 transition-all duration-200"
           >
             📥 Download Holiday Template
           </button>
@@ -511,7 +511,7 @@ export default function HolidaysTab() {
           <button
             type="submit"
             disabled={!file || uploading}
-            className="rounded-md bg-blue-700 px-4 py-2 text-sm font-medium text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
+            className="bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2.5 px-6 rounded-lg transition-all duration-200 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
           >
             {uploading
               ? "Uploading..."
@@ -526,7 +526,7 @@ export default function HolidaysTab() {
             </h3>
 
             <div className="mt-2 flex gap-6 text-sm">
-              <span className="text-green-700">
+              <span className="text-emerald-700">
                 ✓ Created: {uploadResult.success ?? 0}
               </span>
 
@@ -594,7 +594,7 @@ export default function HolidaysTab() {
             setNewName(e.target.value)
           }
           placeholder="Holiday name"
-          className="max-w-sm flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="max-w-sm flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
         />
 
         <input
@@ -603,7 +603,7 @@ export default function HolidaysTab() {
           onChange={(e) =>
             setNewDate(e.target.value)
           }
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
         />
 
         <input
@@ -612,12 +612,12 @@ export default function HolidaysTab() {
             setNewDescription(e.target.value)
           }
           placeholder="Description"
-          className="max-w-sm flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="max-w-sm flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
         />
 
         <button
           type="submit"
-          className="rounded-md bg-blue-700 px-4 py-2 text-sm font-medium text-white hover:bg-blue-800"
+          className="bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2.5 px-6 rounded-lg transition-all duration-200 hover:shadow-md"
         >
           Add
         </button>
@@ -628,7 +628,7 @@ export default function HolidaysTab() {
       ====================================================== */}
 
       {editingGroup && (
-        <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
+        <div className="mb-4 rounded-lg border border-slate-300 bg-slate-50 p-4">
           <div className="mb-3">
             <h3 className="text-sm font-semibold text-slate-900">
               Edit Holiday Group
@@ -651,7 +651,7 @@ export default function HolidaysTab() {
                 onChange={(e) =>
                   setGroupName(e.target.value)
                 }
-                className="w-64 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-64 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
               />
             </div>
 
@@ -666,7 +666,7 @@ export default function HolidaysTab() {
                   setGroupDescription(e.target.value)
                 }
                 placeholder="Description"
-                className="w-64 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-64 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
               />
             </div>
 
@@ -681,7 +681,7 @@ export default function HolidaysTab() {
                 onChange={(e) =>
                   setGroupStartDate(e.target.value)
                 }
-                className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
               />
             </div>
 
@@ -696,14 +696,14 @@ export default function HolidaysTab() {
                 onChange={(e) =>
                   setGroupEndDate(e.target.value)
                 }
-                className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
               />
             </div>
 
             <button
               type="button"
               onClick={handleGroupEdit}
-              className="rounded-md bg-blue-700 px-4 py-2 text-sm font-medium text-white hover:bg-blue-800"
+              className="bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2.5 px-6 rounded-lg transition-all duration-200 hover:shadow-md"
             >
               Save Group
             </button>
@@ -717,7 +717,7 @@ export default function HolidaysTab() {
                 setGroupStartDate("");
                 setGroupEndDate("");
               }}
-              className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              className="rounded-lg border border-slate-300 bg-white px-6 py-2.5 text-sm font-semibold text-slate-900 hover:bg-slate-50 hover:border-slate-400 transition-all duration-200"
             >
               Cancel
             </button>
@@ -731,21 +731,21 @@ export default function HolidaysTab() {
 
       <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
         <table className="w-full text-sm">
-          <thead className="border-b border-slate-200 bg-slate-50">
+          <thead className="border-b-2 border-slate-200 bg-slate-50">
             <tr>
-              <th className="w-40 px-4 py-3 text-left font-medium text-slate-600">
+              <th className="w-40 px-4 py-4 text-left text-xs font-bold text-slate-950 uppercase tracking-wide">
                 Action
               </th>
 
-              <th className="px-4 py-3 text-left font-medium text-slate-600">
+              <th className="px-4 py-4 text-left text-xs font-bold text-slate-950 uppercase tracking-wide">
                 Holiday Name
               </th>
 
-              <th className="px-4 py-3 text-left font-medium text-slate-600">
+              <th className="px-4 py-4 text-left text-xs font-bold text-slate-950 uppercase tracking-wide">
                 Date
               </th>
 
-              <th className="px-4 py-3 text-left font-medium text-slate-600">
+              <th className="px-4 py-4 text-left text-xs font-bold text-slate-950 uppercase tracking-wide">
                 Description
               </th>
             </tr>
@@ -777,7 +777,7 @@ export default function HolidaysTab() {
             {items.map((item) => (
               <tr
                 key={item.id}
-                className="border-b border-slate-100 last:border-0"
+                className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors duration-200"
               >
                 <td className="px-4 py-2.5">
                   {editingId === item.id ? (
@@ -820,7 +820,7 @@ export default function HolidaysTab() {
                           );
                           setEditingGroup(null);
                         }}
-                        className="text-xs font-medium text-blue-600"
+                        className="text-xs font-medium text-slate-700 hover:text-slate-900"
                       >
                         Edit
                       </button>
@@ -858,7 +858,7 @@ export default function HolidaysTab() {
                       onChange={(e) =>
                         setEditingName(e.target.value)
                       }
-                      className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
                     />
                   ) : (
                     item.name
@@ -873,7 +873,7 @@ export default function HolidaysTab() {
                       onChange={(e) =>
                         setEditingDate(e.target.value)
                       }
-                      className="rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
                     />
                   ) : (
                     new Date(item.date).toLocaleDateString(
@@ -897,7 +897,7 @@ export default function HolidaysTab() {
                         )
                       }
                       placeholder="Description"
-                      className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
                     />
                   ) : (
                     item.description || "-"

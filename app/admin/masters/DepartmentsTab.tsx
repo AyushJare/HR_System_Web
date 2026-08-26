@@ -78,19 +78,19 @@ export default function DepartmentsTab() {
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           placeholder="New department name"
-          className="flex-1 max-w-sm rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="flex-1 max-w-sm rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
         />
-        <button className="bg-blue-700 hover:bg-blue-800 text-white text-sm font-medium px-4 py-2 rounded-md">
+        <button className="bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2.5 px-6 rounded-lg transition-all duration-200 hover:shadow-md">
           Add
         </button>
       </form>
 
       <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 border-b border-slate-200">
+          <thead className="bg-slate-50 border-b-2 border-slate-200">
             <tr>
-              <th className="text-left px-4 py-3 font-medium text-slate-600 w-24">Action</th>
-              <th className="text-left px-4 py-3 font-medium text-slate-600">Department Name</th>
+              <th className="text-left px-4 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide w-24">Action</th>
+              <th className="text-left px-4 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide">Department Name</th>
             </tr>
           </thead>
           <tbody>
@@ -101,12 +101,12 @@ export default function DepartmentsTab() {
               <tr><td colSpan={2} className="px-4 py-6 text-center text-slate-400">No departments yet.</td></tr>
             )}
             {items.map((item) => (
-              <tr key={item.id} className="border-b border-slate-100 last:border-0">
+              <tr key={item.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors duration-200">
                 <td className="px-4 py-2.5">
                   {editingId === item.id ? (
                     <button onClick={() => handleUpdate(item.id)} className="text-green-600 text-xs font-medium mr-3">Save</button>
                   ) : (
-                    <button onClick={() => { setEditingId(item.id); setEditName(item.name); }} className="text-blue-600 text-xs font-medium mr-3">Edit</button>
+                    <button onClick={() => { setEditingId(item.id); setEditName(item.name); }} className="text-slate-700 hover:text-slate-900 text-xs font-medium mr-3">Edit</button>
                   )}
                   <button onClick={() => handleDelete(item.id, item.name)} className="text-red-600 text-xs font-medium">Delete</button>
                 </td>

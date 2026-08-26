@@ -73,24 +73,23 @@ export default function EmployeesPage() {
   return (
     <div className="p-8">
       {/* Header */}
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex justify-between items-start mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Employees</h1>
-          <p className="text-slate-600 mt-1">
+          <h1 className="text-4xl font-bold text-slate-950 tracking-tight">Employees</h1>
+          <p className="text-slate-500 mt-2 font-normal text-sm">
             Manage all employees in the system
           </p>
         </div>
-        <div className="flex gap-4">
-
+        <div className="flex gap-3">
           <button
             onClick={() => router.push("/admin/employees/bulk-upload")}
-            className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded-lg transition flex items-center gap-2"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 px-6 rounded-lg transition-all duration-200 hover:shadow-md flex items-center gap-2"
           >
             ⬆️ Bulk Upload
           </button>
           <button
             onClick={() => router.push("/admin/employees/add")}
-            className="bg-blue-700 hover:bg-blue-800 text-white font-medium py-2 px-6 rounded-lg transition"
+            className="bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2.5 px-6 rounded-lg transition-all duration-200 hover:shadow-md"
           >
             + Add Employee
           </button>
@@ -105,9 +104,9 @@ export default function EmployeesPage() {
           value={searchTerm}
           onChange={(e) => {
             setSearchTerm(e.target.value);
-            setPage(1); // Reset to page 1 on search
+            setPage(1);
           }}
-          className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200 text-sm"
         />
       </div>
 
@@ -121,33 +120,33 @@ export default function EmployeesPage() {
           No employees found.{" "}
           <button
             onClick={() => router.push("/admin/employees/add")}
-            className="text-blue-600 hover:underline"
+            className="text-slate-900 hover:underline font-semibold"
           >
             Create one now.
           </button>
         </div>
       ) : (
         <>
-          <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+          <div className="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200">
             <table className="w-full">
-              <thead className="bg-slate-50 border-b border-slate-200">
+              <thead className="bg-slate-50 border-b-2 border-slate-200">
                 <tr>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-700">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-950 uppercase tracking-wide">
                     Name
                   </th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-700">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-950 uppercase tracking-wide">
                     Email
                   </th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-700">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-950 uppercase tracking-wide">
                     Designation
                   </th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-700">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-950 uppercase tracking-wide">
                     Department
                   </th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-700">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-950 uppercase tracking-wide">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-700">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-950 uppercase tracking-wide">
                     Actions
                   </th>
                 </tr>
@@ -156,12 +155,12 @@ export default function EmployeesPage() {
                 {paginatedEmployees.map((emp) => (
                   <tr
                     key={emp.id}
-                    className="border-b border-slate-200 hover:bg-slate-50"
+                    className="border-b border-slate-100 hover:bg-slate-50 transition-colors duration-200"
                   >
-                    <td className="px-6 py-4 text-sm text-slate-900 font-medium">
+                    <td className="px-6 py-4 text-sm text-slate-900 font-semibold">
                       <button
                         onClick={() => router.push(`/admin/employees/${emp.id}`)}
-                        className="text-blue-700 hover:underline text-left"
+                        className="text-slate-900 hover:text-slate-700 hover:underline text-left font-semibold"
                       >
                         {emp.fullName}
                       </button>
@@ -177,24 +176,25 @@ export default function EmployeesPage() {
                     </td>
                     <td className="px-6 py-4 text-sm">
                       <span
-                        className={`px-3 py-1 rounded-full text-xs font-medium ${emp.isActive
-                          ? "bg-green-100 text-green-800"
+                        className={`px-3 py-1.5 rounded-full text-xs font-semibold inline-flex items-center gap-1 ${emp.isActive
+                          ? "bg-emerald-100 text-emerald-800"
                           : "bg-red-100 text-red-800"
                           }`}
                       >
+                        <span className={`w-1.5 h-1.5 rounded-full ${emp.isActive ? "bg-emerald-600" : "bg-red-600"}`}></span>
                         {emp.isActive ? "Active" : "Inactive"}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm">
+                    <td className="px-6 py-4 text-sm space-x-3">
                       <button
                         onClick={() => router.push(`/admin/employees/${emp.id}/edit`)}
-                        className="text-blue-600 hover:text-blue-800 font-medium mr-4"
+                        className="text-slate-900 hover:text-slate-700 font-semibold hover:bg-slate-100 px-2 py-1 rounded transition-all duration-200"
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => handleDelete(emp.id, emp.fullName)}
-                        className="text-red-600 hover:text-red-800 font-medium"
+                        className="text-red-600 hover:text-red-700 font-semibold hover:bg-red-50 px-2 py-1 rounded transition-all duration-200"
                       >
                         Delete
                       </button>
@@ -218,17 +218,17 @@ export default function EmployeesPage() {
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="px-4 py-2 border border-slate-300 rounded-lg disabled:opacity-50 hover:bg-slate-50"
+                  className="px-4 py-2 border border-slate-300 rounded-lg disabled:opacity-50 hover:bg-slate-50 hover:border-slate-400 transition-all duration-200 font-medium text-sm"
                 >
                   Previous
                 </button>
-                <span className="px-4 py-2 text-slate-700">
+                <span className="px-4 py-2 text-slate-700 font-medium">
                   Page {page} of {totalPages}
                 </span>
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages}
-                  className="px-4 py-2 border border-slate-300 rounded-lg disabled:opacity-50 hover:bg-slate-50"
+                  className="px-4 py-2 border border-slate-300 rounded-lg disabled:opacity-50 hover:bg-slate-50 hover:border-slate-400 transition-all duration-200 font-medium text-sm"
                 >
                   Next
                 </button>
