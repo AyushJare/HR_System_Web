@@ -27,22 +27,28 @@ export type AggregateHoliday = {
 export type HolidayMinAggregateOutputType = {
   id: string | null
   name: string | null
+  description: string | null
   date: Date | null
   createdAt: Date | null
+  updatedAt: Date | null
 }
 
 export type HolidayMaxAggregateOutputType = {
   id: string | null
   name: string | null
+  description: string | null
   date: Date | null
   createdAt: Date | null
+  updatedAt: Date | null
 }
 
 export type HolidayCountAggregateOutputType = {
   id: number
   name: number
+  description: number
   date: number
   createdAt: number
+  updatedAt: number
   _all: number
 }
 
@@ -50,22 +56,28 @@ export type HolidayCountAggregateOutputType = {
 export type HolidayMinAggregateInputType = {
   id?: true
   name?: true
+  description?: true
   date?: true
   createdAt?: true
+  updatedAt?: true
 }
 
 export type HolidayMaxAggregateInputType = {
   id?: true
   name?: true
+  description?: true
   date?: true
   createdAt?: true
+  updatedAt?: true
 }
 
 export type HolidayCountAggregateInputType = {
   id?: true
   name?: true
+  description?: true
   date?: true
   createdAt?: true
+  updatedAt?: true
   _all?: true
 }
 
@@ -144,8 +156,10 @@ export type HolidayGroupByArgs<ExtArgs extends runtime.Types.Extensions.Internal
 export type HolidayGroupByOutputType = {
   id: string
   name: string
+  description: string | null
   date: Date
   createdAt: Date
+  updatedAt: Date
   _count: HolidayCountAggregateOutputType | null
   _min: HolidayMinAggregateOutputType | null
   _max: HolidayMaxAggregateOutputType | null
@@ -172,32 +186,41 @@ export type HolidayWhereInput = {
   NOT?: Prisma.HolidayWhereInput | Prisma.HolidayWhereInput[]
   id?: Prisma.StringFilter<"Holiday"> | string
   name?: Prisma.StringFilter<"Holiday"> | string
+  description?: Prisma.StringNullableFilter<"Holiday"> | string | null
   date?: Prisma.DateTimeFilter<"Holiday"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"Holiday"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"Holiday"> | Date | string
 }
 
 export type HolidayOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  description?: Prisma.SortOrderInput | Prisma.SortOrder
   date?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
 }
 
 export type HolidayWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  name_date?: Prisma.HolidayNameDateCompoundUniqueInput
   AND?: Prisma.HolidayWhereInput | Prisma.HolidayWhereInput[]
   OR?: Prisma.HolidayWhereInput[]
   NOT?: Prisma.HolidayWhereInput | Prisma.HolidayWhereInput[]
   name?: Prisma.StringFilter<"Holiday"> | string
+  description?: Prisma.StringNullableFilter<"Holiday"> | string | null
   date?: Prisma.DateTimeFilter<"Holiday"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"Holiday"> | Date | string
-}, "id">
+  updatedAt?: Prisma.DateTimeFilter<"Holiday"> | Date | string
+}, "id" | "name_date">
 
 export type HolidayOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  description?: Prisma.SortOrderInput | Prisma.SortOrder
   date?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
   _count?: Prisma.HolidayCountOrderByAggregateInput
   _max?: Prisma.HolidayMaxOrderByAggregateInput
   _min?: Prisma.HolidayMinOrderByAggregateInput
@@ -209,78 +232,105 @@ export type HolidayScalarWhereWithAggregatesInput = {
   NOT?: Prisma.HolidayScalarWhereWithAggregatesInput | Prisma.HolidayScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"Holiday"> | string
   name?: Prisma.StringWithAggregatesFilter<"Holiday"> | string
+  description?: Prisma.StringNullableWithAggregatesFilter<"Holiday"> | string | null
   date?: Prisma.DateTimeWithAggregatesFilter<"Holiday"> | Date | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Holiday"> | Date | string
+  updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Holiday"> | Date | string
 }
 
 export type HolidayCreateInput = {
   id?: string
   name: string
+  description?: string | null
   date: Date | string
   createdAt?: Date | string
+  updatedAt?: Date | string
 }
 
 export type HolidayUncheckedCreateInput = {
   id?: string
   name: string
+  description?: string | null
   date: Date | string
   createdAt?: Date | string
+  updatedAt?: Date | string
 }
 
 export type HolidayUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type HolidayUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type HolidayCreateManyInput = {
   id?: string
   name: string
+  description?: string | null
   date: Date | string
   createdAt?: Date | string
+  updatedAt?: Date | string
 }
 
 export type HolidayUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type HolidayUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type HolidayNameDateCompoundUniqueInput = {
+  name: string
+  date: Date | string
 }
 
 export type HolidayCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  description?: Prisma.SortOrder
   date?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
 }
 
 export type HolidayMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  description?: Prisma.SortOrder
   date?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
 }
 
 export type HolidayMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  description?: Prisma.SortOrder
   date?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
 }
 
 
@@ -288,32 +338,40 @@ export type HolidayMinOrderByAggregateInput = {
 export type HolidaySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  description?: boolean
   date?: boolean
   createdAt?: boolean
+  updatedAt?: boolean
 }, ExtArgs["result"]["holiday"]>
 
 export type HolidaySelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  description?: boolean
   date?: boolean
   createdAt?: boolean
+  updatedAt?: boolean
 }, ExtArgs["result"]["holiday"]>
 
 export type HolidaySelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  description?: boolean
   date?: boolean
   createdAt?: boolean
+  updatedAt?: boolean
 }, ExtArgs["result"]["holiday"]>
 
 export type HolidaySelectScalar = {
   id?: boolean
   name?: boolean
+  description?: boolean
   date?: boolean
   createdAt?: boolean
+  updatedAt?: boolean
 }
 
-export type HolidayOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "date" | "createdAt", ExtArgs["result"]["holiday"]>
+export type HolidayOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "description" | "date" | "createdAt" | "updatedAt", ExtArgs["result"]["holiday"]>
 
 export type $HolidayPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Holiday"
@@ -321,8 +379,10 @@ export type $HolidayPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     name: string
+    description: string | null
     date: Date
     createdAt: Date
+    updatedAt: Date
   }, ExtArgs["result"]["holiday"]>
   composites: {}
 }
@@ -748,8 +808,10 @@ export interface Prisma__HolidayClient<T, Null = never, ExtArgs extends runtime.
 export interface HolidayFieldRefs {
   readonly id: Prisma.FieldRef<"Holiday", 'String'>
   readonly name: Prisma.FieldRef<"Holiday", 'String'>
+  readonly description: Prisma.FieldRef<"Holiday", 'String'>
   readonly date: Prisma.FieldRef<"Holiday", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"Holiday", 'DateTime'>
+  readonly updatedAt: Prisma.FieldRef<"Holiday", 'DateTime'>
 }
     
 

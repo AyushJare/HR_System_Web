@@ -27,6 +27,7 @@ export type AggregateDesignation = {
 export type DesignationMinAggregateOutputType = {
   id: string | null
   name: string | null
+  description: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -34,6 +35,7 @@ export type DesignationMinAggregateOutputType = {
 export type DesignationMaxAggregateOutputType = {
   id: string | null
   name: string | null
+  description: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -41,6 +43,7 @@ export type DesignationMaxAggregateOutputType = {
 export type DesignationCountAggregateOutputType = {
   id: number
   name: number
+  description: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -50,6 +53,7 @@ export type DesignationCountAggregateOutputType = {
 export type DesignationMinAggregateInputType = {
   id?: true
   name?: true
+  description?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -57,6 +61,7 @@ export type DesignationMinAggregateInputType = {
 export type DesignationMaxAggregateInputType = {
   id?: true
   name?: true
+  description?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -64,6 +69,7 @@ export type DesignationMaxAggregateInputType = {
 export type DesignationCountAggregateInputType = {
   id?: true
   name?: true
+  description?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -144,6 +150,7 @@ export type DesignationGroupByArgs<ExtArgs extends runtime.Types.Extensions.Inte
 export type DesignationGroupByOutputType = {
   id: string
   name: string
+  description: string | null
   createdAt: Date
   updatedAt: Date
   _count: DesignationCountAggregateOutputType | null
@@ -172,6 +179,7 @@ export type DesignationWhereInput = {
   NOT?: Prisma.DesignationWhereInput | Prisma.DesignationWhereInput[]
   id?: Prisma.StringFilter<"Designation"> | string
   name?: Prisma.StringFilter<"Designation"> | string
+  description?: Prisma.StringNullableFilter<"Designation"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Designation"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Designation"> | Date | string
   employees?: Prisma.EmployeeListRelationFilter
@@ -180,6 +188,7 @@ export type DesignationWhereInput = {
 export type DesignationOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  description?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   employees?: Prisma.EmployeeOrderByRelationAggregateInput
@@ -191,6 +200,7 @@ export type DesignationWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.DesignationWhereInput | Prisma.DesignationWhereInput[]
   OR?: Prisma.DesignationWhereInput[]
   NOT?: Prisma.DesignationWhereInput | Prisma.DesignationWhereInput[]
+  description?: Prisma.StringNullableFilter<"Designation"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Designation"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Designation"> | Date | string
   employees?: Prisma.EmployeeListRelationFilter
@@ -199,6 +209,7 @@ export type DesignationWhereUniqueInput = Prisma.AtLeast<{
 export type DesignationOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  description?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.DesignationCountOrderByAggregateInput
@@ -212,6 +223,7 @@ export type DesignationScalarWhereWithAggregatesInput = {
   NOT?: Prisma.DesignationScalarWhereWithAggregatesInput | Prisma.DesignationScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"Designation"> | string
   name?: Prisma.StringWithAggregatesFilter<"Designation"> | string
+  description?: Prisma.StringNullableWithAggregatesFilter<"Designation"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Designation"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Designation"> | Date | string
 }
@@ -219,6 +231,7 @@ export type DesignationScalarWhereWithAggregatesInput = {
 export type DesignationCreateInput = {
   id?: string
   name: string
+  description?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   employees?: Prisma.EmployeeCreateNestedManyWithoutDesignationInput
@@ -227,6 +240,7 @@ export type DesignationCreateInput = {
 export type DesignationUncheckedCreateInput = {
   id?: string
   name: string
+  description?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   employees?: Prisma.EmployeeUncheckedCreateNestedManyWithoutDesignationInput
@@ -235,6 +249,7 @@ export type DesignationUncheckedCreateInput = {
 export type DesignationUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   employees?: Prisma.EmployeeUpdateManyWithoutDesignationNestedInput
@@ -243,6 +258,7 @@ export type DesignationUpdateInput = {
 export type DesignationUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   employees?: Prisma.EmployeeUncheckedUpdateManyWithoutDesignationNestedInput
@@ -251,6 +267,7 @@ export type DesignationUncheckedUpdateInput = {
 export type DesignationCreateManyInput = {
   id?: string
   name: string
+  description?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -258,6 +275,7 @@ export type DesignationCreateManyInput = {
 export type DesignationUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -265,6 +283,7 @@ export type DesignationUpdateManyMutationInput = {
 export type DesignationUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -272,6 +291,7 @@ export type DesignationUncheckedUpdateManyInput = {
 export type DesignationCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  description?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -279,6 +299,7 @@ export type DesignationCountOrderByAggregateInput = {
 export type DesignationMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  description?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -286,6 +307,7 @@ export type DesignationMaxOrderByAggregateInput = {
 export type DesignationMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  description?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -293,6 +315,10 @@ export type DesignationMinOrderByAggregateInput = {
 export type DesignationNullableScalarRelationFilter = {
   is?: Prisma.DesignationWhereInput | null
   isNot?: Prisma.DesignationWhereInput | null
+}
+
+export type NullableStringFieldUpdateOperationsInput = {
+  set?: string | null
 }
 
 export type DesignationCreateNestedOneWithoutEmployeesInput = {
@@ -314,6 +340,7 @@ export type DesignationUpdateOneWithoutEmployeesNestedInput = {
 export type DesignationCreateWithoutEmployeesInput = {
   id?: string
   name: string
+  description?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -321,6 +348,7 @@ export type DesignationCreateWithoutEmployeesInput = {
 export type DesignationUncheckedCreateWithoutEmployeesInput = {
   id?: string
   name: string
+  description?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -344,6 +372,7 @@ export type DesignationUpdateToOneWithWhereWithoutEmployeesInput = {
 export type DesignationUpdateWithoutEmployeesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -351,6 +380,7 @@ export type DesignationUpdateWithoutEmployeesInput = {
 export type DesignationUncheckedUpdateWithoutEmployeesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -389,6 +419,7 @@ export type DesignationCountOutputTypeCountEmployeesArgs<ExtArgs extends runtime
 export type DesignationSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  description?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   employees?: boolean | Prisma.Designation$employeesArgs<ExtArgs>
@@ -398,6 +429,7 @@ export type DesignationSelect<ExtArgs extends runtime.Types.Extensions.InternalA
 export type DesignationSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  description?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["designation"]>
@@ -405,6 +437,7 @@ export type DesignationSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
 export type DesignationSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  description?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["designation"]>
@@ -412,11 +445,12 @@ export type DesignationSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
 export type DesignationSelectScalar = {
   id?: boolean
   name?: boolean
+  description?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type DesignationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "createdAt" | "updatedAt", ExtArgs["result"]["designation"]>
+export type DesignationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "description" | "createdAt" | "updatedAt", ExtArgs["result"]["designation"]>
 export type DesignationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   employees?: boolean | Prisma.Designation$employeesArgs<ExtArgs>
   _count?: boolean | Prisma.DesignationCountOutputTypeDefaultArgs<ExtArgs>
@@ -432,6 +466,7 @@ export type $DesignationPayload<ExtArgs extends runtime.Types.Extensions.Interna
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     name: string
+    description: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["designation"]>
@@ -860,6 +895,7 @@ export interface Prisma__DesignationClient<T, Null = never, ExtArgs extends runt
 export interface DesignationFieldRefs {
   readonly id: Prisma.FieldRef<"Designation", 'String'>
   readonly name: Prisma.FieldRef<"Designation", 'String'>
+  readonly description: Prisma.FieldRef<"Designation", 'String'>
   readonly createdAt: Prisma.FieldRef<"Designation", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Designation", 'DateTime'>
 }

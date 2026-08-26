@@ -1,11 +1,17 @@
 import { NextResponse } from "next/server";
+
 import { prisma } from "@/lib/prisma";
+
 import { requireAdmin } from "@/lib/auth";
 
 export async function GET() {
   const auth = await requireAdmin();
+
   if (!auth.ok) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+    return NextResponse.json(
+      { error: auth.error },
+      { status: auth.status }
+    );
   }
 
   const designations = await prisma.designation.findMany({
@@ -17,12 +23,17 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const auth = await requireAdmin();
+
   if (!auth.ok) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+    return NextResponse.json(
+      { error: auth.error },
+      { status: auth.status }
+    );
   }
 
   const body = await request.json();
-  const { name } = body;
+
+  const { name, description } = body;
 
   if (!name || name.trim() === "") {
     return NextResponse.json(
@@ -32,7 +43,12 @@ export async function POST(request: Request) {
   }
 
   const existing = await prisma.designation.findFirst({
-    where: { name: { equals: name, mode: "insensitive" } },
+    where: {
+      name: {
+        equals: name,
+        mode: "insensitive",
+      },
+    },
   });
 
   if (existing) {
@@ -43,7 +59,14 @@ export async function POST(request: Request) {
   }
 
   const designation = await prisma.designation.create({
-    data: { name: name.trim() },
+    data: {
+      name: name.trim(),
+      description:
+        typeof description === "string" &&
+          description.trim() !== ""
+          ? description.trim()
+          : null,
+    },
   });
 
   await prisma.auditLog.create({
@@ -55,5 +78,8 @@ export async function POST(request: Request) {
     },
   });
 
-  return NextResponse.json(designation, { status: 201 });
+  return NextResponse.json(
+    designation,
+    { status: 201 }
+  );
 }

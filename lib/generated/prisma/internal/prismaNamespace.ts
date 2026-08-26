@@ -1368,6 +1368,7 @@ export type DepartmentScalarFieldEnum = (typeof DepartmentScalarFieldEnum)[keyof
 export const DesignationScalarFieldEnum = {
   id: 'id',
   name: 'name',
+  description: 'description',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -1389,8 +1390,10 @@ export type EmployeeTypeScalarFieldEnum = (typeof EmployeeTypeScalarFieldEnum)[k
 export const HolidayScalarFieldEnum = {
   id: 'id',
   name: 'name',
+  description: 'description',
   date: 'date',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 } as const
 
 export type HolidayScalarFieldEnum = (typeof HolidayScalarFieldEnum)[keyof typeof HolidayScalarFieldEnum]
@@ -1409,6 +1412,7 @@ export const LeaveTypeScalarFieldEnum = {
   id: 'id',
   name: 'name',
   code: 'code',
+  description: 'description',
   defaultAnnualQuota: 'defaultAnnualQuota',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

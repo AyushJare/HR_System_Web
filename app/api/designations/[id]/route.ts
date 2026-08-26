@@ -11,12 +11,18 @@ export async function PUT(
   const { id } = await params;
 
   const auth = await requireAdmin();
+
   if (!auth.ok) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+    return NextResponse.json(
+      { error: auth.error },
+      { status: auth.status }
+    );
   }
 
   const body = await request.json();
-  const { name } = body;
+
+  const name = body.name;
+  const description = body.description;
 
   if (!name || name.trim() === "") {
     return NextResponse.json(
@@ -27,7 +33,14 @@ export async function PUT(
 
   const designation = await prisma.designation.update({
     where: { id },
-    data: { name: name.trim() },
+    data: {
+      name: name.trim(),
+      description:
+        typeof description === "string" &&
+          description.trim() !== ""
+          ? description.trim()
+          : null,
+    },
   });
 
   await prisma.auditLog.create({
@@ -36,6 +49,10 @@ export async function PUT(
       action: "DESIGNATION_UPDATED",
       entity: "Designation",
       entityId: id,
+      metadata: {
+        name: designation.name,
+        description: designation.description,
+      },
     },
   });
 
@@ -50,10 +67,16 @@ export async function DELETE(
 
   const auth = await requireAdmin();
   if (!auth.ok) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+    return NextResponse.json(
+      { error: auth.error },
+      { status: auth.status }
+    );
   }
 
-  const designation = await prisma.designation.findUnique({ where: { id } });
+  const designation = await prisma.designation.findUnique({
+    where: { id },
+  });
+
   if (!designation) {
     return NextResponse.json(
       { error: "Designation not found" },
@@ -71,7 +94,9 @@ export async function DELETE(
     },
   });
 
-  await prisma.designation.delete({ where: { id } });
+  await prisma.designation.delete({
+    where: { id },
+  });
 
   return NextResponse.json({ success: true });
 }

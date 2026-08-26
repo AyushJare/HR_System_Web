@@ -38,6 +38,7 @@ export type LeaveTypeMinAggregateOutputType = {
   id: string | null
   name: string | null
   code: string | null
+  description: string | null
   defaultAnnualQuota: number | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -47,6 +48,7 @@ export type LeaveTypeMaxAggregateOutputType = {
   id: string | null
   name: string | null
   code: string | null
+  description: string | null
   defaultAnnualQuota: number | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -56,6 +58,7 @@ export type LeaveTypeCountAggregateOutputType = {
   id: number
   name: number
   code: number
+  description: number
   defaultAnnualQuota: number
   createdAt: number
   updatedAt: number
@@ -75,6 +78,7 @@ export type LeaveTypeMinAggregateInputType = {
   id?: true
   name?: true
   code?: true
+  description?: true
   defaultAnnualQuota?: true
   createdAt?: true
   updatedAt?: true
@@ -84,6 +88,7 @@ export type LeaveTypeMaxAggregateInputType = {
   id?: true
   name?: true
   code?: true
+  description?: true
   defaultAnnualQuota?: true
   createdAt?: true
   updatedAt?: true
@@ -93,6 +98,7 @@ export type LeaveTypeCountAggregateInputType = {
   id?: true
   name?: true
   code?: true
+  description?: true
   defaultAnnualQuota?: true
   createdAt?: true
   updatedAt?: true
@@ -189,6 +195,7 @@ export type LeaveTypeGroupByOutputType = {
   id: string
   name: string
   code: string
+  description: string | null
   defaultAnnualQuota: number
   createdAt: Date
   updatedAt: Date
@@ -221,6 +228,7 @@ export type LeaveTypeWhereInput = {
   id?: Prisma.StringFilter<"LeaveType"> | string
   name?: Prisma.StringFilter<"LeaveType"> | string
   code?: Prisma.StringFilter<"LeaveType"> | string
+  description?: Prisma.StringNullableFilter<"LeaveType"> | string | null
   defaultAnnualQuota?: Prisma.IntFilter<"LeaveType"> | number
   createdAt?: Prisma.DateTimeFilter<"LeaveType"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"LeaveType"> | Date | string
@@ -231,6 +239,7 @@ export type LeaveTypeOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   code?: Prisma.SortOrder
+  description?: Prisma.SortOrderInput | Prisma.SortOrder
   defaultAnnualQuota?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -244,6 +253,7 @@ export type LeaveTypeWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.LeaveTypeWhereInput | Prisma.LeaveTypeWhereInput[]
   OR?: Prisma.LeaveTypeWhereInput[]
   NOT?: Prisma.LeaveTypeWhereInput | Prisma.LeaveTypeWhereInput[]
+  description?: Prisma.StringNullableFilter<"LeaveType"> | string | null
   defaultAnnualQuota?: Prisma.IntFilter<"LeaveType"> | number
   createdAt?: Prisma.DateTimeFilter<"LeaveType"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"LeaveType"> | Date | string
@@ -254,6 +264,7 @@ export type LeaveTypeOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   code?: Prisma.SortOrder
+  description?: Prisma.SortOrderInput | Prisma.SortOrder
   defaultAnnualQuota?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -271,6 +282,7 @@ export type LeaveTypeScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"LeaveType"> | string
   name?: Prisma.StringWithAggregatesFilter<"LeaveType"> | string
   code?: Prisma.StringWithAggregatesFilter<"LeaveType"> | string
+  description?: Prisma.StringNullableWithAggregatesFilter<"LeaveType"> | string | null
   defaultAnnualQuota?: Prisma.IntWithAggregatesFilter<"LeaveType"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"LeaveType"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"LeaveType"> | Date | string
@@ -280,6 +292,7 @@ export type LeaveTypeCreateInput = {
   id?: string
   name: string
   code: string
+  description?: string | null
   defaultAnnualQuota?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -290,6 +303,7 @@ export type LeaveTypeUncheckedCreateInput = {
   id?: string
   name: string
   code: string
+  description?: string | null
   defaultAnnualQuota?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -300,6 +314,7 @@ export type LeaveTypeUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   defaultAnnualQuota?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -310,6 +325,7 @@ export type LeaveTypeUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   defaultAnnualQuota?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -320,6 +336,7 @@ export type LeaveTypeCreateManyInput = {
   id?: string
   name: string
   code: string
+  description?: string | null
   defaultAnnualQuota?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -329,6 +346,7 @@ export type LeaveTypeUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   defaultAnnualQuota?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -338,6 +356,7 @@ export type LeaveTypeUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   defaultAnnualQuota?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -347,6 +366,7 @@ export type LeaveTypeCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   code?: Prisma.SortOrder
+  description?: Prisma.SortOrder
   defaultAnnualQuota?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -360,6 +380,7 @@ export type LeaveTypeMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   code?: Prisma.SortOrder
+  description?: Prisma.SortOrder
   defaultAnnualQuota?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -369,6 +390,7 @@ export type LeaveTypeMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   code?: Prisma.SortOrder
+  description?: Prisma.SortOrder
   defaultAnnualQuota?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -401,6 +423,7 @@ export type LeaveTypeCreateWithoutBalancesInput = {
   id?: string
   name: string
   code: string
+  description?: string | null
   defaultAnnualQuota?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -410,6 +433,7 @@ export type LeaveTypeUncheckedCreateWithoutBalancesInput = {
   id?: string
   name: string
   code: string
+  description?: string | null
   defaultAnnualQuota?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -435,6 +459,7 @@ export type LeaveTypeUpdateWithoutBalancesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   defaultAnnualQuota?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -444,6 +469,7 @@ export type LeaveTypeUncheckedUpdateWithoutBalancesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   defaultAnnualQuota?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -484,6 +510,7 @@ export type LeaveTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   id?: boolean
   name?: boolean
   code?: boolean
+  description?: boolean
   defaultAnnualQuota?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -495,6 +522,7 @@ export type LeaveTypeSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
   id?: boolean
   name?: boolean
   code?: boolean
+  description?: boolean
   defaultAnnualQuota?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -504,6 +532,7 @@ export type LeaveTypeSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
   id?: boolean
   name?: boolean
   code?: boolean
+  description?: boolean
   defaultAnnualQuota?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -513,12 +542,13 @@ export type LeaveTypeSelectScalar = {
   id?: boolean
   name?: boolean
   code?: boolean
+  description?: boolean
   defaultAnnualQuota?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type LeaveTypeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "code" | "defaultAnnualQuota" | "createdAt" | "updatedAt", ExtArgs["result"]["leaveType"]>
+export type LeaveTypeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "code" | "description" | "defaultAnnualQuota" | "createdAt" | "updatedAt", ExtArgs["result"]["leaveType"]>
 export type LeaveTypeInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   balances?: boolean | Prisma.LeaveType$balancesArgs<ExtArgs>
   _count?: boolean | Prisma.LeaveTypeCountOutputTypeDefaultArgs<ExtArgs>
@@ -535,6 +565,7 @@ export type $LeaveTypePayload<ExtArgs extends runtime.Types.Extensions.InternalA
     id: string
     name: string
     code: string
+    description: string | null
     defaultAnnualQuota: number
     createdAt: Date
     updatedAt: Date
@@ -965,6 +996,7 @@ export interface LeaveTypeFieldRefs {
   readonly id: Prisma.FieldRef<"LeaveType", 'String'>
   readonly name: Prisma.FieldRef<"LeaveType", 'String'>
   readonly code: Prisma.FieldRef<"LeaveType", 'String'>
+  readonly description: Prisma.FieldRef<"LeaveType", 'String'>
   readonly defaultAnnualQuota: Prisma.FieldRef<"LeaveType", 'Int'>
   readonly createdAt: Prisma.FieldRef<"LeaveType", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"LeaveType", 'DateTime'>

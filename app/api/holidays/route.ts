@@ -1,11 +1,17 @@
 import { NextResponse } from "next/server";
+
 import { prisma } from "@/lib/prisma";
+
 import { requireAdmin } from "@/lib/auth";
 
 export async function GET() {
   const auth = await requireAdmin();
+
   if (!auth.ok) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+    return NextResponse.json(
+      { error: auth.error },
+      { status: auth.status }
+    );
   }
 
   const holidays = await prisma.holiday.findMany({
@@ -17,12 +23,17 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const auth = await requireAdmin();
+
   if (!auth.ok) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+    return NextResponse.json(
+      { error: auth.error },
+      { status: auth.status }
+    );
   }
 
   const body = await request.json();
-  const { name, date } = body;
+
+  const { name, date, description } = body;
 
   if (!name || name.trim() === "" || !date) {
     return NextResponse.json(
@@ -32,7 +43,15 @@ export async function POST(request: Request) {
   }
 
   const holiday = await prisma.holiday.create({
-    data: { name: name.trim(), date: new Date(date) },
+    data: {
+      name: name.trim(),
+      description:
+        typeof description === "string" &&
+          description.trim() !== ""
+          ? description.trim()
+          : null,
+      date: new Date(date),
+    },
   });
 
   await prisma.auditLog.create({
