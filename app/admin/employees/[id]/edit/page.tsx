@@ -97,50 +97,50 @@ export default function EditEmployeePage() {
   };
 
   if (loading) {
-    return <div className="p-8 text-slate-400">Loading...</div>;
+    return <div className="p-8 text-slate-500">Loading...</div>;
   }
 
   return (
     <div className="p-8 max-w-2xl">
       <button
         onClick={() => router.push(`/admin/employees/${id}`)}
-        className="text-sm text-blue-700 hover:text-blue-900 mb-4"
+        className="text-sm text-slate-900 hover:text-slate-700 font-semibold transition-colors duration-200 mb-6"
       >
         ← Back to Employee
       </button>
 
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900">Edit Employee</h1>
-        <p className="text-slate-600 mt-1">Update employee details</p>
+        <h1 className="text-4xl font-bold text-slate-950 tracking-tight">Edit Employee</h1>
+        <p className="text-slate-500 mt-2 font-normal text-sm">Update employee details</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-slate-200 p-6 space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+      <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-slate-200 p-8 space-y-6 shadow-sm hover:shadow-md transition-shadow duration-200">
+        <div className="grid grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
+            <label className="block text-sm font-semibold text-slate-900 mb-2">Full Name</label>
             <input
               name="fullName"
               value={formData.fullName}
               onChange={handleChange}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Mobile</label>
+            <label className="block text-sm font-semibold text-slate-900 mb-2">Mobile</label>
             <input
               name="mobile"
               value={formData.mobile}
               onChange={handleChange}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Gender</label>
+            <label className="block text-sm font-semibold text-slate-900 mb-2">Gender</label>
             <select
               name="gender"
               value={formData.gender}
               onChange={handleChange}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
             >
               <option value="">Select</option>
               <option value="male">Male</option>
@@ -149,24 +149,24 @@ export default function EditEmployeePage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Role</label>
+            <label className="block text-sm font-semibold text-slate-900 mb-2">Role</label>
             <select
               name="role"
               value={formData.role}
               onChange={handleChange}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
             >
               <option value="EMPLOYEE">Employee</option>
               <option value="ADMIN">Admin</option>
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Department</label>
+            <label className="block text-sm font-semibold text-slate-900 mb-2">Department</label>
             <select
               name="departmentId"
               value={formData.departmentId}
               onChange={handleChange}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
             >
               <option value="">Select department</option>
               {departments.map((d) => (
@@ -175,12 +175,12 @@ export default function EditEmployeePage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Designation</label>
+            <label className="block text-sm font-semibold text-slate-900 mb-2">Designation</label>
             <select
               name="designationId"
               value={formData.designationId}
               onChange={handleChange}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
             >
               <option value="">Select designation</option>
               {designations.map((d) => (
@@ -189,12 +189,12 @@ export default function EditEmployeePage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Employee Type</label>
+            <label className="block text-sm font-semibold text-slate-900 mb-2">Employee Type</label>
             <select
               name="employeeTypeId"
               value={formData.employeeTypeId}
               onChange={handleChange}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
             >
               <option value="">Select employee type</option>
               {employeeTypes.map((t) => (
@@ -203,14 +203,14 @@ export default function EditEmployeePage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
+            <label className="block text-sm font-semibold text-slate-900 mb-2">Status</label>
             <select
               name="isActive"
               value={formData.isActive ? "true" : "false"}
               onChange={(e) =>
                 setFormData((prev) => ({ ...prev, isActive: e.target.value === "true" }))
               }
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
             >
               <option value="true">Active</option>
               <option value="false">Inactive</option>
@@ -218,18 +218,18 @@ export default function EditEmployeePage() {
           </div>
         </div>
 
-        <div className="flex gap-3 pt-2">
+        <div className="flex gap-3 pt-4 border-t border-slate-100">
           <button
             type="submit"
             disabled={saving}
-            className="bg-blue-700 hover:bg-blue-800 text-white text-sm font-medium px-5 py-2 rounded-md disabled:opacity-60"
+            className="bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold px-6 py-2.5 rounded-lg transition-all duration-200 hover:shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {saving ? "Saving..." : "Save Changes"}
           </button>
           <button
             type="button"
             onClick={() => router.push(`/admin/employees/${id}`)}
-            className="text-sm font-medium text-slate-600 px-5 py-2"
+            className="border border-slate-300 text-slate-900 font-semibold text-sm px-6 py-2.5 rounded-lg hover:bg-slate-50 hover:border-slate-400 transition-all duration-200"
           >
             Cancel
           </button>

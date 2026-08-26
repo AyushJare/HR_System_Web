@@ -97,55 +97,55 @@ export default function AttendancePage() {
 
   return (
     <div className="p-8">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-slate-900">Daily Attendance</h1>
-        <p className="text-slate-600 mt-1">Mark or update attendance for a specific date.</p>
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold text-slate-950 tracking-tight">Daily Attendance</h1>
+        <p className="text-slate-500 mt-2 font-normal text-sm">Mark or update attendance for a specific date.</p>
       </div>
 
-      <div className="mb-4 flex items-center gap-3">
-        <label className="text-sm font-medium text-slate-700">Date</label>
+      <div className="mb-6 flex items-center gap-4">
+        <label className="text-sm font-semibold text-slate-900">Date</label>
         <input
           type="date"
           value={date}
           onChange={(e) => setDate(e.target.value)}
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="rounded-lg border border-slate-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
         />
       </div>
 
-      <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 border-b border-slate-200">
+          <thead className="bg-slate-50 border-b-2 border-slate-200">
             <tr>
-              <th className="text-left px-4 py-3 font-medium text-slate-600">Employee</th>
-              <th className="text-left px-4 py-3 font-medium text-slate-600">Status</th>
-              <th className="text-left px-4 py-3 font-medium text-slate-600">Time In</th>
-              <th className="text-left px-4 py-3 font-medium text-slate-600">Time Out</th>
-              <th className="text-left px-4 py-3 font-medium text-slate-600">Reason</th>
-              <th className="text-left px-4 py-3 font-medium text-slate-600 w-20">Save</th>
+              <th className="text-left px-6 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide">Employee</th>
+              <th className="text-left px-6 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide">Status</th>
+              <th className="text-left px-6 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide">Time In</th>
+              <th className="text-left px-6 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide">Time Out</th>
+              <th className="text-left px-6 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide">Reason</th>
+              <th className="text-left px-6 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide">Save</th>
             </tr>
           </thead>
           <tbody>
             {loading && (
-              <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-400">Loading...</td></tr>
+              <tr><td colSpan={6} className="px-6 py-8 text-center text-slate-500">Loading...</td></tr>
             )}
             {!loading && rows.length === 0 && (
-              <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-400">No employees found.</td></tr>
+              <tr><td colSpan={6} className="px-6 py-8 text-center text-slate-500">No employees found.</td></tr>
             )}
             {rows.map((row) => {
               const draft: Draft = drafts[row.employeeId] ?? {
                 timeIn: "", timeOut: "", reason: "", status: "PRESENT",
               };
               return (
-                <tr key={row.employeeId} className="border-b border-slate-100 last:border-0">
-                  <td className="px-4 py-2.5 text-slate-700">
-                    <div className="font-medium">{row.fullName}</div>
-                    <div className="text-xs text-slate-400">#{row.employeeCode}</div>
+                <tr key={row.employeeId} className="border-b border-slate-100 hover:bg-slate-50 transition-colors duration-200 last:border-0">
+                  <td className="px-6 py-3 text-slate-900">
+                    <div className="font-semibold">{row.fullName}</div>
+                    <div className="text-xs text-slate-500 mt-0.5">#{row.employeeCode}</div>
                   </td>
-                  <td className="px-4 py-2.5">
+                  <td className="px-6 py-3">
                     <select
                       value={draft.status}
                       onChange={(e) => updateDraft(row.employeeId, "status", e.target.value)}
-                      className="rounded-md border border-slate-300 px-2 py-1 text-xs"
+                      className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
                     >
                       <option value="PRESENT">Present</option>
                       <option value="ABSENT">Absent</option>
@@ -153,36 +153,36 @@ export default function AttendancePage() {
                       <option value="ON_LEAVE">On Leave</option>
                     </select>
                   </td>
-                  <td className="px-4 py-2.5">
+                  <td className="px-6 py-3">
                     <input
                       type="time"
                       value={draft.timeIn}
                       onChange={(e) => updateDraft(row.employeeId, "timeIn", e.target.value)}
-                      className="rounded-md border border-slate-300 px-2 py-1 text-xs"
+                      className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
                     />
                   </td>
-                  <td className="px-4 py-2.5">
+                  <td className="px-6 py-3">
                     <input
                       type="time"
                       value={draft.timeOut}
                       onChange={(e) => updateDraft(row.employeeId, "timeOut", e.target.value)}
-                      className="rounded-md border border-slate-300 px-2 py-1 text-xs"
+                      className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
                     />
                   </td>
-                  <td className="px-4 py-2.5">
+                  <td className="px-6 py-3">
                     <input
                       type="text"
                       value={draft.reason}
                       onChange={(e) => updateDraft(row.employeeId, "reason", e.target.value)}
                       placeholder="Reason (optional)"
-                      className="rounded-md border border-slate-300 px-2 py-1 text-xs w-full"
+                      className="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
                     />
                   </td>
-                  <td className="px-4 py-2.5">
+                  <td className="px-6 py-3">
                     <button
                       onClick={() => handleSave(row.employeeId)}
                       disabled={savingId === row.employeeId}
-                      className="text-blue-700 hover:text-blue-900 text-xs font-medium disabled:opacity-50"
+                      className="text-slate-900 hover:text-slate-700 font-semibold text-sm hover:bg-slate-100 px-2 py-1 rounded transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {savingId === row.employeeId ? "..." : "Save"}
                     </button>

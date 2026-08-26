@@ -56,19 +56,19 @@ export default function ReportsPage() {
 
   return (
     <div className="p-8">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-slate-900">Reports</h1>
-        <p className="text-slate-600 mt-1">Attendance summary and consolidated views.</p>
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold text-slate-950 tracking-tight">Reports</h1>
+        <p className="text-slate-500 mt-2 font-normal text-sm">Attendance summary and consolidated views.</p>
       </div>
 
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-6 flex items-center justify-between">
         <div className="flex gap-6 border-b border-slate-200">
           <button
             onClick={() => setTab("summary")}
             className={
               tab === "summary"
-                ? "pb-3 text-sm font-medium text-blue-700 border-b-2 border-blue-700"
-                : "pb-3 text-sm font-medium text-slate-500 hover:text-slate-700"
+                ? "pb-3 text-sm font-semibold text-slate-900 border-b-2 border-slate-900 transition-colors duration-200"
+                : "pb-3 text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors duration-200"
             }
           >
             Summary
@@ -77,8 +77,8 @@ export default function ReportsPage() {
             onClick={() => setTab("consolidated")}
             className={
               tab === "consolidated"
-                ? "pb-3 text-sm font-medium text-blue-700 border-b-2 border-blue-700"
-                : "pb-3 text-sm font-medium text-slate-500 hover:text-slate-700"
+                ? "pb-3 text-sm font-semibold text-slate-900 border-b-2 border-slate-900 transition-colors duration-200"
+                : "pb-3 text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors duration-200"
             }
           >
             Consolidated
@@ -88,42 +88,42 @@ export default function ReportsPage() {
           type="month"
           value={month}
           onChange={(e) => setMonth(e.target.value)}
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="rounded-lg border border-slate-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
         />
       </div>
 
       {tab === "summary" && (
-        <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+        <div className="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b border-slate-200">
+            <thead className="bg-slate-50 border-b-2 border-slate-200">
               <tr>
-                <th className="text-left px-4 py-3 font-medium text-slate-600">Employee</th>
-                <th className="text-left px-4 py-3 font-medium text-slate-600">Department</th>
-                <th className="text-center px-4 py-3 font-medium text-slate-600">Present</th>
-                <th className="text-center px-4 py-3 font-medium text-slate-600">Absent</th>
-                <th className="text-center px-4 py-3 font-medium text-slate-600">Half Day</th>
-                <th className="text-center px-4 py-3 font-medium text-slate-600">On Leave</th>
-                <th className="text-center px-4 py-3 font-medium text-slate-600">Total Marked</th>
+                <th className="text-left px-6 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide">Employee</th>
+                <th className="text-left px-6 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide">Department</th>
+                <th className="text-center px-6 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide">Present</th>
+                <th className="text-center px-6 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide">Absent</th>
+                <th className="text-center px-6 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide">Half Day</th>
+                <th className="text-center px-6 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide">On Leave</th>
+                <th className="text-center px-6 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide">Total Marked</th>
               </tr>
             </thead>
             <tbody>
               {loading && (
-                <tr><td colSpan={7} className="px-4 py-8 text-center text-slate-400">Loading...</td></tr>
+                <tr><td colSpan={7} className="px-6 py-8 text-center text-slate-500">Loading...</td></tr>
               )}
               {!loading && summary.length === 0 && (
-                <tr><td colSpan={7} className="px-4 py-8 text-center text-slate-400">No data for this month.</td></tr>
+                <tr><td colSpan={7} className="px-6 py-8 text-center text-slate-500">No data for this month.</td></tr>
               )}
               {summary.map((row) => (
-                <tr key={row.employeeId} className="border-b border-slate-100 last:border-0">
-                  <td className="px-4 py-2.5 text-slate-700">
-                    {row.fullName} <span className="text-slate-400 text-xs">#{row.employeeCode}</span>
+                <tr key={row.employeeId} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors duration-200">
+                  <td className="px-6 py-3 text-slate-900 font-medium">
+                    {row.fullName} <span className="text-slate-500 text-xs">#{row.employeeCode}</span>
                   </td>
-                  <td className="px-4 py-2.5 text-slate-500">{row.department}</td>
-                  <td className="px-4 py-2.5 text-center text-green-700 font-medium">{row.present}</td>
-                  <td className="px-4 py-2.5 text-center text-red-700 font-medium">{row.absent}</td>
-                  <td className="px-4 py-2.5 text-center text-amber-700 font-medium">{row.halfDay}</td>
-                  <td className="px-4 py-2.5 text-center text-blue-700 font-medium">{row.onLeave}</td>
-                  <td className="px-4 py-2.5 text-center text-slate-600">{row.totalMarked}</td>
+                  <td className="px-6 py-3 text-slate-600">{row.department}</td>
+                  <td className="px-6 py-3 text-center text-emerald-700 font-semibold">{row.present}</td>
+                  <td className="px-6 py-3 text-center text-red-700 font-semibold">{row.absent}</td>
+                  <td className="px-6 py-3 text-center text-amber-700 font-semibold">{row.halfDay}</td>
+                  <td className="px-6 py-3 text-center text-blue-700 font-semibold">{row.onLeave}</td>
+                  <td className="px-6 py-3 text-center text-slate-900 font-semibold">{row.totalMarked}</td>
                 </tr>
               ))}
             </tbody>
@@ -132,17 +132,17 @@ export default function ReportsPage() {
       )}
 
       {tab === "consolidated" && (
-        <div className="bg-white rounded-lg border border-slate-200 overflow-x-auto">
-          {loading && <div className="p-8 text-center text-slate-400">Loading...</div>}
+        <div className="bg-white rounded-lg border border-slate-200 overflow-x-auto shadow-sm hover:shadow-md transition-shadow duration-200">
+          {loading && <div className="p-8 text-center text-slate-500">Loading...</div>}
           {!loading && consolidated && (
             <table className="text-sm border-collapse">
-              <thead className="bg-slate-50 border-b border-slate-200">
+              <thead className="bg-slate-50 border-b-2 border-slate-200">
                 <tr>
-                  <th className="text-left px-4 py-3 font-medium text-slate-600 sticky left-0 bg-slate-50 whitespace-nowrap">
+                  <th className="text-left px-6 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide sticky left-0 bg-slate-50 whitespace-nowrap">
                     Employee
                   </th>
                   {Array.from({ length: consolidated.daysInMonth }, (_, i) => (
-                    <th key={i} className="text-center px-2 py-3 font-medium text-slate-500 w-8">
+                    <th key={i} className="text-center px-2 py-4 text-xs font-bold text-slate-950 w-8">
                       {i + 1}
                     </th>
                   ))}
@@ -150,25 +150,25 @@ export default function ReportsPage() {
               </thead>
               <tbody>
                 {consolidated.rows.map((row) => (
-                  <tr key={row.employeeId} className="border-b border-slate-100 last:border-0">
-                    <td className="px-4 py-2 text-slate-700 sticky left-0 bg-white whitespace-nowrap">
-                      {row.fullName} <span className="text-slate-400 text-xs">#{row.employeeCode}</span>
+                  <tr key={row.employeeId} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors duration-200">
+                    <td className="px-6 py-3 text-slate-900 font-medium sticky left-0 bg-white hover:bg-slate-50 whitespace-nowrap">
+                      {row.fullName} <span className="text-slate-500 text-xs">#{row.employeeCode}</span>
                     </td>
                     {row.days.map((code, i) => (
                       <td
                         key={i}
                         title={statusLabel[code] ?? code}
                         className={
-                          "text-center px-2 py-2 text-xs font-medium " +
+                          "text-center px-2 py-3 text-xs font-semibold " +
                           (code === "P"
-                            ? "text-green-700"
+                            ? "text-emerald-700"
                             : code === "A"
-                            ? "text-red-700"
-                            : code === "H"
-                            ? "text-amber-700"
-                            : code === "L"
-                            ? "text-blue-700"
-                            : "text-slate-300")
+                              ? "text-red-700"
+                              : code === "H"
+                                ? "text-amber-700"
+                                : code === "L"
+                                  ? "text-blue-700"
+                                  : "text-slate-300")
                         }
                       >
                         {code}
