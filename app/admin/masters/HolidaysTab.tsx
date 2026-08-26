@@ -287,108 +287,27 @@ export default function HolidaysTab() {
       return;
     }
 
-    const start = new Date(groupStartDate);
-    const end = new Date(groupEndDate);
-
-    start.setHours(0, 0, 0, 0);
-    end.setHours(0, 0, 0, 0);
-
-    const dates: string[] = [];
-    const current = new Date(start);
-
-    while (current <= end) {
-      dates.push(current.toISOString().split("T")[0]);
-
-      current.setDate(current.getDate() + 1);
-    }
-
     try {
-      // Update existing records
-      const existingCount = Math.min(
-        editingGroup.length,
-        dates.length
-      );
+      const res = await fetch("/api/holidays/group", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ids: editingGroup.map((holiday) => holiday.id),
+          name: groupName.trim(),
+          description: groupDescription.trim() || null,
+          startDate: groupStartDate,
+          endDate: groupEndDate,
+        }),
+      });
 
-      for (let i = 0; i < existingCount; i++) {
-        const res = await fetch(
-          `/api/holidays/${editingGroup[i].id}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              name: groupName.trim(),
-              description: groupDescription.trim() || null,
-              date: dates[i],
-            }),
-          }
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(
+          data.error || "Failed to update holiday group"
         );
-
-        if (!res.ok) {
-          let message = "Failed to update holiday group";
-
-          try {
-            const err = await res.json();
-            message = err.error || message;
-          } catch { }
-
-          throw new Error(message);
-        }
-      }
-
-      // Delete extra records if range becomes shorter
-      if (editingGroup.length > dates.length) {
-        for (
-          let i = dates.length;
-          i < editingGroup.length;
-          i++
-        ) {
-          const res = await fetch(
-            `/api/holidays/${editingGroup[i].id}`,
-            {
-              method: "DELETE",
-            }
-          );
-
-          if (!res.ok) {
-            throw new Error(
-              "Failed to remove extra holiday dates"
-            );
-          }
-        }
-      }
-
-      // Create additional records if range becomes longer
-      if (dates.length > editingGroup.length) {
-        for (
-          let i = editingGroup.length;
-          i < dates.length;
-          i++
-        ) {
-          const res = await fetch("/api/holidays", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              name: groupName.trim(),
-              description: groupDescription.trim() || null,
-              date: dates[i],
-            }),
-          });
-
-          if (!res.ok) {
-            let message = "Failed to create holiday date";
-
-            try {
-              const err = await res.json();
-              message = err.error || message;
-            } catch { }
-
-            throw new Error(message);
-          }
-        }
       }
 
       toast.success("Holiday group updated");
@@ -401,6 +320,8 @@ export default function HolidaysTab() {
 
       await load();
     } catch (error) {
+      console.error("Holiday group update error:", error);
+
       toast.error(
         error instanceof Error
           ? error.message
@@ -408,7 +329,6 @@ export default function HolidaysTab() {
       );
     }
   };
-
   // =========================================================
   // DOWNLOAD TEMPLATE
   // =========================================================
