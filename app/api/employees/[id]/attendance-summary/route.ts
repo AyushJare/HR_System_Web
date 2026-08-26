@@ -8,11 +8,22 @@ type DayEntry = {
   day: number;
   dateStr: string;
   dayOfWeek: number;
-  status: "FUTURE" | "WEEK_OFF" | "HOLIDAY" | "PRESENT" | "ABSENT" | "HALF_DAY" | "ON_LEAVE" | "ON_LEAVE_SCHEDULED" | "NOT_MARKED";  timeIn: string | null;
+  status: "FUTURE" | "WEEK_OFF" | "HOLIDAY" | "PRESENT" | "ABSENT" | "HALF_DAY" | "ON_LEAVE" | "ON_LEAVE_SCHEDULED" | "NOT_MARKED"; timeIn: string | null;
   timeOut: string | null;
   reason: string | null;
   holidayName: string | null;
 };
+
+function isAttendanceStatus(
+  status: string
+): status is "PRESENT" | "ABSENT" | "HALF_DAY" | "ON_LEAVE" {
+  return (
+    status === "PRESENT" ||
+    status === "ABSENT" ||
+    status === "HALF_DAY" ||
+    status === "ON_LEAVE"
+  );
+}
 
 export async function GET(
   request: NextRequest,
@@ -113,9 +124,19 @@ export async function GET(
       holidayName = holidayByDay.get(d)!;
       counts.holiday++;
     } else if (record) {
-      status = record.status;
-      timeIn = record.timeIn ? record.timeIn.toISOString() : null;
-      timeOut = record.timeOut ? record.timeOut.toISOString() : null;
+      if (isAttendanceStatus(record.status)) {
+        status = record.status;
+      } else {
+        status = "NOT_MARKED";
+      }
+
+      timeIn = record.checkInTime
+        ? record.checkInTime.toISOString()
+        : null;
+
+      timeOut = record.checkOutTime
+        ? record.checkOutTime.toISOString()
+        : null;
       if (status === "PRESENT") counts.present++;
       if (status === "ABSENT") counts.absent++;
       if (status === "HALF_DAY") counts.halfDay++;

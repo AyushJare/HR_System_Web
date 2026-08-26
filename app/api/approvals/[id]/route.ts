@@ -96,16 +96,40 @@ export async function PUT(
           employeeId_date: { employeeId: approval.actorId, date: correctionDate },
         },
         update: {
-          timeIn: details.timeIn ? new Date(`${details.date}T${details.timeIn}:00`) : undefined,
-          timeOut: details.timeOut ? new Date(`${details.date}T${details.timeOut}:00`) : undefined,
-          status: (details.status as "PRESENT" | "ABSENT" | "HALF_DAY" | "ON_LEAVE") || undefined,
+          checkInTime: details.timeIn
+            ? new Date(`${details.date}T${details.timeIn}:00`)
+            : undefined,
+
+          checkOutTime: details.timeOut
+            ? new Date(`${details.date}T${details.timeOut}:00`)
+            : undefined,
+
+          status:
+            (details.status as
+              | "PRESENT"
+              | "ABSENT"
+              | "HALF_DAY"
+              | "ON_LEAVE") || undefined,
         },
+
         create: {
           employeeId: approval.actorId,
           date: correctionDate,
-          timeIn: details.timeIn ? new Date(`${details.date}T${details.timeIn}:00`) : null,
-          timeOut: details.timeOut ? new Date(`${details.date}T${details.timeOut}:00`) : null,
-          status: (details.status as "PRESENT" | "ABSENT" | "HALF_DAY" | "ON_LEAVE") || "PRESENT",
+
+          checkInTime: details.timeIn
+            ? new Date(`${details.date}T${details.timeIn}:00`)
+            : undefined,
+
+          checkOutTime: details.timeOut
+            ? new Date(`${details.date}T${details.timeOut}:00`)
+            : undefined,
+
+          status:
+            (details.status as
+              | "PRESENT"
+              | "ABSENT"
+              | "HALF_DAY"
+              | "ON_LEAVE") || "PRESENT",
         },
       });
     }

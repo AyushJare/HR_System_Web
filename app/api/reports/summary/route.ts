@@ -37,7 +37,14 @@ export async function GET(request: NextRequest) {
   const summary = employees.map((emp) => {
     const counts = { PRESENT: 0, ABSENT: 0, HALF_DAY: 0, ON_LEAVE: 0 };
     emp.attendances.forEach((a) => {
-      counts[a.status] += 1;
+      if (
+        a.status === "PRESENT" ||
+        a.status === "ABSENT" ||
+        a.status === "HALF_DAY" ||
+        a.status === "ON_LEAVE"
+      ) {
+        counts[a.status] += 1;
+      }
     });
     return {
       employeeId: emp.id,
