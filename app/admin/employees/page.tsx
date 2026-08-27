@@ -83,9 +83,9 @@ export default function EmployeesPage() {
         <div className="flex gap-3">
           <button
             onClick={() => router.push("/admin/employees/bulk-upload")}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 px-6 rounded-lg transition-all duration-200 hover:shadow-md flex items-center gap-2"
+            className="bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2.5 px-6 rounded-lg transition-all duration-200 hover:shadow-md flex items-center gap-2"
           >
-            ⬆️ Bulk Upload
+            Bulk Upload
           </button>
           <button
             onClick={() => router.push("/admin/employees/add")}
