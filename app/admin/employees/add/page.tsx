@@ -27,6 +27,13 @@ export default function AddEmployeePage() {
     employeeTypeId: "",
     role: "EMPLOYEE",
   });
+  const [errors, setErrors] = useState({
+    fullName: "",
+    email: "",
+    password: "",
+    mobile: "",
+    role: "",
+  });
 
   useEffect(() => {
     Promise.all([
@@ -40,11 +47,56 @@ export default function AddEmployeePage() {
     });
   }, []);
 
+  const validateFullName = (value: string) => {
+    if (!value.trim()) return "Full name is required";
+    if (value.trim().length < 2) return "Full name must be at least 2 characters";
+    return "";
+  };
+
+  const validateEmail = (value: string) => {
+    if (!value.trim()) return "Email is required";
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(value.trim())) return "Please enter a valid email address";
+    return "";
+  };
+
+  const validatePassword = (value: string) => {
+    if (!value) return "Password is required";
+    if (value.length < 8) return "Password must be at least 8 characters";
+    return "";
+  };
+
+  const validateMobile = (value: string) => {
+    if (!value) return ""; // optional field
+    const cleaned = value.replace(/\D/g, "");
+    if (cleaned.length !== value.length) return "Phone number should contain only digits";
+    if (cleaned.length !== 10) return "Phone number must be exactly 10 digits";
+    return "";
+  };
+
+  const validateRole = (value: string) => {
+    if (!value) return "Please select a role";
+    return "";
+  };
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
+
+    // Update the form value
     setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // Validate the field that changed and update its error
+    let errorMessage = "";
+
+    if (name === "fullName") errorMessage = validateFullName(value);
+    else if (name === "email") errorMessage = validateEmail(value);
+    else if (name === "password") errorMessage = validatePassword(value);
+    else if (name === "mobile") errorMessage = validateMobile(value);
+    else if (name === "role") errorMessage = validateRole(value);
+
+    setErrors((prev) => ({ ...prev, [name]: errorMessage }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -111,8 +163,12 @@ export default function AddEmployeePage() {
               name="fullName"
               value={formData.fullName}
               onChange={handleChange}
-              className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
+              className={`w-full rounded-lg border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200 ${errors.fullName ? "border-red-500" : "border-slate-300"
+                }`}
             />
+            {errors.fullName && (
+              <p className="mt-1 text-sm text-red-600">{errors.fullName}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-semibold text-slate-900 mb-2">Email *</label>
@@ -121,8 +177,12 @@ export default function AddEmployeePage() {
               name="email"
               value={formData.email}
               onChange={handleChange}
-              className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
+              className={`w-full rounded-lg border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200 ${errors.email ? "border-red-500" : "border-slate-300"
+                }`}
             />
+            {errors.email && (
+              <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-semibold text-slate-900 mb-2">Password *</label>
@@ -131,8 +191,12 @@ export default function AddEmployeePage() {
               name="password"
               value={formData.password}
               onChange={handleChange}
-              className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
+              className={`w-full rounded-lg border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200 ${errors.password ? "border-red-500" : "border-slate-300"
+                }`}
             />
+            {errors.password && (
+              <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-semibold text-slate-900 mb-2">Mobile</label>
@@ -140,8 +204,12 @@ export default function AddEmployeePage() {
               name="mobile"
               value={formData.mobile}
               onChange={handleChange}
-              className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
+              className={`w-full rounded-lg border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200 ${errors.mobile ? "border-red-500" : "border-slate-300"
+                }`}
             />
+            {errors.mobile && (
+              <p className="mt-1 text-sm text-red-600">{errors.mobile}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-semibold text-slate-900 mb-2">Gender</label>
