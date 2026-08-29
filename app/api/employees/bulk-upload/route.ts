@@ -16,7 +16,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import * as ExcelJS from "exceljs";
-import { requireAdmin } from "@/lib/auth";
+import { requirePermissionOrAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/password";
 import { validateEmail } from "@/lib/validators/email";
@@ -98,10 +98,10 @@ async function parseExcelFile(file: File): Promise<{
 
       rows.push({
         rowNumber,
-        email: values[1],
-        firstName: values[2],
-        lastName: values[3],
-        phone: values[4],
+        email: (values[1]?.text || values[1]?.toString() || "").trim(),
+        firstName: (values[2]?.text || values[2]?.toString() || "").trim(),
+        lastName: (values[3]?.text || values[3]?.toString() || "").trim(),
+        phone: (values[4]?.text || values[4]?.toString() || "").trim(),
         department: values[5],
         designation: values[6],
         employeeType: values[7],
@@ -151,7 +151,16 @@ async function validateEmployeeRow(
   const fullName = `${firstName.toString().trim()} ${lastName.toString().trim()}`;
 
   // Email validation
-  const emailValidation = validateEmail(email);
+  // DEBUG FIRST
+  console.log("Validating email:", {
+    rawEmail: email,
+    trimmedEmail: String(email).trim(),
+    type: typeof email
+  });
+
+  // VALIDATE ONCE
+  const emailValidation = validateEmail(String(email).trim());
+
   if (!emailValidation.valid) {
     errors.push({
       row: rowNumber,
@@ -370,16 +379,19 @@ async function validateEmployeeRow(
 export async function POST(request: NextRequest) {
   try {
     // Authentication check
-    const adminCheck = await requireAdmin();
+    const authCheck = await requirePermissionOrAdmin(
+      "Employee Bulk Upload",
+      "import"
+    );
 
-    if (!adminCheck.ok) {
+    if (!authCheck.ok) {
       return NextResponse.json(
-        { error: adminCheck.error },
-        { status: adminCheck.status }
+        { error: authCheck.error },
+        { status: authCheck.status }
       );
     }
 
-    const admin = adminCheck.session;
+    const admin = authCheck.session;
 
     // Note: requireAdmin() already checks role === "ADMIN", so no extra check needed.
 

@@ -1,26 +1,63 @@
 import { prisma } from "@/lib/prisma";
 
 /**
- * Log audit trail for all system actions
+ * Metadata accepted by the audit logger.
+ */
+export type AuditMetadata = Record<string, unknown>;
+
+/**
+ * Log an audit trail for a system action.
+ *
+ * entity and entityId are stored in their dedicated AuditLog columns.
+ * Additional information is stored in the metadata JSON field.
+ *
+ * Audit logging must never break the actual application action.
  */
 export async function logAudit(
     action: string,
     employeeId?: string | null,
-    metadata?: Record<string, any> | null // ✅ Changed type
+    metadata?: AuditMetadata | null,
+    entity?: string | null,
+    entityId?: string | null
 ) {
     try {
-        // ✅ Explicitly handle metadata - Prisma Json needs proper conversion
-        const auditData = {
-            action,
-            employeeId: employeeId || null,
-            metadata: metadata ? JSON.stringify(metadata) : null, // ✅ Convert to string
-            entity: null,
-            entityId: null,
-        };
+        const metadataCopy = metadata
+            ? { ...metadata }
+            : null;
 
-        // Type assertion to work with Prisma's Json type
+        // Support callers that may provide entity/entityId
+        // inside metadata.
+        const resolvedEntity =
+            entity ??
+            (typeof metadataCopy?.entity === "string"
+                ? metadataCopy.entity
+                : null);
+
+        const resolvedEntityId =
+            entityId ??
+            (typeof metadataCopy?.entityId === "string"
+                ? metadataCopy.entityId
+                : null);
+
+        if (metadataCopy) {
+            delete metadataCopy.entity;
+            delete metadataCopy.entityId;
+        }
+
         await prisma.auditLog.create({
-            data: auditData as any, // ✅ Use type assertion if needed
+            data: {
+                action,
+                employeeId: employeeId || null,
+                entity: resolvedEntity,
+                entityId: resolvedEntityId,
+
+                // Prisma's JSON input type does not accept
+                // a nullable plain object directly.
+                // undefined means "do not provide metadata".
+                metadata: metadataCopy
+                    ? (metadataCopy as any)
+                    : undefined,
+            },
         });
     } catch (error) {
         console.error("Failed to log audit:", error);
@@ -28,7 +65,7 @@ export async function logAudit(
 }
 
 /**
- * Log login attempt
+ * Log a login attempt.
  */
 export async function logLoginAttempt(
     email: string,
@@ -36,51 +73,91 @@ export async function logLoginAttempt(
     employeeId?: string,
     reason?: string
 ) {
-    const metadata = {
-        email,
-        success,
-        reason: reason || null,
-        timestamp: new Date().toISOString(),
-    };
-
     await logAudit(
         success ? "LOGIN_SUCCESS" : "LOGIN_FAILED",
         employeeId || null,
-        metadata
+        {
+            email,
+            success,
+            reason: reason || null,
+            timestamp: new Date().toISOString(),
+        },
+        "Employee",
+        employeeId || null
     );
 }
 
 /**
- * Log employee action
+ * Log an employee action.
  */
 export async function logEmployeeAction(
     employeeId: string,
     action: string,
     targetEmployeeId?: string,
-    metadata?: Record<string, any>
+    metadata?: AuditMetadata
 ) {
-    const fullMetadata = {
-        targetEmployeeId,
-        ...metadata,
-    };
-
-    await logAudit(action, employeeId, fullMetadata);
+    await logAudit(
+        action,
+        employeeId,
+        {
+            targetEmployeeId: targetEmployeeId || null,
+            ...metadata,
+        },
+        "Employee",
+        targetEmployeeId || null
+    );
 }
 
 /**
- * Log attendance action
+ * Log an attendance action.
  */
 export async function logAttendanceAction(
     employeeId: string,
     action: string,
     attendanceId: string,
-    metadata?: Record<string, any>
+    metadata?: AuditMetadata
 ) {
-    const fullMetadata = {
-        entity: "Attendance",
-        entityId: attendanceId,
-        ...metadata,
-    };
+    await logAudit(
+        action,
+        employeeId,
+        metadata,
+        "Attendance",
+        attendanceId
+    );
+}
 
-    await logAudit(action, employeeId, fullMetadata);
+/**
+ * Log a UserType / Access Control action.
+ */
+export async function logUserTypeAction(
+    employeeId: string,
+    action: string,
+    userTypeId?: string,
+    metadata?: AuditMetadata
+) {
+    await logAudit(
+        action,
+        employeeId,
+        metadata,
+        "UserType",
+        userTypeId || null
+    );
+}
+
+/**
+ * Log an approval action.
+ */
+export async function logApprovalAction(
+    employeeId: string,
+    action: string,
+    approvalId?: string,
+    metadata?: AuditMetadata
+) {
+    await logAudit(
+        action,
+        employeeId,
+        metadata,
+        "Approval",
+        approvalId || null
+    );
 }

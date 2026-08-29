@@ -13,7 +13,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import * as ExcelJS from "exceljs";
-import { getSession } from "@/lib/auth";
+import { requirePermissionOrAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 /**
@@ -433,28 +433,15 @@ async function generateEmployeeTemplate(): Promise<Buffer> {
 export async function GET(request: NextRequest) {
     try {
         // Authentication check
-        const session = await getSession();
+        const auth = await requirePermissionOrAdmin(
+            "Employee Export",
+            "export"
+        );
 
-        if (!session) {
+        if (!auth.ok) {
             return NextResponse.json(
-                {
-                    error: "Unauthorized",
-                },
-                {
-                    status: 401,
-                }
-            );
-        }
-
-        // Authorization check
-        if (session.role !== "ADMIN") {
-            return NextResponse.json(
-                {
-                    error: "Only admins can download templates",
-                },
-                {
-                    status: 403,
-                }
+                { error: auth.error },
+                { status: auth.status }
             );
         }
 

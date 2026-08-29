@@ -32,27 +32,89 @@ export default function EditEmployeePage() {
   });
 
   useEffect(() => {
-    Promise.all([
-      fetch(`/api/employees/${id}`).then((r) => r.json()),
-      fetch("/api/departments").then((r) => r.json()),
-      fetch("/api/designations").then((r) => r.json()),
-      fetch("/api/employee-types").then((r) => r.json()),
-    ]).then(([emp, depts, desigs, types]) => {
-      setFormData({
-        fullName: emp.fullName ?? "",
-        mobile: emp.mobile ?? "",
-        gender: emp.gender ?? "",
-        isActive: emp.isActive,
-        role: emp.role,
-        departmentId: emp.department?.id ?? "",
-        designationId: emp.designation?.id ?? "",
-        employeeTypeId: emp.employeeType?.id ?? "",
-      });
-      setDepartments(depts);
-      setDesignations(desigs);
-      setEmployeeTypes(types);
-      setLoading(false);
-    });
+    const loadData = async () => {
+      try {
+        setLoading(true);
+
+        const [empRes, deptsRes, desigsRes, typesRes] =
+          await Promise.all([
+            fetch(`/api/employees/${id}`),
+            fetch("/api/departments"),
+            fetch("/api/designations"),
+            fetch("/api/employee-types"),
+          ]);
+
+        const emp = await empRes.json();
+        const depts = await deptsRes.json();
+        const desigs = await desigsRes.json();
+        const types = await typesRes.json();
+
+        // Employee
+        if (!empRes.ok) {
+          throw new Error(
+            emp.error || "Failed to load employee"
+          );
+        }
+
+        // Options APIs may return permission errors.
+        // Always keep state as arrays.
+        if (!deptsRes.ok) {
+          console.error("Departments API:", depts);
+          toast.error(
+            depts.error || "Failed to load departments"
+          );
+        }
+
+        if (!desigsRes.ok) {
+          console.error("Designations API:", desigs);
+          toast.error(
+            desigs.error || "Failed to load designations"
+          );
+        }
+
+        if (!typesRes.ok) {
+          console.error("Employee Types API:", types);
+          toast.error(
+            types.error || "Failed to load employee types"
+          );
+        }
+
+        setFormData({
+          fullName: emp.fullName ?? "",
+          mobile: emp.mobile ?? "",
+          gender: emp.gender ?? "",
+          isActive: emp.isActive,
+          role: emp.role,
+          departmentId: emp.department?.id ?? "",
+          designationId: emp.designation?.id ?? "",
+          employeeTypeId: emp.employeeType?.id ?? "",
+        });
+
+        setDepartments(
+          Array.isArray(depts) ? depts : []
+        );
+
+        setDesignations(
+          Array.isArray(desigs) ? desigs : []
+        );
+
+        setEmployeeTypes(
+          Array.isArray(types) ? types : []
+        );
+      } catch (error) {
+        console.error("Failed to load edit employee:", error);
+
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Failed to load employee"
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
   }, [id]);
 
   const handleChange = (

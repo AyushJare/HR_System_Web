@@ -1,22 +1,19 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requirePermissionOrAdmin } from "@/lib/auth";
 
 export async function GET() {
-  const auth = await requireAdmin();
+  const auth = await requirePermissionOrAdmin("Leave Types", "view");
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
-  const leaveTypes = await prisma.leaveType.findMany({
-    orderBy: { createdAt: "asc" },
-  });
-
+  const leaveTypes = await prisma.leaveType.findMany({ orderBy: { createdAt: "asc" } });
   return NextResponse.json(leaveTypes);
 }
 
 export async function POST(request: Request) {
-  const auth = await requireAdmin();
+  const auth = await requirePermissionOrAdmin("Leave Types", "add");
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }

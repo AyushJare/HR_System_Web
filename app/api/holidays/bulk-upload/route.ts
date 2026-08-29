@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requirePermissionOrAdmin } from "@/lib/auth";
 import ExcelJS from "exceljs";
 
 type UploadError = {
@@ -97,8 +97,7 @@ export async function POST(request: NextRequest) {
         // AUTH
         // =========================================================
 
-        const auth = await requireAdmin();
-
+        const auth = await requirePermissionOrAdmin("Holiday Bulk Upload", "import");
         if (!auth.ok) {
             return NextResponse.json(
                 { error: auth.error },

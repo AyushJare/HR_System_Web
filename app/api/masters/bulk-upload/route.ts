@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/auth";
+import { requirePermissionOrAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import ExcelJS from "exceljs";
 
@@ -128,8 +128,7 @@ export async function POST(
         // AUTHENTICATION
         // =========================================================
 
-        const auth = await requireAdmin();
-
+        const auth = await requirePermissionOrAdmin("Masters Bulk Upload", "import");
         if (!auth.ok) {
             return NextResponse.json(
                 {

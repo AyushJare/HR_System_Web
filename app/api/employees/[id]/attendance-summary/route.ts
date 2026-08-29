@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
+import { checkPermission } from "@/lib/permissions";
 
 type Params = { id: string };
 
@@ -31,9 +32,31 @@ export async function GET(
 ) {
   const { id } = await params;
 
-  const auth = await requireAdmin();
-  if (!auth.ok) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  const session = await getSession();
+
+  if (!session) {
+    return NextResponse.json(
+      { error: "Unauthorized" },
+      { status: 401 }
+    );
+  }
+
+  if (session.role !== "ADMIN") {
+    const allowed = await checkPermission(
+      session.sub,
+      "Employee Attendance Summary",
+      "view"
+    );
+
+    if (!allowed) {
+      return NextResponse.json(
+        {
+          error:
+            "You don't have permission to view employee attendance summary",
+        },
+        { status: 403 }
+      );
+    }
   }
 
   const { searchParams } = new URL(request.url);

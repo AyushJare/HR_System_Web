@@ -9,15 +9,15 @@ export interface EmailValidationResult {
   normalized?: string; // lowercase, trimmed
 }
 
-export const validateEmail = (email: string): EmailValidationResult => {
-  if (!email) {
+export const validateEmail = (email: unknown): EmailValidationResult => {
+  if (email === null || email === undefined || email === "") {
     return {
       valid: false,
       error: "Email is required",
     };
   }
 
-  const trimmed = email.trim().toLowerCase();
+  const trimmed = String(email).trim().toLowerCase();
 
   // Basic length checks
   if (trimmed.length > 254) {

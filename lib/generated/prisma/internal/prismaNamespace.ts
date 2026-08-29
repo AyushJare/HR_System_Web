@@ -403,6 +403,7 @@ export const ModelName = {
   Holiday: 'Holiday',
   AttendanceSettings: 'AttendanceSettings',
   LeaveType: 'LeaveType',
+  UserType: 'UserType',
   Employee: 'Employee',
   Attendance: 'Attendance',
   Approval: 'Approval',
@@ -424,7 +425,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "department" | "designation" | "employeeType" | "holiday" | "attendanceSettings" | "leaveType" | "employee" | "attendance" | "approval" | "leaveBalance" | "auditLog" | "session"
+    modelProps: "department" | "designation" | "employeeType" | "holiday" | "attendanceSettings" | "leaveType" | "userType" | "employee" | "attendance" | "approval" | "leaveBalance" | "auditLog" | "session"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -869,6 +870,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.LeaveTypeCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.LeaveTypeCountAggregateOutputType> | number
+        }
+      }
+    }
+    UserType: {
+      payload: Prisma.$UserTypePayload<ExtArgs>
+      fields: Prisma.UserTypeFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.UserTypeFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserTypePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.UserTypeFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserTypePayload>
+        }
+        findFirst: {
+          args: Prisma.UserTypeFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserTypePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.UserTypeFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserTypePayload>
+        }
+        findMany: {
+          args: Prisma.UserTypeFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserTypePayload>[]
+        }
+        create: {
+          args: Prisma.UserTypeCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserTypePayload>
+        }
+        createMany: {
+          args: Prisma.UserTypeCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.UserTypeCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserTypePayload>[]
+        }
+        delete: {
+          args: Prisma.UserTypeDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserTypePayload>
+        }
+        update: {
+          args: Prisma.UserTypeUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserTypePayload>
+        }
+        deleteMany: {
+          args: Prisma.UserTypeDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.UserTypeUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.UserTypeUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserTypePayload>[]
+        }
+        upsert: {
+          args: Prisma.UserTypeUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserTypePayload>
+        }
+        aggregate: {
+          args: Prisma.UserTypeAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateUserType>
+        }
+        groupBy: {
+          args: Prisma.UserTypeGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserTypeGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.UserTypeCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserTypeCountAggregateOutputType> | number
         }
       }
     }
@@ -1421,6 +1496,21 @@ export const LeaveTypeScalarFieldEnum = {
 export type LeaveTypeScalarFieldEnum = (typeof LeaveTypeScalarFieldEnum)[keyof typeof LeaveTypeScalarFieldEnum]
 
 
+export const UserTypeScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  description: 'description',
+  permissions: 'permissions',
+  isSystem: 'isSystem',
+  loginEmail: 'loginEmail',
+  passwordHash: 'passwordHash',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type UserTypeScalarFieldEnum = (typeof UserTypeScalarFieldEnum)[keyof typeof UserTypeScalarFieldEnum]
+
+
 export const EmployeeScalarFieldEnum = {
   id: 'id',
   employeeCode: 'employeeCode',
@@ -1434,6 +1524,7 @@ export const EmployeeScalarFieldEnum = {
   departmentId: 'departmentId',
   designationId: 'designationId',
   employeeTypeId: 'employeeTypeId',
+  userTypeId: 'userTypeId',
   createdById: 'createdById',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -1520,6 +1611,13 @@ export const SortOrder = {
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
+
+
 export const NullableJsonNullValueInput = {
   DbNull: DbNull,
   JsonNull: JsonNull
@@ -1602,16 +1700,16 @@ export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel,
 
 
 /**
- * Reference to a field of type 'UserRole'
+ * Reference to a field of type 'Json'
  */
-export type EnumUserRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UserRole'>
+export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
     
 
 
 /**
- * Reference to a field of type 'UserRole[]'
+ * Reference to a field of type 'QueryMode'
  */
-export type ListEnumUserRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UserRole[]'>
+export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
     
 
 
@@ -1623,16 +1721,16 @@ export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel,
 
 
 /**
- * Reference to a field of type 'Json'
+ * Reference to a field of type 'UserRole'
  */
-export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
+export type EnumUserRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UserRole'>
     
 
 
 /**
- * Reference to a field of type 'QueryMode'
+ * Reference to a field of type 'UserRole[]'
  */
-export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
+export type ListEnumUserRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UserRole[]'>
     
 
 
@@ -1820,6 +1918,7 @@ export type GlobalOmitConfig = {
   holiday?: Prisma.HolidayOmit
   attendanceSettings?: Prisma.AttendanceSettingsOmit
   leaveType?: Prisma.LeaveTypeOmit
+  userType?: Prisma.UserTypeOmit
   employee?: Prisma.EmployeeOmit
   attendance?: Prisma.AttendanceOmit
   approval?: Prisma.ApprovalOmit

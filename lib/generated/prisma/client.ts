@@ -72,6 +72,11 @@ export type AttendanceSettings = Prisma.AttendanceSettingsModel
  */
 export type LeaveType = Prisma.LeaveTypeModel
 /**
+ * Model UserType
+ * 
+ */
+export type UserType = Prisma.UserTypeModel
+/**
  * Model Employee
  * 
  */

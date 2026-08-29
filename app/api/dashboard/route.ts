@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requirePermissionOrAdmin } from "@/lib/auth";
 
 export async function GET() {
-  const auth = await requireAdmin();
+  const auth = await requirePermissionOrAdmin("Dashboard", "view");
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }

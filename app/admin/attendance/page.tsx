@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import PermissionGate from "../PermissionGate";
 
 interface AttendanceRow {
   employeeId: string;
@@ -37,20 +38,52 @@ export default function AttendancePage() {
 
   const load = async (d: string) => {
     setLoading(true);
-    const res = await fetch(`/api/attendance?date=${d}`);
-    const data: AttendanceRow[] = await res.json();
-    setRows(data);
-    const nextDrafts: DraftMap = {};
-    data.forEach((row) => {
-      nextDrafts[row.employeeId] = {
-        timeIn: toTimeInputValue(row.attendance?.timeIn ?? null),
-        timeOut: toTimeInputValue(row.attendance?.timeOut ?? null),
-        reason: row.attendance?.reason ?? "",
-        status: row.attendance?.status ?? "PRESENT",
-      };
-    });
-    setDrafts(nextDrafts);
-    setLoading(false);
+
+    try {
+      const res = await fetch(`/api/attendance?date=${d}`);
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data?.error || "Failed to load attendance");
+      }
+
+      if (!Array.isArray(data)) {
+        throw new Error("Invalid attendance response");
+      }
+
+      setRows(data);
+
+      const nextDrafts: DraftMap = {};
+
+      data.forEach((row: AttendanceRow) => {
+        nextDrafts[row.employeeId] = {
+          timeIn: toTimeInputValue(
+            row.attendance?.timeIn ?? null
+          ),
+          timeOut: toTimeInputValue(
+            row.attendance?.timeOut ?? null
+          ),
+          reason: row.attendance?.reason ?? "",
+          status: row.attendance?.status ?? "PRESENT",
+        };
+      });
+
+      setDrafts(nextDrafts);
+    } catch (error) {
+      console.error("Attendance load error:", error);
+
+      setRows([]);
+      setDrafts({});
+
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to load attendance"
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -96,103 +129,105 @@ export default function AttendancePage() {
   };
 
   return (
-    <div className="p-8">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-slate-950 tracking-tight">Daily Attendance</h1>
-        <p className="text-slate-500 mt-2 font-normal text-sm">Mark or update attendance for a specific date.</p>
-      </div>
+    <PermissionGate moduleName="Attendance" action="view">
+      <div className="p-8">
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-slate-950 tracking-tight">Daily Attendance</h1>
+          <p className="text-slate-500 mt-2 font-normal text-sm">Mark or update attendance for a specific date.</p>
+        </div>
 
-      <div className="mb-6 flex items-center gap-4">
-        <label className="text-sm font-semibold text-slate-900">Date</label>
-        <input
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          className="rounded-lg border border-slate-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
-        />
-      </div>
+        <div className="mb-6 flex items-center gap-4">
+          <label className="text-sm font-semibold text-slate-900">Date</label>
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="rounded-lg border border-slate-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
+          />
+        </div>
 
-      <div className="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 border-b-2 border-slate-200">
-            <tr>
-              <th className="text-left px-6 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide">Employee</th>
-              <th className="text-left px-6 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide">Status</th>
-              <th className="text-left px-6 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide">Time In</th>
-              <th className="text-left px-6 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide">Time Out</th>
-              <th className="text-left px-6 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide">Reason</th>
-              <th className="text-left px-6 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide">Save</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading && (
-              <tr><td colSpan={6} className="px-6 py-8 text-center text-slate-500">Loading...</td></tr>
-            )}
-            {!loading && rows.length === 0 && (
-              <tr><td colSpan={6} className="px-6 py-8 text-center text-slate-500">No employees found.</td></tr>
-            )}
-            {rows.map((row) => {
-              const draft: Draft = drafts[row.employeeId] ?? {
-                timeIn: "", timeOut: "", reason: "", status: "PRESENT",
-              };
-              return (
-                <tr key={row.employeeId} className="border-b border-slate-100 hover:bg-slate-50 transition-colors duration-200 last:border-0">
-                  <td className="px-6 py-3 text-slate-900">
-                    <div className="font-semibold">{row.fullName}</div>
-                    <div className="text-xs text-slate-500 mt-0.5">#{row.employeeCode}</div>
-                  </td>
-                  <td className="px-6 py-3">
-                    <select
-                      value={draft.status}
-                      onChange={(e) => updateDraft(row.employeeId, "status", e.target.value)}
-                      className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
-                    >
-                      <option value="PRESENT">Present</option>
-                      <option value="ABSENT">Absent</option>
-                      <option value="HALF_DAY">Half Day</option>
-                      <option value="ON_LEAVE">On Leave</option>
-                    </select>
-                  </td>
-                  <td className="px-6 py-3">
-                    <input
-                      type="time"
-                      value={draft.timeIn}
-                      onChange={(e) => updateDraft(row.employeeId, "timeIn", e.target.value)}
-                      className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
-                    />
-                  </td>
-                  <td className="px-6 py-3">
-                    <input
-                      type="time"
-                      value={draft.timeOut}
-                      onChange={(e) => updateDraft(row.employeeId, "timeOut", e.target.value)}
-                      className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
-                    />
-                  </td>
-                  <td className="px-6 py-3">
-                    <input
-                      type="text"
-                      value={draft.reason}
-                      onChange={(e) => updateDraft(row.employeeId, "reason", e.target.value)}
-                      placeholder="Reason (optional)"
-                      className="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
-                    />
-                  </td>
-                  <td className="px-6 py-3">
-                    <button
-                      onClick={() => handleSave(row.employeeId)}
-                      disabled={savingId === row.employeeId}
-                      className="text-slate-900 hover:text-slate-700 font-semibold text-sm hover:bg-slate-100 px-2 py-1 rounded transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {savingId === row.employeeId ? "..." : "Save"}
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <div className="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200">
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 border-b-2 border-slate-200">
+              <tr>
+                <th className="text-left px-6 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide">Employee</th>
+                <th className="text-left px-6 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide">Status</th>
+                <th className="text-left px-6 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide">Time In</th>
+                <th className="text-left px-6 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide">Time Out</th>
+                <th className="text-left px-6 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide">Reason</th>
+                <th className="text-left px-6 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide">Save</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading && (
+                <tr><td colSpan={6} className="px-6 py-8 text-center text-slate-500">Loading...</td></tr>
+              )}
+              {!loading && rows.length === 0 && (
+                <tr><td colSpan={6} className="px-6 py-8 text-center text-slate-500">No employees found.</td></tr>
+              )}
+              {rows.map((row) => {
+                const draft: Draft = drafts[row.employeeId] ?? {
+                  timeIn: "", timeOut: "", reason: "", status: "PRESENT",
+                };
+                return (
+                  <tr key={row.employeeId} className="border-b border-slate-100 hover:bg-slate-50 transition-colors duration-200 last:border-0">
+                    <td className="px-6 py-3 text-slate-900">
+                      <div className="font-semibold">{row.fullName}</div>
+                      <div className="text-xs text-slate-500 mt-0.5">#{row.employeeCode}</div>
+                    </td>
+                    <td className="px-6 py-3">
+                      <select
+                        value={draft.status}
+                        onChange={(e) => updateDraft(row.employeeId, "status", e.target.value)}
+                        className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
+                      >
+                        <option value="PRESENT">Present</option>
+                        <option value="ABSENT">Absent</option>
+                        <option value="HALF_DAY">Half Day</option>
+                        <option value="ON_LEAVE">On Leave</option>
+                      </select>
+                    </td>
+                    <td className="px-6 py-3">
+                      <input
+                        type="time"
+                        value={draft.timeIn}
+                        onChange={(e) => updateDraft(row.employeeId, "timeIn", e.target.value)}
+                        className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
+                      />
+                    </td>
+                    <td className="px-6 py-3">
+                      <input
+                        type="time"
+                        value={draft.timeOut}
+                        onChange={(e) => updateDraft(row.employeeId, "timeOut", e.target.value)}
+                        className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
+                      />
+                    </td>
+                    <td className="px-6 py-3">
+                      <input
+                        type="text"
+                        value={draft.reason}
+                        onChange={(e) => updateDraft(row.employeeId, "reason", e.target.value)}
+                        placeholder="Reason (optional)"
+                        className="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
+                      />
+                    </td>
+                    <td className="px-6 py-3">
+                      <button
+                        onClick={() => handleSave(row.employeeId)}
+                        disabled={savingId === row.employeeId}
+                        className="text-slate-900 hover:text-slate-700 font-semibold text-sm hover:bg-slate-100 px-2 py-1 rounded transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {savingId === row.employeeId ? "..." : "Save"}
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
+    </PermissionGate>
   );
 }

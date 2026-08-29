@@ -57,6 +57,7 @@ export const ModelName = {
   Holiday: 'Holiday',
   AttendanceSettings: 'AttendanceSettings',
   LeaveType: 'LeaveType',
+  UserType: 'UserType',
   Employee: 'Employee',
   Attendance: 'Attendance',
   Approval: 'Approval',
@@ -147,6 +148,21 @@ export const LeaveTypeScalarFieldEnum = {
 export type LeaveTypeScalarFieldEnum = (typeof LeaveTypeScalarFieldEnum)[keyof typeof LeaveTypeScalarFieldEnum]
 
 
+export const UserTypeScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  description: 'description',
+  permissions: 'permissions',
+  isSystem: 'isSystem',
+  loginEmail: 'loginEmail',
+  passwordHash: 'passwordHash',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type UserTypeScalarFieldEnum = (typeof UserTypeScalarFieldEnum)[keyof typeof UserTypeScalarFieldEnum]
+
+
 export const EmployeeScalarFieldEnum = {
   id: 'id',
   employeeCode: 'employeeCode',
@@ -160,6 +176,7 @@ export const EmployeeScalarFieldEnum = {
   departmentId: 'departmentId',
   designationId: 'designationId',
   employeeTypeId: 'employeeTypeId',
+  userTypeId: 'userTypeId',
   createdById: 'createdById',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -244,6 +261,13 @@ export const SortOrder = {
 } as const
 
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
+
+
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
 export const NullableJsonNullValueInput = {

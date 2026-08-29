@@ -1,49 +1,55 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requirePermissionOrAdmin } from "@/lib/auth";
 
 export async function GET() {
-  const auth = await requireAdmin();
+  const auth = await requirePermissionOrAdmin("Approvals", "view");
+
   if (!auth.ok) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+    return NextResponse.json(
+      { error: auth.error },
+      { status: auth.status }
+    );
   }
 
   const approvals = await prisma.approval.findMany({
     orderBy: { createdAt: "desc" },
     include: {
-      actor: { select: { fullName: true, employeeCode: true } },
+      actor: {
+        select: {
+          fullName: true,
+          employeeCode: true,
+        },
+      },
     },
   });
 
   return NextResponse.json(approvals);
 }
 
-export async function POST(request: Request) {
-  const auth = await requireAdmin();
+export async function POST(request: NextRequest) {
+  const auth = await requirePermissionOrAdmin("Approvals", "edit");
+
   if (!auth.ok) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+    return NextResponse.json(
+      { error: auth.error },
+      { status: auth.status }
+    );
   }
 
   const body = await request.json();
-  const { type, actorId, details, remarks } = body;
+  const { type, actorId, details } = body ?? {};
 
-  if (!type || !actorId) {
+  if (!type || !actorId || !details) {
     return NextResponse.json(
-      { error: "type and actorId are required" },
+      { error: "type, actorId and details are required" },
       { status: 400 }
     );
   }
 
   if (type !== "LEAVE" && type !== "ATTENDANCE_CORRECTION") {
     return NextResponse.json(
-      { error: "type must be LEAVE or ATTENDANCE_CORRECTION" },
-      { status: 400 }
-    );
-  }
-
-  if (type === "LEAVE" && !details?.leaveTypeId) {
-    return NextResponse.json(
-      { error: "leaveTypeId is required for leave requests" },
+      { error: "Invalid request type" },
       { status: 400 }
     );
   }
@@ -52,11 +58,8 @@ export async function POST(request: Request) {
     data: {
       type,
       actorId,
-      details: details || null,
-      remarks: remarks || null,
-    },
-    include: {
-      actor: { select: { fullName: true, employeeCode: true } },
+      status: "PENDING",
+      details,
     },
   });
 
@@ -66,7 +69,7 @@ export async function POST(request: Request) {
       action: "APPROVAL_REQUESTED",
       entity: "Approval",
       entityId: approval.id,
-      metadata: { type, forEmployeeId: actorId },
+      metadata: { type, actorId },
     },
   });
 

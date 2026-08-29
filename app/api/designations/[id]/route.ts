@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requirePermissionOrAdmin } from "@/lib/auth";
 
 type Params = { id: string };
 
@@ -10,17 +10,12 @@ export async function PUT(
 ) {
   const { id } = await params;
 
-  const auth = await requireAdmin();
-
+  const auth = await requirePermissionOrAdmin("Designations", "edit");
   if (!auth.ok) {
-    return NextResponse.json(
-      { error: auth.error },
-      { status: auth.status }
-    );
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
   const body = await request.json();
-
   const name = body.name;
   const description = body.description;
 
@@ -36,8 +31,7 @@ export async function PUT(
     data: {
       name: name.trim(),
       description:
-        typeof description === "string" &&
-          description.trim() !== ""
+        typeof description === "string" && description.trim() !== ""
           ? description.trim()
           : null,
     },
@@ -65,23 +59,14 @@ export async function DELETE(
 ) {
   const { id } = await params;
 
-  const auth = await requireAdmin();
+  const auth = await requirePermissionOrAdmin("Designations", "delete");
   if (!auth.ok) {
-    return NextResponse.json(
-      { error: auth.error },
-      { status: auth.status }
-    );
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
-  const designation = await prisma.designation.findUnique({
-    where: { id },
-  });
-
+  const designation = await prisma.designation.findUnique({ where: { id } });
   if (!designation) {
-    return NextResponse.json(
-      { error: "Designation not found" },
-      { status: 404 }
-    );
+    return NextResponse.json({ error: "Designation not found" }, { status: 404 });
   }
 
   await prisma.auditLog.create({
@@ -94,9 +79,6 @@ export async function DELETE(
     },
   });
 
-  await prisma.designation.delete({
-    where: { id },
-  });
-
+  await prisma.designation.delete({ where: { id } });
   return NextResponse.json({ success: true });
 }

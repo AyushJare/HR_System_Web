@@ -11,12 +11,26 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   const employee = await prisma.employee.findUnique({
     where: { id: session.sub },
-    select: { fullName: true, email: true, role: true },
+    select: {
+      fullName: true,
+      email: true,
+      role: true,
+      userType: { select: { permissions: true } },
+    },
   });
 
   if (!employee) {
     redirect("/login");
   }
 
-  return <AdminShell user={employee}>{children}</AdminShell>;
+  const permissions = (employee.userType?.permissions ?? null) as Record<string, unknown> | null;
+
+  return (
+    <AdminShell
+      user={{ fullName: employee.fullName, email: employee.email, role: employee.role }}
+      permissions={permissions}
+    >
+      {children}
+    </AdminShell>
+  );
 }

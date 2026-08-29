@@ -1,21 +1,76 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getSession } from "@/lib/auth";
+import { checkPermission } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
 
 type Params = {
   id: string;
 };
+
+type EmployeePermissionAction = "view" | "edit" | "delete";
+
+async function requireEmployeePermission(
+  moduleName: string,
+  action: EmployeePermissionAction
+) {
+  const session = await getSession();
+
+  if (!session) {
+    return {
+      ok: false as const,
+      response: NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      ),
+    };
+  }
+
+  // Main Admin always has full access.
+  if (session.role === "ADMIN") {
+    return {
+      ok: true as const,
+      session,
+    };
+  }
+
+  const allowed = await checkPermission(
+    session.sub,
+    moduleName,
+    action
+  );
+
+  if (!allowed) {
+    return {
+      ok: false as const,
+      response: NextResponse.json(
+        {
+          error: `You don't have permission to ${action} ${moduleName}`,
+        },
+        { status: 403 }
+      ),
+    };
+  }
+
+  return {
+    ok: true as const,
+    session,
+  };
+}
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<Params> }
 ) {
   try {
-    const { id } = await params;  // ← AWAIT params!
+    const { id } = await params;
 
-    const auth = await requireAdmin();
+    const auth = await requireEmployeePermission(
+      "Employee Details",
+      "view"
+    );
+
     if (!auth.ok) {
-      return NextResponse.json({ error: auth.error }, { status: auth.status });
+      return auth.response;
     }
 
     const employee = await prisma.employee.findUnique({
@@ -29,9 +84,28 @@ export async function GET(
         gender: true,
         isActive: true,
         role: true,
-        department: { select: { id: true, name: true } },
-        designation: { select: { id: true, name: true } },
-        employeeType: { select: { id: true, name: true } },
+
+        department: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+
+        designation: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+
+        employeeType: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+
         createdAt: true,
       },
     });
@@ -45,7 +119,8 @@ export async function GET(
 
     return NextResponse.json(employee);
   } catch (error) {
-    console.error("GET [id] error:", error);
+    console.error("GET /api/employees/[id] error:", error);
+
     return NextResponse.json(
       { error: "Server error" },
       { status: 500 }
@@ -58,14 +133,19 @@ export async function PUT(
   { params }: { params: Promise<Params> }
 ) {
   try {
-    const { id } = await params;  // ← AWAIT params!
+    const { id } = await params;
 
-    const auth = await requireAdmin();
+    const auth = await requireEmployeePermission(
+      "Employee Details",
+      "edit"
+    );
+
     if (!auth.ok) {
-      return NextResponse.json({ error: auth.error }, { status: auth.status });
+      return auth.response;
     }
 
     const body = await request.json();
+
     const {
       fullName,
       mobile,
@@ -79,17 +159,51 @@ export async function PUT(
 
     const employee = await prisma.employee.update({
       where: { id },
+
       data: {
-        fullName: fullName || undefined,
-        mobile: mobile || undefined,
-        gender: gender || undefined,
-        isActive: isActive !== undefined ? isActive : undefined,
-        departmentId: departmentId !== undefined ? (departmentId || null) : undefined,
-        designationId: designationId !== undefined ? (designationId || null) : undefined,
-        employeeTypeId: employeeTypeId !== undefined ? (employeeTypeId || null) : undefined,
-        role: role === "ADMIN" || role === "EMPLOYEE" ? role : undefined,
+        fullName:
+          fullName !== undefined
+            ? fullName
+            : undefined,
+
+        mobile:
+          mobile !== undefined
+            ? mobile || null
+            : undefined,
+
+        gender:
+          gender !== undefined
+            ? gender || null
+            : undefined,
+
+        isActive:
+          isActive !== undefined
+            ? isActive
+            : undefined,
+
+        departmentId:
+          departmentId !== undefined
+            ? departmentId || null
+            : undefined,
+
+        designationId:
+          designationId !== undefined
+            ? designationId || null
+            : undefined,
+
+        employeeTypeId:
+          employeeTypeId !== undefined
+            ? employeeTypeId || null
+            : undefined,
+
+        role:
+          role === "ADMIN" || role === "EMPLOYEE"
+            ? role
+            : undefined,
+
         updatedAt: new Date(),
       },
+
       select: {
         id: true,
         fullName: true,
@@ -109,7 +223,8 @@ export async function PUT(
 
     return NextResponse.json(employee);
   } catch (error) {
-    console.error("PUT [id] error:", error);
+    console.error("PUT /api/employees/[id] error:", error);
+
     return NextResponse.json(
       { error: "Failed to update employee" },
       { status: 500 }
@@ -122,16 +237,22 @@ export async function DELETE(
   { params }: { params: Promise<Params> }
 ) {
   try {
-    const { id } = await params;  // ← AWAIT params!
+    const { id } = await params;
 
-    const auth = await requireAdmin();
+    const auth = await requireEmployeePermission(
+      "Employee List",
+      "delete"
+    );
+
     if (!auth.ok) {
-      return NextResponse.json({ error: auth.error }, { status: auth.status });
+      return auth.response;
     }
 
     const employee = await prisma.employee.findUnique({
       where: { id },
-      select: { fullName: true },
+      select: {
+        fullName: true,
+      },
     });
 
     if (!employee) {
@@ -141,24 +262,31 @@ export async function DELETE(
       );
     }
 
+    await prisma.employee.update({
+      where: { id },
+      data: {
+        isActive: false,
+      },
+    });
+
     await prisma.auditLog.create({
       data: {
         employeeId: auth.session.sub,
         action: "EMPLOYEE_DELETED",
-        entity: "Employee",
+        entity: "Employee List",
         entityId: id,
-        metadata: { deletedName: employee.fullName },
+        metadata: {
+          deletedName: employee.fullName,
+        },
       },
     });
 
-    await prisma.employee.update({
-      where: { id },
-      data: { isActive: false },
+    return NextResponse.json({
+      success: true,
     });
-
-    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("DELETE [id] error:", error);
+    console.error("DELETE /api/employees/[id] error:", error);
+
     return NextResponse.json(
       { error: "Failed to delete employee" },
       { status: 500 }

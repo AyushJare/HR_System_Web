@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requirePermissionOrAdmin } from "@/lib/auth";
 
 type Params = { id: string };
 
@@ -10,7 +10,7 @@ export async function PUT(
 ) {
   const { id } = await params;
 
-  const auth = await requireAdmin();
+  const auth = await requirePermissionOrAdmin("Employee Types", "edit");
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
@@ -51,17 +51,14 @@ export async function DELETE(
 ) {
   const { id } = await params;
 
-  const auth = await requireAdmin();
+  const auth = await requirePermissionOrAdmin("Employee Types", "delete");
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
   const employeeType = await prisma.employeeType.findUnique({ where: { id } });
   if (!employeeType) {
-    return NextResponse.json(
-      { error: "Employee type not found" },
-      { status: 404 }
-    );
+    return NextResponse.json({ error: "Employee type not found" }, { status: 404 });
   }
 
   await prisma.auditLog.create({
@@ -75,6 +72,5 @@ export async function DELETE(
   });
 
   await prisma.employeeType.delete({ where: { id } });
-
   return NextResponse.json({ success: true });
 }

@@ -1,38 +1,24 @@
 import { NextResponse } from "next/server";
-
 import { prisma } from "@/lib/prisma";
-
-import { requireAdmin } from "@/lib/auth";
+import { requirePermissionOrAdmin } from "@/lib/auth";
 
 export async function GET() {
-  const auth = await requireAdmin();
-
+  const auth = await requirePermissionOrAdmin("Holidays", "view");
   if (!auth.ok) {
-    return NextResponse.json(
-      { error: auth.error },
-      { status: auth.status }
-    );
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
-  const holidays = await prisma.holiday.findMany({
-    orderBy: { date: "asc" },
-  });
-
+  const holidays = await prisma.holiday.findMany({ orderBy: { date: "asc" } });
   return NextResponse.json(holidays);
 }
 
 export async function POST(request: Request) {
-  const auth = await requireAdmin();
-
+  const auth = await requirePermissionOrAdmin("Holidays", "add");
   if (!auth.ok) {
-    return NextResponse.json(
-      { error: auth.error },
-      { status: auth.status }
-    );
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
   const body = await request.json();
-
   const { name, date, description } = body;
 
   if (!name || name.trim() === "" || !date) {
@@ -46,8 +32,7 @@ export async function POST(request: Request) {
     data: {
       name: name.trim(),
       description:
-        typeof description === "string" &&
-          description.trim() !== ""
+        typeof description === "string" && description.trim() !== ""
           ? description.trim()
           : null,
       date: new Date(date),

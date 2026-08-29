@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/auth";
+import { requirePermissionOrAdmin } from "@/lib/auth";
 import ExcelJS from "exceljs";
 
 export async function GET() {
     try {
-        const auth = await requireAdmin();
+        const auth = await requirePermissionOrAdmin("Masters Template", "export");
 
         if (!auth.ok) {
             return NextResponse.json(

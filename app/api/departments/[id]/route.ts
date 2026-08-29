@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requirePermissionOrAdmin } from "@/lib/auth";
 
-type Params = {
-  id: string;
-};
+type Params = { id: string };
 
 export async function GET(
   request: NextRequest,
@@ -13,29 +11,20 @@ export async function GET(
   try {
     const { id } = await params;
 
-    const auth = await requireAdmin();
+    const auth = await requirePermissionOrAdmin("Departments", "view");
     if (!auth.ok) {
       return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
 
-    const department = await prisma.department.findUnique({
-      where: { id },
-    });
-
+    const department = await prisma.department.findUnique({ where: { id } });
     if (!department) {
-      return NextResponse.json(
-        { error: "Department not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Department not found" }, { status: 404 });
     }
 
     return NextResponse.json(department);
   } catch (error) {
     console.error("GET [id] department error:", error);
-    return NextResponse.json(
-      { error: "Server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
 
@@ -46,7 +35,7 @@ export async function PUT(
   try {
     const { id } = await params;
 
-    const auth = await requireAdmin();
+    const auth = await requirePermissionOrAdmin("Departments", "edit");
     if (!auth.ok) {
       return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
@@ -78,10 +67,7 @@ export async function PUT(
     return NextResponse.json(department);
   } catch (error) {
     console.error("PUT [id] department error:", error);
-    return NextResponse.json(
-      { error: "Failed to update department" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to update department" }, { status: 500 });
   }
 }
 
@@ -92,20 +78,14 @@ export async function DELETE(
   try {
     const { id } = await params;
 
-    const auth = await requireAdmin();
+    const auth = await requirePermissionOrAdmin("Departments", "delete");
     if (!auth.ok) {
       return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
 
-    const department = await prisma.department.findUnique({
-      where: { id },
-    });
-
+    const department = await prisma.department.findUnique({ where: { id } });
     if (!department) {
-      return NextResponse.json(
-        { error: "Department not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Department not found" }, { status: 404 });
     }
 
     await prisma.auditLog.create({
@@ -118,16 +98,10 @@ export async function DELETE(
       },
     });
 
-    await prisma.department.delete({
-      where: { id },
-    });
-
+    await prisma.department.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("DELETE [id] department error:", error);
-    return NextResponse.json(
-      { error: "Failed to delete department" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to delete department" }, { status: 500 });
   }
 }

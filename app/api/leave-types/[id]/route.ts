@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requirePermissionOrAdmin } from "@/lib/auth";
 
 type Params = { id: string };
 
@@ -10,7 +10,7 @@ export async function PUT(
 ) {
   const { id } = await params;
 
-  const auth = await requireAdmin();
+  const auth = await requirePermissionOrAdmin("Leave Types", "edit");
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
@@ -45,7 +45,7 @@ export async function DELETE(
 ) {
   const { id } = await params;
 
-  const auth = await requireAdmin();
+  const auth = await requirePermissionOrAdmin("Leave Types", "delete");
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
@@ -66,6 +66,5 @@ export async function DELETE(
   });
 
   await prisma.leaveType.delete({ where: { id } });
-
   return NextResponse.json({ success: true });
 }

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requirePermissionOrAdmin } from "@/lib/auth";
 
 type Params = { id: string };
 
@@ -10,28 +10,17 @@ export async function PUT(
 ) {
   const { id } = await params;
 
-  const auth = await requireAdmin();
-
+  const auth = await requirePermissionOrAdmin("Holidays", "edit");
   if (!auth.ok) {
-    return NextResponse.json(
-      { error: auth.error },
-      { status: auth.status }
-    );
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
-  const holiday = await prisma.holiday.findUnique({
-    where: { id },
-  });
-
+  const holiday = await prisma.holiday.findUnique({ where: { id } });
   if (!holiday) {
-    return NextResponse.json(
-      { error: "Holiday not found" },
-      { status: 404 }
-    );
+    return NextResponse.json({ error: "Holiday not found" }, { status: 404 });
   }
 
   const body = await request.json();
-
   const name = body.name?.trim();
   const date = body.date;
   const description = body.description;
@@ -49,8 +38,7 @@ export async function PUT(
       data: {
         name,
         description:
-          typeof description === "string" &&
-            description.trim() !== ""
+          typeof description === "string" && description.trim() !== ""
             ? description.trim()
             : null,
         date: new Date(date),
@@ -76,27 +64,14 @@ export async function PUT(
 
     return NextResponse.json(updatedHoliday);
   } catch (error) {
-    // Duplicate holiday: same name + same date
-    if (
-      error &&
-      typeof error === "object" &&
-      "code" in error &&
-      error.code === "P2002"
-    ) {
+    if (error && typeof error === "object" && "code" in error && error.code === "P2002") {
       return NextResponse.json(
-        {
-          error: `A holiday named "${name}" already exists on ${date}.`,
-        },
+        { error: `A holiday named "${name}" already exists on ${date}.` },
         { status: 409 }
       );
     }
-
     console.error("Holiday update error:", error);
-
-    return NextResponse.json(
-      { error: "Failed to update holiday" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to update holiday" }, { status: 500 });
   }
 }
 
@@ -106,24 +81,14 @@ export async function DELETE(
 ) {
   const { id } = await params;
 
-  const auth = await requireAdmin();
-
+  const auth = await requirePermissionOrAdmin("Holidays", "delete");
   if (!auth.ok) {
-    return NextResponse.json(
-      { error: auth.error },
-      { status: auth.status }
-    );
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
-  const holiday = await prisma.holiday.findUnique({
-    where: { id },
-  });
-
+  const holiday = await prisma.holiday.findUnique({ where: { id } });
   if (!holiday) {
-    return NextResponse.json(
-      { error: "Holiday not found" },
-      { status: 404 }
-    );
+    return NextResponse.json({ error: "Holiday not found" }, { status: 404 });
   }
 
   await prisma.auditLog.create({
@@ -132,17 +97,10 @@ export async function DELETE(
       action: "HOLIDAY_DELETED",
       entity: "Holiday",
       entityId: id,
-      metadata: {
-        deletedName: holiday.name,
-      },
+      metadata: { deletedName: holiday.name },
     },
   });
 
-  await prisma.holiday.delete({
-    where: { id },
-  });
-
-  return NextResponse.json({
-    success: true,
-  });
+  await prisma.holiday.delete({ where: { id } });
+  return NextResponse.json({ success: true });
 }

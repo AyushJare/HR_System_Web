@@ -95,6 +95,27 @@ model LeaveType {
   @@map("leave_types")
 }
 
+// ---------- ACCESS CONTROL ----------
+
+model UserType {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  permissions Json
+  isSystem    Boolean  @default(false)
+
+  // Login credentials for this User Type
+  loginEmail    String?  @unique
+  passwordHash  String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  employees   Employee[]
+
+  @@map("user_types")
+}
+
 // ---------- CORE ----------
 
 model Employee {
@@ -117,6 +138,10 @@ model Employee {
   employeeTypeId String?
   employeeType   EmployeeType? @relation(fields: [employeeTypeId], references: [id])
 
+  // NEW: Link to UserType for Access Control
+  userTypeId     String?
+  userType       UserType?     @relation(fields: [userTypeId], references: [id])
+
   createdById    String?
   createdBy      Employee?     @relation("EmployeeCreatedBy", fields: [createdById], references: [id])
   createdEmployees Employee[]  @relation("EmployeeCreatedBy")
@@ -128,7 +153,7 @@ model Employee {
   approvalsMade  Approval[]    @relation("ApprovalActor")
   auditLogs      AuditLog[]
   leaveBalances  LeaveBalance[]
-  sessions       Session[]      // ✅ ADD THIS LINE - Was missing!
+  sessions       Session[]
 
   @@map("employees")
 }
@@ -138,8 +163,8 @@ model Attendance {
   employeeId            String
   employee              Employee  @relation(fields: [employeeId], references: [id])
   
-  date                  DateTime  @db.Date  // IMPORTANT: Use DATE type
-  checkInTime           DateTime  @default(now()) // Immutable
+  date                  DateTime  @db.Date
+  checkInTime           DateTime  @default(now())
   checkOutTime          DateTime?
   
   status                String    @default("PRESENT")
@@ -150,7 +175,7 @@ model Attendance {
   createdAt             DateTime  @default(now())
   deletedAt             DateTime?
   
-  @@unique([employeeId, date]) // Only one check-in per day per employee
+  @@unique([employeeId, date])
   @@index([date])
   @@index([employeeId, date])
 }
@@ -190,10 +215,10 @@ model AuditLog {
   id         String   @id @default(cuid())
   employeeId String?
   employee   Employee? @relation(fields: [employeeId], references: [id], onDelete: SetNull)
-  action     String    // e.g., "LOGIN_SUCCESS", "LOGIN_FAILED"
-  entity     String?   // e.g., "Employee", "Attendance"
-  entityId   String?   // Reference to the entity
-  metadata   Json?     // Additional details (email, reason, etc.)
+  action     String
+  entity     String?
+  entityId   String?
+  metadata   Json?
   createdAt  DateTime  @default(now())
 
   @@index([employeeId])
@@ -203,12 +228,12 @@ model AuditLog {
 }
 
 model Session {
-  id        String    @id @default(cuid())
-  token     String    @unique
+  id         String    @id @default(cuid())
+  token      String    @unique
   employeeId String
-  employee  Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  expiresAt DateTime
-  createdAt DateTime  @default(now())
+  employee   Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  expiresAt  DateTime
+  createdAt  DateTime  @default(now())
 
   @@map("sessions")
 }

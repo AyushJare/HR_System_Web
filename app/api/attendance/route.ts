@@ -1,21 +1,40 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
+import { checkPermission } from "@/lib/permissions";
 import { toDateOnlyUTC } from "@/lib/dateOnly";
 
 export async function GET(request: NextRequest) {
   try {
-    const auth = await requireAdmin();
+    const session = await getSession();
 
-    if (!auth.ok) {
+    if (!session) {
       return NextResponse.json(
-        { error: auth.error },
-        { status: auth.status }
+        { error: "Unauthorized" },
+        { status: 401 }
       );
     }
 
-    const { searchParams } = new URL(request.url);
-    const dateParam = searchParams.get("date");
+    const employeeId = session.sub;
+
+    // ADMIN always has access.
+    // Other users need Attendance -> View.
+    if (session.role !== "ADMIN") {
+      const allowed = await checkPermission(
+        employeeId,
+        "Attendance",
+        "view"
+      );
+
+      if (!allowed) {
+        return NextResponse.json(
+          { error: "You don't have permission to view Attendance" },
+          { status: 403 }
+        );
+      }
+    }
+
+    const dateParam = request.nextUrl.searchParams.get("date");
 
     if (!dateParam) {
       return NextResponse.json(
@@ -57,16 +76,8 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    /*
-     * Keep the response shape expected by
-     * app/admin/attendance/page.tsx.
-     *
-     * Prisma:
-     *   checkInTime  -> API: timeIn
-     *   checkOutTime -> API: timeOut
-     */
     const result = employees.map((emp) => {
-      const attendance = emp.attendances[0] || null;
+      const attendance = emp.attendances[0] ?? null;
 
       return {
         employeeId: emp.id,
@@ -97,28 +108,55 @@ export async function GET(request: NextRequest) {
             ? error.message
             : "Unknown server error",
       },
-      {
-        status: 500,
-      }
+      { status: 500 }
     );
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const auth = await requireAdmin();
+    const session = await getSession();
 
-    if (!auth.ok) {
+    if (!session) {
       return NextResponse.json(
-        { error: auth.error },
-        { status: auth.status }
+        { error: "Unauthorized" },
+        { status: 401 }
       );
+    }
+
+    const employeeId = session.sub;
+
+    /*
+     * Saving attendance is a modifying action.
+     *
+     * ADMIN -> automatically allowed
+     * Other users -> need Attendance edit OR add permission
+     */
+    if (session.role !== "ADMIN") {
+      const canEdit = await checkPermission(
+        employeeId,
+        "Attendance",
+        "edit"
+      );
+
+      const canAdd = await checkPermission(
+        employeeId,
+        "Attendance",
+        "add"
+      );
+
+      if (!canEdit && !canAdd) {
+        return NextResponse.json(
+          { error: "You don't have permission to modify Attendance" },
+          { status: 403 }
+        );
+      }
     }
 
     const body = await request.json();
 
     const {
-      employeeId,
+      employeeId: targetEmployeeId,
       date,
       timeIn,
       timeOut,
@@ -126,14 +164,12 @@ export async function POST(request: Request) {
       reason,
     } = body;
 
-    if (!employeeId || !date) {
+    if (!targetEmployeeId || !date) {
       return NextResponse.json(
         {
           error: "employeeId and date are required",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
@@ -142,27 +178,33 @@ export async function POST(request: Request) {
     const attendance = await prisma.attendance.upsert({
       where: {
         employeeId_date: {
-          employeeId,
+          employeeId: targetEmployeeId,
           date: attendanceDate,
         },
       },
 
       update: {
-        checkInTime: timeIn
-          ? new Date(`${date}T${timeIn}:00`)
-          : undefined,
+        ...(timeIn
+          ? {
+            checkInTime: new Date(`${date}T${timeIn}:00`),
+          }
+          : {}),
 
-        checkOutTime: timeOut
-          ? new Date(`${date}T${timeOut}:00`)
-          : null,
+        ...(timeOut
+          ? {
+            checkOutTime: new Date(`${date}T${timeOut}:00`),
+          }
+          : {
+            checkOutTime: null,
+          }),
 
         status: status || "PRESENT",
         reason: reason || null,
-        modifiedBy: auth.session.sub,
+        modifiedBy: employeeId,
       },
 
       create: {
-        employeeId,
+        employeeId: targetEmployeeId,
         date: attendanceDate,
 
         checkInTime: timeIn
@@ -175,19 +217,19 @@ export async function POST(request: Request) {
 
         status: status || "PRESENT",
         reason: reason || null,
-        modifiedBy: auth.session.sub,
+        modifiedBy: employeeId,
       },
     });
 
     await prisma.auditLog.create({
       data: {
-        employeeId: auth.session.sub,
+        employeeId,
         action: "ATTENDANCE_MARKED",
         entity: "Attendance",
         entityId: attendance.id,
 
         metadata: {
-          forEmployeeId: employeeId,
+          forEmployeeId: targetEmployeeId,
           date,
           status: status || "PRESENT",
         },
@@ -206,9 +248,7 @@ export async function POST(request: Request) {
             ? error.message
             : "Unknown server error",
       },
-      {
-        status: 500,
-      }
+      { status: 500 }
     );
   }
 }

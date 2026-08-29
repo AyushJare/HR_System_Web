@@ -9,10 +9,21 @@ export async function GET() {
   }
   const employee = await prisma.employee.findUnique({
     where: { id: session.sub },
-    select: { id: true, fullName: true, email: true, role: true },
+    include: { userType: true },
   });
   if (!employee) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
-  return NextResponse.json(employee);
+  return NextResponse.json({
+    success: true,
+    data: {
+      id: employee.id,
+      fullName: employee.fullName,
+      email: employee.email,
+      role: employee.role,
+      employeeCode: employee.employeeCode,
+      userType: employee.userType?.name,
+      permissions: employee.userType?.permissions,
+    }
+  });
 }
