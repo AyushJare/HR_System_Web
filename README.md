@@ -36,7 +36,38 @@ JWT over cookie-only sessions — chosen specifically so a future mobile client 
 - **Input validation layer** — RFC-compliant email validation, password strength enforcement with secure auto-generation, and India-formatted phone validation
 - **Session security** — refresh-token-based sessions with revocation support
 - **Rate limiting** — protection against abuse on sensitive endpoints, alongside standard security headers
+- **Fine-grained permissions** — Control view, add, edit, delete per module
+- **UserType-based roles** — Create custom roles with specific permission sets
+- **Permission inheritance** — Parent module permissions apply to children
+  - Example: "Masters.view" grants view access to all masters modules
+  - Example: "Approvals.edit" grants edit access to Approve/Reject Requests
+- **Access Control dashboard** — Manage roles, permissions, and user assignments
+- **Nested permissions** — Approvals has sub-actions: Approve Requests, Reject Requests
+- **Audit logging** — Every permission check logged with user, action, result
 
+### Permission Modules
+
+| Module | Actions | Sub-modules |
+|---|---|---|
+| Employee | view, add, edit, delete | Employee List, Employee Details |
+| Attendance | view, add, edit | Check-in, Daily, Corrections |
+| Masters | view, add, edit, delete | Departments, Designations, Holidays, Leave Types |
+| Approvals | view, add, edit | Leave Approvals, Attendance Approvals, Approve Requests, Reject Requests |
+| Leaves | view, add, edit | Leave Config, Balances |
+| Reports | view, export | Attendance Summary, Consolidated Report |
+| Dashboard | view | - |
+| Access Control | view, add, edit, delete | User Types, Permissions |
+
+### How It Works
+
+1. **Admin** creates a UserType (e.g., "HR Manager")
+2. **Admin** assigns granular permissions to that UserType
+3. **Admin** assigns UserType to employees
+4. **Employee** logs in → gets only their assigned permissions
+5. **API** enforces permission on every endpoint
+6. **Audit** logs every permission check (success/denial)
+
+   
 ## Tech Stack
 
 | Layer | Technology |
@@ -47,6 +78,7 @@ JWT over cookie-only sessions — chosen specifically so a future mobile client 
 | Auth | JWT ([jose](https://github.com/panva/jose)) + httpOnly cookies |
 | Styling | [Tailwind CSS](https://tailwindcss.com) |
 | Password Hashing | bcryptjs |
+| Access Control | Permission modules, UserType, fine-grained checks |
 
 ## Architecture
 
@@ -98,6 +130,12 @@ Transaction-wrapped leave approval — approving a leave, updating attendance, a
 
 7. Open [http://localhost:3000](http://localhost:3000) — you'll be redirected to the login page.
 
+8. Login as admin and create your first UserType
+   - Go to Admin → Access Control
+   - Create new UserType
+   - Assign permissions
+   - Assign to employees
+
 ### Default Seeded Login
 
 | Field | Value |
@@ -109,8 +147,11 @@ Change this immediately in any environment beyond local development.
 
 ## Project Structure
 ```text
-app/
-├── admin/
+app/admin/
+├── access-control/          NEW: Manage roles & permissions
+│   ├── page.tsx            List UserTypes
+│   ├── add/page.tsx        Create new role
+│   └── [id]/edit/page.tsx  Edit permissions
 │   ├── dashboard/           Live stats, pending approvals, recent activity
 │   ├── employees/           List, add, per-employee detail + edit
 │   ├── attendance/          Daily attendance marking
