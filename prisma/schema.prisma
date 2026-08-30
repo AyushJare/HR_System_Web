@@ -27,6 +27,11 @@ enum ApprovalStatus {
   REJECTED
 }
 
+enum LocationMode {
+  RESTRICTED_100M
+  UNRESTRICTED
+}
+
 // ---------- MASTERS ----------
 
 model Department {
@@ -98,20 +103,18 @@ model LeaveType {
 // ---------- ACCESS CONTROL ----------
 
 model UserType {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  description String?
-  permissions Json
-  isSystem    Boolean  @default(false)
+  id           String       @id @default(cuid())
+  name         String       @unique
+  description  String?
+  permissions  Json
+  isSystem     Boolean      @default(false)
+  locationMode LocationMode @default(UNRESTRICTED)
 
-  // Login credentials for this User Type
-  loginEmail    String?  @unique
-  passwordHash  String?
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  employees   Employee[]
+  loginEmail   String?      @unique
+  passwordHash String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  employees    Employee[]
 
   @@map("user_types")
 }
@@ -119,65 +122,70 @@ model UserType {
 // ---------- CORE ----------
 
 model Employee {
-  id             String    @id @default(cuid())
-  employeeCode   Int       @unique @default(autoincrement())
-  fullName       String
-  email          String    @unique
-  passwordHash   String
-  mobile         String?
-  gender         String?
-  role           UserRole  @default(EMPLOYEE)
-  isActive       Boolean   @default(true)
+  id               String    @id @default(cuid())
+  employeeCode     Int       @unique @default(autoincrement())
+  fullName         String
+  email            String    @unique
+  passwordHash     String
+  mobile           String?
+  gender           String?
+  role             UserRole  @default(EMPLOYEE)
+  isActive         Boolean   @default(true)
 
-  departmentId   String?
-  department     Department?   @relation(fields: [departmentId], references: [id])
+  departmentId     String?
+  department       Department?   @relation(fields: [departmentId], references: [id])
 
-  designationId  String?
-  designation    Designation?  @relation(fields: [designationId], references: [id])
+  designationId    String?
+  designation      Designation?  @relation(fields: [designationId], references: [id])
 
-  employeeTypeId String?
-  employeeType   EmployeeType? @relation(fields: [employeeTypeId], references: [id])
+  employeeTypeId   String?
+  employeeType     EmployeeType? @relation(fields: [employeeTypeId], references: [id])
 
-  // NEW: Link to UserType for Access Control
-  userTypeId     String?
-  userType       UserType?     @relation(fields: [userTypeId], references: [id])
+  userTypeId       String?
+  userType         UserType?     @relation(fields: [userTypeId], references: [id])
 
-  createdById    String?
-  createdBy      Employee?     @relation("EmployeeCreatedBy", fields: [createdById], references: [id])
-  createdEmployees Employee[]  @relation("EmployeeCreatedBy")
+  createdById      String?
+  createdBy        Employee?     @relation("EmployeeCreatedBy", fields: [createdById], references: [id])
+  createdEmployees Employee[]    @relation("EmployeeCreatedBy")
 
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
-  attendances    Attendance[]
-  approvalsMade  Approval[]    @relation("ApprovalActor")
-  auditLogs      AuditLog[]
-  leaveBalances  LeaveBalance[]
-  sessions       Session[]
+  attendances      Attendance[]
+  approvalsMade    Approval[]    @relation("ApprovalActor")
+  auditLogs        AuditLog[]
+  leaveBalances    LeaveBalance[]
+  sessions         Session[]
 
   @@map("employees")
 }
 
 model Attendance {
-  id                    String    @id @default(cuid())
-  employeeId            String
-  employee              Employee  @relation(fields: [employeeId], references: [id])
-  
-  date                  DateTime  @db.Date
-  checkInTime           DateTime  @default(now())
-  checkOutTime          DateTime?
-  
-  status                String    @default("PRESENT")
-  modifiedAt            DateTime  @updatedAt
-  modifiedBy            String?
-  reason                String?
-  
-  createdAt             DateTime  @default(now())
-  deletedAt             DateTime?
-  
+  id                 String    @id @default(cuid())
+  employeeId         String
+  employee            Employee  @relation(fields: [employeeId], references: [id])
+
+  date               DateTime  @db.Date
+  checkInTime        DateTime  @default(now())
+  checkOutTime       DateTime?
+
+  status             String    @default("PRESENT")
+  reason             String?
+  modifiedBy         String?
+
+  latitude           Float?
+  longitude          Float?
+  gpsAccuracy        Float?
+  deviceId           String?
+  ipAddress          String?
+  isMockLocation     Boolean   @default(false)
+  distanceFromOffice Float?
+
+  modifiedAt         DateTime  @updatedAt
+  deletedAt          DateTime?
+
   @@unique([employeeId, date])
-  @@index([date])
-  @@index([employeeId, date])
+  @@map("attendances")
 }
 
 model Approval {
@@ -212,7 +220,7 @@ model LeaveBalance {
 }
 
 model AuditLog {
-  id         String   @id @default(cuid())
+  id         String    @id @default(cuid())
   employeeId String?
   employee   Employee? @relation(fields: [employeeId], references: [id], onDelete: SetNull)
   action     String
@@ -228,12 +236,12 @@ model AuditLog {
 }
 
 model Session {
-  id         String    @id @default(cuid())
-  token      String    @unique
+  id         String   @id @default(cuid())
+  token      String   @unique
   employeeId String
-  employee   Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   expiresAt  DateTime
-  createdAt  DateTime  @default(now())
+  createdAt  DateTime @default(now())
 
   @@map("sessions")
 }

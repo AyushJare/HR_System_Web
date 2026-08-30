@@ -34,3 +34,11 @@ export const ApprovalStatus = {
 } as const
 
 export type ApprovalStatus = (typeof ApprovalStatus)[keyof typeof ApprovalStatus]
+
+
+export const LocationMode = {
+  RESTRICTED_100M: 'RESTRICTED_100M',
+  UNRESTRICTED: 'UNRESTRICTED'
+} as const
+
+export type LocationMode = (typeof LocationMode)[keyof typeof LocationMode]

@@ -1502,6 +1502,7 @@ export const UserTypeScalarFieldEnum = {
   description: 'description',
   permissions: 'permissions',
   isSystem: 'isSystem',
+  locationMode: 'locationMode',
   loginEmail: 'loginEmail',
   passwordHash: 'passwordHash',
   createdAt: 'createdAt',
@@ -1540,10 +1541,16 @@ export const AttendanceScalarFieldEnum = {
   checkInTime: 'checkInTime',
   checkOutTime: 'checkOutTime',
   status: 'status',
-  modifiedAt: 'modifiedAt',
-  modifiedBy: 'modifiedBy',
   reason: 'reason',
-  createdAt: 'createdAt',
+  modifiedBy: 'modifiedBy',
+  latitude: 'latitude',
+  longitude: 'longitude',
+  gpsAccuracy: 'gpsAccuracy',
+  deviceId: 'deviceId',
+  ipAddress: 'ipAddress',
+  isMockLocation: 'isMockLocation',
+  distanceFromOffice: 'distanceFromOffice',
+  modifiedAt: 'modifiedAt',
   deletedAt: 'deletedAt'
 } as const
 
@@ -1721,6 +1728,20 @@ export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel,
 
 
 /**
+ * Reference to a field of type 'LocationMode'
+ */
+export type EnumLocationModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'LocationMode'>
+    
+
+
+/**
+ * Reference to a field of type 'LocationMode[]'
+ */
+export type ListEnumLocationModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'LocationMode[]'>
+    
+
+
+/**
  * Reference to a field of type 'UserRole'
  */
 export type EnumUserRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UserRole'>
@@ -1735,20 +1756,6 @@ export type ListEnumUserRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$Pri
 
 
 /**
- * Reference to a field of type 'ApprovalStatus'
- */
-export type EnumApprovalStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ApprovalStatus'>
-    
-
-
-/**
- * Reference to a field of type 'ApprovalStatus[]'
- */
-export type ListEnumApprovalStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ApprovalStatus[]'>
-    
-
-
-/**
  * Reference to a field of type 'Float'
  */
 export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
@@ -1759,6 +1766,20 @@ export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, '
  * Reference to a field of type 'Float[]'
  */
 export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
+    
+
+
+/**
+ * Reference to a field of type 'ApprovalStatus'
+ */
+export type EnumApprovalStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ApprovalStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'ApprovalStatus[]'
+ */
+export type ListEnumApprovalStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ApprovalStatus[]'>
     
 
 /**

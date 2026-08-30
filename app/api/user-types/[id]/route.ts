@@ -9,6 +9,7 @@ interface UpdateUserTypeRequest {
     name?: string;
     description?: string;
     permissions?: UserPermissions | UserPermissions[];
+    locationMode?: "RESTRICTED_100M" | "UNRESTRICTED";
 }
 
 export async function GET(
@@ -127,6 +128,13 @@ export async function PUT(
             ...(body.permissions !== undefined && {
                 permissions: body.permissions as any,
             }),
+
+            ...(body.locationMode !== undefined && {
+                locationMode:
+                    body.locationMode === "RESTRICTED_100M"
+                        ? "RESTRICTED_100M"
+                        : "UNRESTRICTED",
+            }),
         },
     });
 
@@ -136,6 +144,10 @@ export async function PUT(
             action: "USER_TYPE_UPDATED",
             entity: "UserType",
             entityId: id,
+            metadata: {
+                locationMode: updated.locationMode,
+                name: updated.name,
+            },
         },
     });
 

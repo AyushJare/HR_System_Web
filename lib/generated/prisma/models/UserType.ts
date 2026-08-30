@@ -29,6 +29,7 @@ export type UserTypeMinAggregateOutputType = {
   name: string | null
   description: string | null
   isSystem: boolean | null
+  locationMode: $Enums.LocationMode | null
   loginEmail: string | null
   passwordHash: string | null
   createdAt: Date | null
@@ -40,6 +41,7 @@ export type UserTypeMaxAggregateOutputType = {
   name: string | null
   description: string | null
   isSystem: boolean | null
+  locationMode: $Enums.LocationMode | null
   loginEmail: string | null
   passwordHash: string | null
   createdAt: Date | null
@@ -52,6 +54,7 @@ export type UserTypeCountAggregateOutputType = {
   description: number
   permissions: number
   isSystem: number
+  locationMode: number
   loginEmail: number
   passwordHash: number
   createdAt: number
@@ -65,6 +68,7 @@ export type UserTypeMinAggregateInputType = {
   name?: true
   description?: true
   isSystem?: true
+  locationMode?: true
   loginEmail?: true
   passwordHash?: true
   createdAt?: true
@@ -76,6 +80,7 @@ export type UserTypeMaxAggregateInputType = {
   name?: true
   description?: true
   isSystem?: true
+  locationMode?: true
   loginEmail?: true
   passwordHash?: true
   createdAt?: true
@@ -88,6 +93,7 @@ export type UserTypeCountAggregateInputType = {
   description?: true
   permissions?: true
   isSystem?: true
+  locationMode?: true
   loginEmail?: true
   passwordHash?: true
   createdAt?: true
@@ -173,6 +179,7 @@ export type UserTypeGroupByOutputType = {
   description: string | null
   permissions: runtime.JsonValue
   isSystem: boolean
+  locationMode: $Enums.LocationMode
   loginEmail: string | null
   passwordHash: string | null
   createdAt: Date
@@ -206,6 +213,7 @@ export type UserTypeWhereInput = {
   description?: Prisma.StringNullableFilter<"UserType"> | string | null
   permissions?: Prisma.JsonFilter<"UserType">
   isSystem?: Prisma.BoolFilter<"UserType"> | boolean
+  locationMode?: Prisma.EnumLocationModeFilter<"UserType"> | $Enums.LocationMode
   loginEmail?: Prisma.StringNullableFilter<"UserType"> | string | null
   passwordHash?: Prisma.StringNullableFilter<"UserType"> | string | null
   createdAt?: Prisma.DateTimeFilter<"UserType"> | Date | string
@@ -219,6 +227,7 @@ export type UserTypeOrderByWithRelationInput = {
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   permissions?: Prisma.SortOrder
   isSystem?: Prisma.SortOrder
+  locationMode?: Prisma.SortOrder
   loginEmail?: Prisma.SortOrderInput | Prisma.SortOrder
   passwordHash?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -236,6 +245,7 @@ export type UserTypeWhereUniqueInput = Prisma.AtLeast<{
   description?: Prisma.StringNullableFilter<"UserType"> | string | null
   permissions?: Prisma.JsonFilter<"UserType">
   isSystem?: Prisma.BoolFilter<"UserType"> | boolean
+  locationMode?: Prisma.EnumLocationModeFilter<"UserType"> | $Enums.LocationMode
   passwordHash?: Prisma.StringNullableFilter<"UserType"> | string | null
   createdAt?: Prisma.DateTimeFilter<"UserType"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"UserType"> | Date | string
@@ -248,6 +258,7 @@ export type UserTypeOrderByWithAggregationInput = {
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   permissions?: Prisma.SortOrder
   isSystem?: Prisma.SortOrder
+  locationMode?: Prisma.SortOrder
   loginEmail?: Prisma.SortOrderInput | Prisma.SortOrder
   passwordHash?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -266,6 +277,7 @@ export type UserTypeScalarWhereWithAggregatesInput = {
   description?: Prisma.StringNullableWithAggregatesFilter<"UserType"> | string | null
   permissions?: Prisma.JsonWithAggregatesFilter<"UserType">
   isSystem?: Prisma.BoolWithAggregatesFilter<"UserType"> | boolean
+  locationMode?: Prisma.EnumLocationModeWithAggregatesFilter<"UserType"> | $Enums.LocationMode
   loginEmail?: Prisma.StringNullableWithAggregatesFilter<"UserType"> | string | null
   passwordHash?: Prisma.StringNullableWithAggregatesFilter<"UserType"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"UserType"> | Date | string
@@ -278,6 +290,7 @@ export type UserTypeCreateInput = {
   description?: string | null
   permissions: Prisma.JsonNullValueInput | runtime.InputJsonValue
   isSystem?: boolean
+  locationMode?: $Enums.LocationMode
   loginEmail?: string | null
   passwordHash?: string | null
   createdAt?: Date | string
@@ -291,6 +304,7 @@ export type UserTypeUncheckedCreateInput = {
   description?: string | null
   permissions: Prisma.JsonNullValueInput | runtime.InputJsonValue
   isSystem?: boolean
+  locationMode?: $Enums.LocationMode
   loginEmail?: string | null
   passwordHash?: string | null
   createdAt?: Date | string
@@ -304,6 +318,7 @@ export type UserTypeUpdateInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   permissions?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   isSystem?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  locationMode?: Prisma.EnumLocationModeFieldUpdateOperationsInput | $Enums.LocationMode
   loginEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -317,6 +332,7 @@ export type UserTypeUncheckedUpdateInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   permissions?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   isSystem?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  locationMode?: Prisma.EnumLocationModeFieldUpdateOperationsInput | $Enums.LocationMode
   loginEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -330,6 +346,7 @@ export type UserTypeCreateManyInput = {
   description?: string | null
   permissions: Prisma.JsonNullValueInput | runtime.InputJsonValue
   isSystem?: boolean
+  locationMode?: $Enums.LocationMode
   loginEmail?: string | null
   passwordHash?: string | null
   createdAt?: Date | string
@@ -342,6 +359,7 @@ export type UserTypeUpdateManyMutationInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   permissions?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   isSystem?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  locationMode?: Prisma.EnumLocationModeFieldUpdateOperationsInput | $Enums.LocationMode
   loginEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -354,6 +372,7 @@ export type UserTypeUncheckedUpdateManyInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   permissions?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   isSystem?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  locationMode?: Prisma.EnumLocationModeFieldUpdateOperationsInput | $Enums.LocationMode
   loginEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -366,6 +385,7 @@ export type UserTypeCountOrderByAggregateInput = {
   description?: Prisma.SortOrder
   permissions?: Prisma.SortOrder
   isSystem?: Prisma.SortOrder
+  locationMode?: Prisma.SortOrder
   loginEmail?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -377,6 +397,7 @@ export type UserTypeMaxOrderByAggregateInput = {
   name?: Prisma.SortOrder
   description?: Prisma.SortOrder
   isSystem?: Prisma.SortOrder
+  locationMode?: Prisma.SortOrder
   loginEmail?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -388,6 +409,7 @@ export type UserTypeMinOrderByAggregateInput = {
   name?: Prisma.SortOrder
   description?: Prisma.SortOrder
   isSystem?: Prisma.SortOrder
+  locationMode?: Prisma.SortOrder
   loginEmail?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -401,6 +423,10 @@ export type UserTypeNullableScalarRelationFilter = {
 
 export type BoolFieldUpdateOperationsInput = {
   set?: boolean
+}
+
+export type EnumLocationModeFieldUpdateOperationsInput = {
+  set?: $Enums.LocationMode
 }
 
 export type UserTypeCreateNestedOneWithoutEmployeesInput = {
@@ -425,6 +451,7 @@ export type UserTypeCreateWithoutEmployeesInput = {
   description?: string | null
   permissions: Prisma.JsonNullValueInput | runtime.InputJsonValue
   isSystem?: boolean
+  locationMode?: $Enums.LocationMode
   loginEmail?: string | null
   passwordHash?: string | null
   createdAt?: Date | string
@@ -437,6 +464,7 @@ export type UserTypeUncheckedCreateWithoutEmployeesInput = {
   description?: string | null
   permissions: Prisma.JsonNullValueInput | runtime.InputJsonValue
   isSystem?: boolean
+  locationMode?: $Enums.LocationMode
   loginEmail?: string | null
   passwordHash?: string | null
   createdAt?: Date | string
@@ -465,6 +493,7 @@ export type UserTypeUpdateWithoutEmployeesInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   permissions?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   isSystem?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  locationMode?: Prisma.EnumLocationModeFieldUpdateOperationsInput | $Enums.LocationMode
   loginEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -477,6 +506,7 @@ export type UserTypeUncheckedUpdateWithoutEmployeesInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   permissions?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   isSystem?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  locationMode?: Prisma.EnumLocationModeFieldUpdateOperationsInput | $Enums.LocationMode
   loginEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -520,6 +550,7 @@ export type UserTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   description?: boolean
   permissions?: boolean
   isSystem?: boolean
+  locationMode?: boolean
   loginEmail?: boolean
   passwordHash?: boolean
   createdAt?: boolean
@@ -534,6 +565,7 @@ export type UserTypeSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   description?: boolean
   permissions?: boolean
   isSystem?: boolean
+  locationMode?: boolean
   loginEmail?: boolean
   passwordHash?: boolean
   createdAt?: boolean
@@ -546,6 +578,7 @@ export type UserTypeSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   description?: boolean
   permissions?: boolean
   isSystem?: boolean
+  locationMode?: boolean
   loginEmail?: boolean
   passwordHash?: boolean
   createdAt?: boolean
@@ -558,13 +591,14 @@ export type UserTypeSelectScalar = {
   description?: boolean
   permissions?: boolean
   isSystem?: boolean
+  locationMode?: boolean
   loginEmail?: boolean
   passwordHash?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserTypeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "description" | "permissions" | "isSystem" | "loginEmail" | "passwordHash" | "createdAt" | "updatedAt", ExtArgs["result"]["userType"]>
+export type UserTypeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "description" | "permissions" | "isSystem" | "locationMode" | "loginEmail" | "passwordHash" | "createdAt" | "updatedAt", ExtArgs["result"]["userType"]>
 export type UserTypeInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   employees?: boolean | Prisma.UserType$employeesArgs<ExtArgs>
   _count?: boolean | Prisma.UserTypeCountOutputTypeDefaultArgs<ExtArgs>
@@ -583,6 +617,7 @@ export type $UserTypePayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     description: string | null
     permissions: runtime.JsonValue
     isSystem: boolean
+    locationMode: $Enums.LocationMode
     loginEmail: string | null
     passwordHash: string | null
     createdAt: Date
@@ -1016,6 +1051,7 @@ export interface UserTypeFieldRefs {
   readonly description: Prisma.FieldRef<"UserType", 'String'>
   readonly permissions: Prisma.FieldRef<"UserType", 'Json'>
   readonly isSystem: Prisma.FieldRef<"UserType", 'Boolean'>
+  readonly locationMode: Prisma.FieldRef<"UserType", 'LocationMode'>
   readonly loginEmail: Prisma.FieldRef<"UserType", 'String'>
   readonly passwordHash: Prisma.FieldRef<"UserType", 'String'>
   readonly createdAt: Prisma.FieldRef<"UserType", 'DateTime'>

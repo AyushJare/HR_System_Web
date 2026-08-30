@@ -154,6 +154,7 @@ export const UserTypeScalarFieldEnum = {
   description: 'description',
   permissions: 'permissions',
   isSystem: 'isSystem',
+  locationMode: 'locationMode',
   loginEmail: 'loginEmail',
   passwordHash: 'passwordHash',
   createdAt: 'createdAt',
@@ -192,10 +193,16 @@ export const AttendanceScalarFieldEnum = {
   checkInTime: 'checkInTime',
   checkOutTime: 'checkOutTime',
   status: 'status',
-  modifiedAt: 'modifiedAt',
-  modifiedBy: 'modifiedBy',
   reason: 'reason',
-  createdAt: 'createdAt',
+  modifiedBy: 'modifiedBy',
+  latitude: 'latitude',
+  longitude: 'longitude',
+  gpsAccuracy: 'gpsAccuracy',
+  deviceId: 'deviceId',
+  ipAddress: 'ipAddress',
+  isMockLocation: 'isMockLocation',
+  distanceFromOffice: 'distanceFromOffice',
+  modifiedAt: 'modifiedAt',
   deletedAt: 'deletedAt'
 } as const
 

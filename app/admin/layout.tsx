@@ -3,8 +3,13 @@ import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import AdminShell from "./AdminShell";
 
-export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+export default async function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const session = await getSession();
+
   if (!session) {
     redirect("/login");
   }
@@ -15,7 +20,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       fullName: true,
       email: true,
       role: true,
-      userType: { select: { permissions: true } },
+      userType: {
+        select: {
+          permissions: true,
+        },
+      },
     },
   });
 
@@ -23,11 +32,17 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     redirect("/login");
   }
 
-  const permissions = (employee.userType?.permissions ?? null) as Record<string, unknown> | null;
+  const permissions = (employee.userType?.permissions ?? null) as
+    | Record<string, unknown>
+    | null;
 
   return (
     <AdminShell
-      user={{ fullName: employee.fullName, email: employee.email, role: employee.role }}
+      user={{
+        fullName: employee.fullName,
+        email: employee.email,
+        role: employee.role,
+      }}
       permissions={permissions}
     >
       {children}

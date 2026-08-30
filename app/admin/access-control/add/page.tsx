@@ -24,6 +24,12 @@ export default function AddUserTypePage() {
     const [permissions, setPermissions] = useState(
         buildEmptyPermissions()
     );
+
+    // Location mode
+    const [locationMode, setLocationMode] = useState(
+        "UNRESTRICTED"
+    );
+
     const [saving, setSaving] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -46,6 +52,7 @@ export default function AddUserTypePage() {
                     name,
                     description,
                     permissions,
+                    locationMode,
                 }),
             });
 
@@ -155,6 +162,75 @@ export default function AddUserTypePage() {
                             }
                             className="w-full max-w-md rounded-md border border-slate-300 px-3 py-2 text-sm"
                         />
+                    </div>
+
+                    {/* Location Settings */}
+                    <div className="border-t pt-6 mt-6">
+                        <h3 className="text-lg font-semibold mb-4">
+                            📍 Location Settings
+                        </h3>
+
+                        <div className="space-y-3">
+                            <label className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-slate-50">
+                                <input
+                                    type="radio"
+                                    name="locationMode"
+                                    value="RESTRICTED_100M"
+                                    checked={
+                                        locationMode ===
+                                        "RESTRICTED_100M"
+                                    }
+                                    onChange={(e) =>
+                                        setLocationMode(
+                                            e.target.value
+                                        )
+                                    }
+                                    className="w-4 h-4"
+                                />
+
+                                <div className="ml-3">
+                                    <p className="font-medium">
+                                        Restricted (100m radius)
+                                    </p>
+
+                                    <p className="text-sm text-slate-600">
+                                        Employees can only login within
+                                        100m of office. Outside =
+                                        requires approval.
+                                    </p>
+                                </div>
+                            </label>
+
+                            <label className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-slate-50">
+                                <input
+                                    type="radio"
+                                    name="locationMode"
+                                    value="UNRESTRICTED"
+                                    checked={
+                                        locationMode ===
+                                        "UNRESTRICTED"
+                                    }
+                                    onChange={(e) =>
+                                        setLocationMode(
+                                            e.target.value
+                                        )
+                                    }
+                                    className="w-4 h-4"
+                                />
+
+                                <div className="ml-3">
+                                    <p className="font-medium">
+                                        Unrestricted (anywhere)
+                                    </p>
+
+                                    <p className="text-sm text-slate-600">
+                                        Employees can login from
+                                        anywhere. Location logged in
+                                        audit trail.
+                                    </p>
+                                </div>
+                            </label>
+                        </div>
                     </div>
                 </div>
 

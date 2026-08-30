@@ -161,23 +161,27 @@ export default function AdminShell({
   }
 
   return (
-    <div className="min-h-screen flex bg-white">
+    <div className="flex min-h-screen bg-white">
       {/* Sidebar */}
-      <aside className="fixed left-0 top-0 h-screen w-72 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 flex flex-col shadow-2xl border-r border-slate-800 z-50">
-        {/* Brand */}
-        <div className="h-20 flex items-center px-8 border-b border-slate-800/40">
+      <aside className="fixed left-0 top-0 h-screen w-72 bg-slate-950 text-white flex flex-col z-50">
+        {/* VMC Brand */}
+        <div className="h-20 flex items-center px-6 border-b border-slate-800/40">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-bold text-lg shadow-lg">
-              HR
+            <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center shadow-lg overflow-hidden">
+              <img
+                src="/images/vmc-logo.png"
+                alt="Vadodara Municipal Corporation"
+                className="w-10 h-10 object-contain"
+              />
             </div>
 
-            <div>
+            <div className="flex flex-col">
               <span className="font-bold text-sm text-white tracking-tight">
-                HR
+                VMC
               </span>
 
-              <span className="font-bold text-sm text-slate-400 tracking-tight ml-1.5">
-                Management
+              <span className="text-xs text-slate-400 tracking-tight">
+                Human Resources
               </span>
             </div>
           </div>
@@ -202,7 +206,8 @@ export default function AdminShell({
                   key={item.href}
                   href={item.href}
                   className={`
-                    flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-all duration-300 group relative
+                    flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl
+                    transition-all duration-300 group relative
                     ${active
                       ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg"
                       : "text-slate-300 hover:text-white hover:bg-slate-800/40"
@@ -213,9 +218,7 @@ export default function AdminShell({
                     {item.icon}
                   </span>
 
-                  <span className="flex-1">
-                    {item.label}
-                  </span>
+                  <span className="flex-1">{item.label}</span>
 
                   {active && (
                     <div className="flex items-center gap-1">
@@ -271,7 +274,7 @@ export default function AdminShell({
       </aside>
 
       {/* Main Content */}
-      <main className="ml-72 flex-1 overflow-y-auto h-screen bg-white">
+      <main className="ml-72 flex-1 overflow-y-auto min-h-screen bg-white">
         {children}
       </main>
     </div>

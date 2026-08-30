@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { checkPermission, UserPermissions } from "@/lib/permissions";
+import {
+    checkPermission,
+    UserPermissions,
+} from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/password";
 import crypto from "crypto";
@@ -9,6 +12,9 @@ interface CreateUserTypeRequest {
     name: string;
     description?: string;
     permissions: UserPermissions;
+
+    // NEW
+    locationMode?: "RESTRICTED_100M" | "UNRESTRICTED";
 }
 
 function generateEmail(name: string): string {
@@ -19,10 +25,6 @@ function generateEmail(name: string): string {
         .replace(/^\.+|\.+$/g, "");
 
     return `${base}@company.com`;
-}
-
-function generatePassword(): string {
-    return `${crypto.randomBytes(6).toString("base64url")}A1!`;
 }
 
 async function getUniqueEmail(name: string): Promise<string> {
@@ -78,14 +80,27 @@ export async function GET() {
 
         if (session.role !== "ADMIN") {
             const allowed =
-                (await checkPermission(session.sub, "User Types", "view")) ||
-                (await checkPermission(session.sub, "Employee List", "add")) ||
-                (await checkPermission(session.sub, "Employee List", "edit"));
+                (await checkPermission(
+                    session.sub,
+                    "User Types",
+                    "view"
+                )) ||
+                (await checkPermission(
+                    session.sub,
+                    "Employee List",
+                    "add"
+                )) ||
+                (await checkPermission(
+                    session.sub,
+                    "Employee List",
+                    "edit"
+                ));
 
             if (!allowed) {
                 return NextResponse.json(
                     {
-                        error: "You don't have permission to view User Types",
+                        error:
+                            "You don't have permission to view User Types",
                     },
                     { status: 403 }
                 );
@@ -97,7 +112,9 @@ export async function GET() {
                 id: true,
                 name: true,
                 description: true,
+                permissions: true,
                 isSystem: true,
+                locationMode: true,
                 loginEmail: true,
                 createdAt: true,
                 updatedAt: true,
@@ -120,173 +137,239 @@ export async function GET() {
         console.error("GET user types error:", error);
 
         return NextResponse.json(
-            { error: "Failed to load User Types" },
+            {
+                error: "Failed to load User Types",
+            },
             { status: 500 }
         );
     }
 }
 
 export async function POST(request: NextRequest) {
-    const session = await getSession();
+    try {
+        const session = await getSession();
 
-    if (!session) {
-        return NextResponse.json(
-            { error: "Unauthorized" },
-            { status: 401 }
-        );
-    }
-
-    if (session.role !== "ADMIN") {
-        const allowed = await checkPermission(
-            session.sub,
-            "User Types",
-            "add"
-        );
-
-        if (!allowed) {
+        if (!session) {
             return NextResponse.json(
-                {
-                    error: "You don't have permission to add User Types",
-                },
-                { status: 403 }
+                { error: "Unauthorized" },
+                { status: 401 }
             );
         }
-    }
 
-    const body: CreateUserTypeRequest = await request.json();
+        if (session.role !== "ADMIN") {
+            const allowed = await checkPermission(
+                session.sub,
+                "User Types",
+                "add"
+            );
 
-    if (!body.name || !body.permissions) {
-        return NextResponse.json(
-            { error: "Name and permissions are required" },
-            { status: 400 }
-        );
-    }
+            if (!allowed) {
+                return NextResponse.json(
+                    {
+                        error:
+                            "You don't have permission to add User Types",
+                    },
+                    { status: 403 }
+                );
+            }
+        }
 
-    const cleanName = body.name.trim();
+        const body: CreateUserTypeRequest =
+            await request.json();
 
-    if (!cleanName) {
-        return NextResponse.json(
-            { error: "UserType name is required" },
-            { status: 400 }
-        );
-    }
+        if (!body.name || !body.permissions) {
+            return NextResponse.json(
+                {
+                    error:
+                        "Name and permissions are required",
+                },
+                { status: 400 }
+            );
+        }
 
-    // Check whether the UserType already exists
-    const existing = await prisma.userType.findUnique({
-        where: {
-            name: cleanName,
-        },
-    });
+        const cleanName = body.name.trim();
 
-    if (existing) {
-        return NextResponse.json(
-            { error: "UserType with this name already exists" },
-            { status: 409 }
-        );
-    }
+        if (!cleanName) {
+            return NextResponse.json(
+                {
+                    error: "UserType name is required",
+                },
+                { status: 400 }
+            );
+        }
 
-    // ----------------------------------------------------
-    // GENERATE LOGIN EMAIL
-    // Example:
-    // "HR Manager" -> hr.manager@company.com
-    // ----------------------------------------------------
+        // -----------------------------------------------
+        // LOCATION MODE
+        // -----------------------------------------------
 
-    const emailPrefix = cleanName
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, ".")
-        .replace(/^\.+|\.+$/g, "");
+        const locationMode =
+            body.locationMode === "RESTRICTED_100M"
+                ? "RESTRICTED_100M"
+                : "UNRESTRICTED";
 
-    let loginEmail = `${emailPrefix}@company.com`;
+        // -----------------------------------------------
+        // CHECK DUPLICATE
+        // -----------------------------------------------
 
-    // Make sure the generated email is unique
-    let emailExists = await prisma.userType.findUnique({
-        where: {
-            loginEmail,
-        },
-    });
+        const existing =
+            await prisma.userType.findUnique({
+                where: {
+                    name: cleanName,
+                },
+            });
 
-    let counter = 1;
+        if (existing) {
+            return NextResponse.json(
+                {
+                    error:
+                        "UserType with this name already exists",
+                },
+                { status: 409 }
+            );
+        }
 
-    while (emailExists) {
-        loginEmail = `${emailPrefix}${counter}@company.com`;
+        // -----------------------------------------------
+        // GENERATE LOGIN EMAIL
+        // -----------------------------------------------
 
-        emailExists = await prisma.userType.findUnique({
-            where: {
-                loginEmail,
+        const emailPrefix = cleanName
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, ".")
+            .replace(/^\.+|\.+$/g, "");
+
+        let loginEmail =
+            `${emailPrefix}@company.com`;
+
+        let emailExists =
+            await prisma.userType.findUnique({
+                where: {
+                    loginEmail,
+                },
+            });
+
+        let counter = 1;
+
+        while (emailExists) {
+            loginEmail =
+                `${emailPrefix}${counter}@company.com`;
+
+            emailExists =
+                await prisma.userType.findUnique({
+                    where: {
+                        loginEmail,
+                    },
+                });
+
+            counter++;
+        }
+
+        // -----------------------------------------------
+        // GENERATE PASSWORD
+        // -----------------------------------------------
+
+        const generatedPassword =
+            crypto.randomBytes(9).toString("base64url") +
+            "A1!";
+
+        const passwordHash =
+            await hashPassword(generatedPassword);
+
+        // -----------------------------------------------
+        // CREATE USER TYPE
+        // -----------------------------------------------
+
+        const userType =
+            await prisma.userType.create({
+                data: {
+                    name: cleanName,
+
+                    description:
+                        body.description?.trim() ||
+                        null,
+
+                    permissions:
+                        body.permissions as any,
+
+                    // IMPORTANT
+                    locationMode,
+
+                    loginEmail,
+
+                    passwordHash,
+
+                    isSystem: false,
+                },
+
+                select: {
+                    id: true,
+                    name: true,
+                    description: true,
+                    permissions: true,
+                    isSystem: true,
+
+                    // IMPORTANT
+                    locationMode: true,
+
+                    loginEmail: true,
+                    createdAt: true,
+                    updatedAt: true,
+                },
+            });
+
+        // -----------------------------------------------
+        // AUDIT
+        // -----------------------------------------------
+
+        await prisma.auditLog.create({
+            data: {
+                employeeId: session.sub,
+
+                action: "USER_TYPE_CREATED",
+
+                entity: "UserType",
+
+                entityId: userType.id,
+
+                metadata: {
+                    name: userType.name,
+                    loginEmail:
+                        userType.loginEmail,
+                    locationMode:
+                        userType.locationMode,
+                },
             },
         });
 
-        counter++;
+        // -----------------------------------------------
+        // RESPONSE
+        // -----------------------------------------------
+
+        return NextResponse.json(
+            {
+                success: true,
+
+                data: userType,
+
+                credentials: {
+                    email: loginEmail,
+                    password:
+                        generatedPassword,
+                },
+            },
+            { status: 201 }
+        );
+    } catch (error) {
+        console.error(
+            "POST user type error:",
+            error
+        );
+
+        return NextResponse.json(
+            {
+                error:
+                    "Failed to create User Type",
+            },
+            { status: 500 }
+        );
     }
-
-    // ----------------------------------------------------
-    // GENERATE RANDOM PASSWORD
-    // ----------------------------------------------------
-
-    const generatedPassword =
-        crypto.randomBytes(9).toString("base64url") + "A1!";
-
-    const passwordHash = await hashPassword(generatedPassword);
-
-    // ----------------------------------------------------
-    // CREATE USER TYPE
-    // ----------------------------------------------------
-
-    const userType = await prisma.userType.create({
-        data: {
-            name: cleanName,
-            description: body.description?.trim() || null,
-            permissions: body.permissions as any,
-
-            // Automatically generated credentials
-            loginEmail,
-            passwordHash,
-
-            isSystem: false,
-        },
-
-        select: {
-            id: true,
-            name: true,
-            description: true,
-            permissions: true,
-            isSystem: true,
-            loginEmail: true,
-            createdAt: true,
-            updatedAt: true,
-        },
-    });
-
-    // ----------------------------------------------------
-    // AUDIT LOG
-    // ----------------------------------------------------
-
-    await prisma.auditLog.create({
-        data: {
-            employeeId: session.sub,
-            action: "USER_TYPE_CREATED",
-            entity: "UserType",
-            entityId: userType.id,
-            metadata: {
-                name: userType.name,
-                loginEmail: userType.loginEmail,
-            },
-        },
-    });
-
-    // ----------------------------------------------------
-    // RETURN CREDENTIALS ONCE
-    // ----------------------------------------------------
-
-    return NextResponse.json(
-        {
-            success: true,
-            data: userType,
-            credentials: {
-                email: loginEmail,
-                password: generatedPassword,
-            },
-        },
-        { status: 201 }
-    );
 }

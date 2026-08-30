@@ -22,6 +22,7 @@ export default function EditUserTypePage() {
     const [description, setDescription] = useState("");
     const [permissions, setPermissions] = useState<Record<string, any>>({});
     const [isSystem, setIsSystem] = useState(false);
+    const [locationMode, setLocationMode] = useState<"RESTRICTED_100M" | "UNRESTRICTED">("UNRESTRICTED");
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
@@ -45,6 +46,7 @@ export default function EditUserTypePage() {
                 setDescription(ut.description ?? "");
                 setPermissions(ut.permissions ?? {});
                 setIsSystem(ut.isSystem);
+                setLocationMode(ut.locationMode ?? "UNRESTRICTED");
             })
             .catch(() => {
                 toast.error("Failed to load user type");
@@ -64,6 +66,7 @@ export default function EditUserTypePage() {
                     name,
                     description,
                     permissions,
+                    locationMode,
                 }),
             });
 
@@ -159,33 +162,58 @@ export default function EditUserTypePage() {
                     disabled={isSystem}
                     className="space-y-6"
                 >
-                    <div className="bg-white rounded-lg border border-slate-200 p-6 space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">
-                                User Type *
+                    {/* Location Settings */}
+                    <div className="border-t pt-6 mt-6">
+                        <h3 className="text-lg font-semibold mb-4">
+                            📍 Location Settings
+                        </h3>
+
+                        <div className="space-y-3">
+                            <label className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-slate-50">
+                                <input
+                                    type="radio"
+                                    name="locationMode"
+                                    value="RESTRICTED_100M"
+                                    checked={locationMode === "RESTRICTED_100M"}
+                                    onChange={(e) =>
+                                        setLocationMode(
+                                            e.target.value as "RESTRICTED_100M"
+                                        )
+                                    }
+                                    className="w-4 h-4"
+                                />
+                                <div className="ml-3">
+                                    <p className="font-medium">
+                                        Restricted (100m radius)
+                                    </p>
+                                    <p className="text-sm text-slate-600">
+                                        Employees can only login within 100m of office. Outside = requires approval.
+                                    </p>
+                                </div>
                             </label>
 
-                            <input
-                                value={name}
-                                onChange={(e) =>
-                                    setName(e.target.value)
-                                }
-                                className="w-full max-w-md rounded-md border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-50"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">
-                                Description
+                            <label className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-slate-50">
+                                <input
+                                    type="radio"
+                                    name="locationMode"
+                                    value="UNRESTRICTED"
+                                    checked={locationMode === "UNRESTRICTED"}
+                                    onChange={(e) =>
+                                        setLocationMode(
+                                            e.target.value as "UNRESTRICTED"
+                                        )
+                                    }
+                                    className="w-4 h-4"
+                                />
+                                <div className="ml-3">
+                                    <p className="font-medium">
+                                        Unrestricted (anywhere)
+                                    </p>
+                                    <p className="text-sm text-slate-600">
+                                        Employees can login from anywhere. Location logged in audit trail.
+                                    </p>
+                                </div>
                             </label>
-
-                            <input
-                                value={description}
-                                onChange={(e) =>
-                                    setDescription(e.target.value)
-                                }
-                                className="w-full max-w-md rounded-md border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-50"
-                            />
                         </div>
                     </div>
 

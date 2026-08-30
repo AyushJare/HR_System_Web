@@ -20,8 +20,24 @@ export type AttendanceModel = runtime.Types.Result.DefaultSelection<Prisma.$Atte
 
 export type AggregateAttendance = {
   _count: AttendanceCountAggregateOutputType | null
+  _avg: AttendanceAvgAggregateOutputType | null
+  _sum: AttendanceSumAggregateOutputType | null
   _min: AttendanceMinAggregateOutputType | null
   _max: AttendanceMaxAggregateOutputType | null
+}
+
+export type AttendanceAvgAggregateOutputType = {
+  latitude: number | null
+  longitude: number | null
+  gpsAccuracy: number | null
+  distanceFromOffice: number | null
+}
+
+export type AttendanceSumAggregateOutputType = {
+  latitude: number | null
+  longitude: number | null
+  gpsAccuracy: number | null
+  distanceFromOffice: number | null
 }
 
 export type AttendanceMinAggregateOutputType = {
@@ -31,10 +47,16 @@ export type AttendanceMinAggregateOutputType = {
   checkInTime: Date | null
   checkOutTime: Date | null
   status: string | null
-  modifiedAt: Date | null
-  modifiedBy: string | null
   reason: string | null
-  createdAt: Date | null
+  modifiedBy: string | null
+  latitude: number | null
+  longitude: number | null
+  gpsAccuracy: number | null
+  deviceId: string | null
+  ipAddress: string | null
+  isMockLocation: boolean | null
+  distanceFromOffice: number | null
+  modifiedAt: Date | null
   deletedAt: Date | null
 }
 
@@ -45,10 +67,16 @@ export type AttendanceMaxAggregateOutputType = {
   checkInTime: Date | null
   checkOutTime: Date | null
   status: string | null
-  modifiedAt: Date | null
-  modifiedBy: string | null
   reason: string | null
-  createdAt: Date | null
+  modifiedBy: string | null
+  latitude: number | null
+  longitude: number | null
+  gpsAccuracy: number | null
+  deviceId: string | null
+  ipAddress: string | null
+  isMockLocation: boolean | null
+  distanceFromOffice: number | null
+  modifiedAt: Date | null
   deletedAt: Date | null
 }
 
@@ -59,14 +87,34 @@ export type AttendanceCountAggregateOutputType = {
   checkInTime: number
   checkOutTime: number
   status: number
-  modifiedAt: number
-  modifiedBy: number
   reason: number
-  createdAt: number
+  modifiedBy: number
+  latitude: number
+  longitude: number
+  gpsAccuracy: number
+  deviceId: number
+  ipAddress: number
+  isMockLocation: number
+  distanceFromOffice: number
+  modifiedAt: number
   deletedAt: number
   _all: number
 }
 
+
+export type AttendanceAvgAggregateInputType = {
+  latitude?: true
+  longitude?: true
+  gpsAccuracy?: true
+  distanceFromOffice?: true
+}
+
+export type AttendanceSumAggregateInputType = {
+  latitude?: true
+  longitude?: true
+  gpsAccuracy?: true
+  distanceFromOffice?: true
+}
 
 export type AttendanceMinAggregateInputType = {
   id?: true
@@ -75,10 +123,16 @@ export type AttendanceMinAggregateInputType = {
   checkInTime?: true
   checkOutTime?: true
   status?: true
-  modifiedAt?: true
-  modifiedBy?: true
   reason?: true
-  createdAt?: true
+  modifiedBy?: true
+  latitude?: true
+  longitude?: true
+  gpsAccuracy?: true
+  deviceId?: true
+  ipAddress?: true
+  isMockLocation?: true
+  distanceFromOffice?: true
+  modifiedAt?: true
   deletedAt?: true
 }
 
@@ -89,10 +143,16 @@ export type AttendanceMaxAggregateInputType = {
   checkInTime?: true
   checkOutTime?: true
   status?: true
-  modifiedAt?: true
-  modifiedBy?: true
   reason?: true
-  createdAt?: true
+  modifiedBy?: true
+  latitude?: true
+  longitude?: true
+  gpsAccuracy?: true
+  deviceId?: true
+  ipAddress?: true
+  isMockLocation?: true
+  distanceFromOffice?: true
+  modifiedAt?: true
   deletedAt?: true
 }
 
@@ -103,10 +163,16 @@ export type AttendanceCountAggregateInputType = {
   checkInTime?: true
   checkOutTime?: true
   status?: true
-  modifiedAt?: true
-  modifiedBy?: true
   reason?: true
-  createdAt?: true
+  modifiedBy?: true
+  latitude?: true
+  longitude?: true
+  gpsAccuracy?: true
+  deviceId?: true
+  ipAddress?: true
+  isMockLocation?: true
+  distanceFromOffice?: true
+  modifiedAt?: true
   deletedAt?: true
   _all?: true
 }
@@ -149,6 +215,18 @@ export type AttendanceAggregateArgs<ExtArgs extends runtime.Types.Extensions.Int
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    * 
+   * Select which fields to average
+  **/
+  _avg?: AttendanceAvgAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
+   * Select which fields to sum
+  **/
+  _sum?: AttendanceSumAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
    * Select which fields to find the minimum value
   **/
   _min?: AttendanceMinAggregateInputType
@@ -179,6 +257,8 @@ export type AttendanceGroupByArgs<ExtArgs extends runtime.Types.Extensions.Inter
   take?: number
   skip?: number
   _count?: AttendanceCountAggregateInputType | true
+  _avg?: AttendanceAvgAggregateInputType
+  _sum?: AttendanceSumAggregateInputType
   _min?: AttendanceMinAggregateInputType
   _max?: AttendanceMaxAggregateInputType
 }
@@ -190,12 +270,20 @@ export type AttendanceGroupByOutputType = {
   checkInTime: Date
   checkOutTime: Date | null
   status: string
-  modifiedAt: Date
-  modifiedBy: string | null
   reason: string | null
-  createdAt: Date
+  modifiedBy: string | null
+  latitude: number | null
+  longitude: number | null
+  gpsAccuracy: number | null
+  deviceId: string | null
+  ipAddress: string | null
+  isMockLocation: boolean
+  distanceFromOffice: number | null
+  modifiedAt: Date
   deletedAt: Date | null
   _count: AttendanceCountAggregateOutputType | null
+  _avg: AttendanceAvgAggregateOutputType | null
+  _sum: AttendanceSumAggregateOutputType | null
   _min: AttendanceMinAggregateOutputType | null
   _max: AttendanceMaxAggregateOutputType | null
 }
@@ -225,10 +313,16 @@ export type AttendanceWhereInput = {
   checkInTime?: Prisma.DateTimeFilter<"Attendance"> | Date | string
   checkOutTime?: Prisma.DateTimeNullableFilter<"Attendance"> | Date | string | null
   status?: Prisma.StringFilter<"Attendance"> | string
-  modifiedAt?: Prisma.DateTimeFilter<"Attendance"> | Date | string
-  modifiedBy?: Prisma.StringNullableFilter<"Attendance"> | string | null
   reason?: Prisma.StringNullableFilter<"Attendance"> | string | null
-  createdAt?: Prisma.DateTimeFilter<"Attendance"> | Date | string
+  modifiedBy?: Prisma.StringNullableFilter<"Attendance"> | string | null
+  latitude?: Prisma.FloatNullableFilter<"Attendance"> | number | null
+  longitude?: Prisma.FloatNullableFilter<"Attendance"> | number | null
+  gpsAccuracy?: Prisma.FloatNullableFilter<"Attendance"> | number | null
+  deviceId?: Prisma.StringNullableFilter<"Attendance"> | string | null
+  ipAddress?: Prisma.StringNullableFilter<"Attendance"> | string | null
+  isMockLocation?: Prisma.BoolFilter<"Attendance"> | boolean
+  distanceFromOffice?: Prisma.FloatNullableFilter<"Attendance"> | number | null
+  modifiedAt?: Prisma.DateTimeFilter<"Attendance"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"Attendance"> | Date | string | null
   employee?: Prisma.XOR<Prisma.EmployeeScalarRelationFilter, Prisma.EmployeeWhereInput>
 }
@@ -240,10 +334,16 @@ export type AttendanceOrderByWithRelationInput = {
   checkInTime?: Prisma.SortOrder
   checkOutTime?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
-  modifiedAt?: Prisma.SortOrder
-  modifiedBy?: Prisma.SortOrderInput | Prisma.SortOrder
   reason?: Prisma.SortOrderInput | Prisma.SortOrder
-  createdAt?: Prisma.SortOrder
+  modifiedBy?: Prisma.SortOrderInput | Prisma.SortOrder
+  latitude?: Prisma.SortOrderInput | Prisma.SortOrder
+  longitude?: Prisma.SortOrderInput | Prisma.SortOrder
+  gpsAccuracy?: Prisma.SortOrderInput | Prisma.SortOrder
+  deviceId?: Prisma.SortOrderInput | Prisma.SortOrder
+  ipAddress?: Prisma.SortOrderInput | Prisma.SortOrder
+  isMockLocation?: Prisma.SortOrder
+  distanceFromOffice?: Prisma.SortOrderInput | Prisma.SortOrder
+  modifiedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   employee?: Prisma.EmployeeOrderByWithRelationInput
 }
@@ -259,10 +359,16 @@ export type AttendanceWhereUniqueInput = Prisma.AtLeast<{
   checkInTime?: Prisma.DateTimeFilter<"Attendance"> | Date | string
   checkOutTime?: Prisma.DateTimeNullableFilter<"Attendance"> | Date | string | null
   status?: Prisma.StringFilter<"Attendance"> | string
-  modifiedAt?: Prisma.DateTimeFilter<"Attendance"> | Date | string
-  modifiedBy?: Prisma.StringNullableFilter<"Attendance"> | string | null
   reason?: Prisma.StringNullableFilter<"Attendance"> | string | null
-  createdAt?: Prisma.DateTimeFilter<"Attendance"> | Date | string
+  modifiedBy?: Prisma.StringNullableFilter<"Attendance"> | string | null
+  latitude?: Prisma.FloatNullableFilter<"Attendance"> | number | null
+  longitude?: Prisma.FloatNullableFilter<"Attendance"> | number | null
+  gpsAccuracy?: Prisma.FloatNullableFilter<"Attendance"> | number | null
+  deviceId?: Prisma.StringNullableFilter<"Attendance"> | string | null
+  ipAddress?: Prisma.StringNullableFilter<"Attendance"> | string | null
+  isMockLocation?: Prisma.BoolFilter<"Attendance"> | boolean
+  distanceFromOffice?: Prisma.FloatNullableFilter<"Attendance"> | number | null
+  modifiedAt?: Prisma.DateTimeFilter<"Attendance"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"Attendance"> | Date | string | null
   employee?: Prisma.XOR<Prisma.EmployeeScalarRelationFilter, Prisma.EmployeeWhereInput>
 }, "id" | "employeeId_date">
@@ -274,14 +380,22 @@ export type AttendanceOrderByWithAggregationInput = {
   checkInTime?: Prisma.SortOrder
   checkOutTime?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
-  modifiedAt?: Prisma.SortOrder
-  modifiedBy?: Prisma.SortOrderInput | Prisma.SortOrder
   reason?: Prisma.SortOrderInput | Prisma.SortOrder
-  createdAt?: Prisma.SortOrder
+  modifiedBy?: Prisma.SortOrderInput | Prisma.SortOrder
+  latitude?: Prisma.SortOrderInput | Prisma.SortOrder
+  longitude?: Prisma.SortOrderInput | Prisma.SortOrder
+  gpsAccuracy?: Prisma.SortOrderInput | Prisma.SortOrder
+  deviceId?: Prisma.SortOrderInput | Prisma.SortOrder
+  ipAddress?: Prisma.SortOrderInput | Prisma.SortOrder
+  isMockLocation?: Prisma.SortOrder
+  distanceFromOffice?: Prisma.SortOrderInput | Prisma.SortOrder
+  modifiedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.AttendanceCountOrderByAggregateInput
+  _avg?: Prisma.AttendanceAvgOrderByAggregateInput
   _max?: Prisma.AttendanceMaxOrderByAggregateInput
   _min?: Prisma.AttendanceMinOrderByAggregateInput
+  _sum?: Prisma.AttendanceSumOrderByAggregateInput
 }
 
 export type AttendanceScalarWhereWithAggregatesInput = {
@@ -294,10 +408,16 @@ export type AttendanceScalarWhereWithAggregatesInput = {
   checkInTime?: Prisma.DateTimeWithAggregatesFilter<"Attendance"> | Date | string
   checkOutTime?: Prisma.DateTimeNullableWithAggregatesFilter<"Attendance"> | Date | string | null
   status?: Prisma.StringWithAggregatesFilter<"Attendance"> | string
-  modifiedAt?: Prisma.DateTimeWithAggregatesFilter<"Attendance"> | Date | string
-  modifiedBy?: Prisma.StringNullableWithAggregatesFilter<"Attendance"> | string | null
   reason?: Prisma.StringNullableWithAggregatesFilter<"Attendance"> | string | null
-  createdAt?: Prisma.DateTimeWithAggregatesFilter<"Attendance"> | Date | string
+  modifiedBy?: Prisma.StringNullableWithAggregatesFilter<"Attendance"> | string | null
+  latitude?: Prisma.FloatNullableWithAggregatesFilter<"Attendance"> | number | null
+  longitude?: Prisma.FloatNullableWithAggregatesFilter<"Attendance"> | number | null
+  gpsAccuracy?: Prisma.FloatNullableWithAggregatesFilter<"Attendance"> | number | null
+  deviceId?: Prisma.StringNullableWithAggregatesFilter<"Attendance"> | string | null
+  ipAddress?: Prisma.StringNullableWithAggregatesFilter<"Attendance"> | string | null
+  isMockLocation?: Prisma.BoolWithAggregatesFilter<"Attendance"> | boolean
+  distanceFromOffice?: Prisma.FloatNullableWithAggregatesFilter<"Attendance"> | number | null
+  modifiedAt?: Prisma.DateTimeWithAggregatesFilter<"Attendance"> | Date | string
   deletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Attendance"> | Date | string | null
 }
 
@@ -307,10 +427,16 @@ export type AttendanceCreateInput = {
   checkInTime?: Date | string
   checkOutTime?: Date | string | null
   status?: string
-  modifiedAt?: Date | string
-  modifiedBy?: string | null
   reason?: string | null
-  createdAt?: Date | string
+  modifiedBy?: string | null
+  latitude?: number | null
+  longitude?: number | null
+  gpsAccuracy?: number | null
+  deviceId?: string | null
+  ipAddress?: string | null
+  isMockLocation?: boolean
+  distanceFromOffice?: number | null
+  modifiedAt?: Date | string
   deletedAt?: Date | string | null
   employee: Prisma.EmployeeCreateNestedOneWithoutAttendancesInput
 }
@@ -322,10 +448,16 @@ export type AttendanceUncheckedCreateInput = {
   checkInTime?: Date | string
   checkOutTime?: Date | string | null
   status?: string
-  modifiedAt?: Date | string
-  modifiedBy?: string | null
   reason?: string | null
-  createdAt?: Date | string
+  modifiedBy?: string | null
+  latitude?: number | null
+  longitude?: number | null
+  gpsAccuracy?: number | null
+  deviceId?: string | null
+  ipAddress?: string | null
+  isMockLocation?: boolean
+  distanceFromOffice?: number | null
+  modifiedAt?: Date | string
   deletedAt?: Date | string | null
 }
 
@@ -335,10 +467,16 @@ export type AttendanceUpdateInput = {
   checkInTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   checkOutTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
-  modifiedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  modifiedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  modifiedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gpsAccuracy?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  deviceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isMockLocation?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  distanceFromOffice?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  modifiedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   employee?: Prisma.EmployeeUpdateOneRequiredWithoutAttendancesNestedInput
 }
@@ -350,10 +488,16 @@ export type AttendanceUncheckedUpdateInput = {
   checkInTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   checkOutTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
-  modifiedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  modifiedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  modifiedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gpsAccuracy?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  deviceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isMockLocation?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  distanceFromOffice?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  modifiedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
@@ -364,10 +508,16 @@ export type AttendanceCreateManyInput = {
   checkInTime?: Date | string
   checkOutTime?: Date | string | null
   status?: string
-  modifiedAt?: Date | string
-  modifiedBy?: string | null
   reason?: string | null
-  createdAt?: Date | string
+  modifiedBy?: string | null
+  latitude?: number | null
+  longitude?: number | null
+  gpsAccuracy?: number | null
+  deviceId?: string | null
+  ipAddress?: string | null
+  isMockLocation?: boolean
+  distanceFromOffice?: number | null
+  modifiedAt?: Date | string
   deletedAt?: Date | string | null
 }
 
@@ -377,10 +527,16 @@ export type AttendanceUpdateManyMutationInput = {
   checkInTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   checkOutTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
-  modifiedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  modifiedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  modifiedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gpsAccuracy?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  deviceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isMockLocation?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  distanceFromOffice?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  modifiedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
@@ -391,10 +547,16 @@ export type AttendanceUncheckedUpdateManyInput = {
   checkInTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   checkOutTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
-  modifiedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  modifiedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  modifiedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gpsAccuracy?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  deviceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isMockLocation?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  distanceFromOffice?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  modifiedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
@@ -420,11 +582,24 @@ export type AttendanceCountOrderByAggregateInput = {
   checkInTime?: Prisma.SortOrder
   checkOutTime?: Prisma.SortOrder
   status?: Prisma.SortOrder
-  modifiedAt?: Prisma.SortOrder
-  modifiedBy?: Prisma.SortOrder
   reason?: Prisma.SortOrder
-  createdAt?: Prisma.SortOrder
+  modifiedBy?: Prisma.SortOrder
+  latitude?: Prisma.SortOrder
+  longitude?: Prisma.SortOrder
+  gpsAccuracy?: Prisma.SortOrder
+  deviceId?: Prisma.SortOrder
+  ipAddress?: Prisma.SortOrder
+  isMockLocation?: Prisma.SortOrder
+  distanceFromOffice?: Prisma.SortOrder
+  modifiedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
+}
+
+export type AttendanceAvgOrderByAggregateInput = {
+  latitude?: Prisma.SortOrder
+  longitude?: Prisma.SortOrder
+  gpsAccuracy?: Prisma.SortOrder
+  distanceFromOffice?: Prisma.SortOrder
 }
 
 export type AttendanceMaxOrderByAggregateInput = {
@@ -434,10 +609,16 @@ export type AttendanceMaxOrderByAggregateInput = {
   checkInTime?: Prisma.SortOrder
   checkOutTime?: Prisma.SortOrder
   status?: Prisma.SortOrder
-  modifiedAt?: Prisma.SortOrder
-  modifiedBy?: Prisma.SortOrder
   reason?: Prisma.SortOrder
-  createdAt?: Prisma.SortOrder
+  modifiedBy?: Prisma.SortOrder
+  latitude?: Prisma.SortOrder
+  longitude?: Prisma.SortOrder
+  gpsAccuracy?: Prisma.SortOrder
+  deviceId?: Prisma.SortOrder
+  ipAddress?: Prisma.SortOrder
+  isMockLocation?: Prisma.SortOrder
+  distanceFromOffice?: Prisma.SortOrder
+  modifiedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
 }
 
@@ -448,11 +629,24 @@ export type AttendanceMinOrderByAggregateInput = {
   checkInTime?: Prisma.SortOrder
   checkOutTime?: Prisma.SortOrder
   status?: Prisma.SortOrder
-  modifiedAt?: Prisma.SortOrder
-  modifiedBy?: Prisma.SortOrder
   reason?: Prisma.SortOrder
-  createdAt?: Prisma.SortOrder
+  modifiedBy?: Prisma.SortOrder
+  latitude?: Prisma.SortOrder
+  longitude?: Prisma.SortOrder
+  gpsAccuracy?: Prisma.SortOrder
+  deviceId?: Prisma.SortOrder
+  ipAddress?: Prisma.SortOrder
+  isMockLocation?: Prisma.SortOrder
+  distanceFromOffice?: Prisma.SortOrder
+  modifiedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
+}
+
+export type AttendanceSumOrderByAggregateInput = {
+  latitude?: Prisma.SortOrder
+  longitude?: Prisma.SortOrder
+  gpsAccuracy?: Prisma.SortOrder
+  distanceFromOffice?: Prisma.SortOrder
 }
 
 export type AttendanceCreateNestedManyWithoutEmployeeInput = {
@@ -501,16 +695,30 @@ export type NullableDateTimeFieldUpdateOperationsInput = {
   set?: Date | string | null
 }
 
+export type NullableFloatFieldUpdateOperationsInput = {
+  set?: number | null
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
+}
+
 export type AttendanceCreateWithoutEmployeeInput = {
   id?: string
   date: Date | string
   checkInTime?: Date | string
   checkOutTime?: Date | string | null
   status?: string
-  modifiedAt?: Date | string
-  modifiedBy?: string | null
   reason?: string | null
-  createdAt?: Date | string
+  modifiedBy?: string | null
+  latitude?: number | null
+  longitude?: number | null
+  gpsAccuracy?: number | null
+  deviceId?: string | null
+  ipAddress?: string | null
+  isMockLocation?: boolean
+  distanceFromOffice?: number | null
+  modifiedAt?: Date | string
   deletedAt?: Date | string | null
 }
 
@@ -520,10 +728,16 @@ export type AttendanceUncheckedCreateWithoutEmployeeInput = {
   checkInTime?: Date | string
   checkOutTime?: Date | string | null
   status?: string
-  modifiedAt?: Date | string
-  modifiedBy?: string | null
   reason?: string | null
-  createdAt?: Date | string
+  modifiedBy?: string | null
+  latitude?: number | null
+  longitude?: number | null
+  gpsAccuracy?: number | null
+  deviceId?: string | null
+  ipAddress?: string | null
+  isMockLocation?: boolean
+  distanceFromOffice?: number | null
+  modifiedAt?: Date | string
   deletedAt?: Date | string | null
 }
 
@@ -563,10 +777,16 @@ export type AttendanceScalarWhereInput = {
   checkInTime?: Prisma.DateTimeFilter<"Attendance"> | Date | string
   checkOutTime?: Prisma.DateTimeNullableFilter<"Attendance"> | Date | string | null
   status?: Prisma.StringFilter<"Attendance"> | string
-  modifiedAt?: Prisma.DateTimeFilter<"Attendance"> | Date | string
-  modifiedBy?: Prisma.StringNullableFilter<"Attendance"> | string | null
   reason?: Prisma.StringNullableFilter<"Attendance"> | string | null
-  createdAt?: Prisma.DateTimeFilter<"Attendance"> | Date | string
+  modifiedBy?: Prisma.StringNullableFilter<"Attendance"> | string | null
+  latitude?: Prisma.FloatNullableFilter<"Attendance"> | number | null
+  longitude?: Prisma.FloatNullableFilter<"Attendance"> | number | null
+  gpsAccuracy?: Prisma.FloatNullableFilter<"Attendance"> | number | null
+  deviceId?: Prisma.StringNullableFilter<"Attendance"> | string | null
+  ipAddress?: Prisma.StringNullableFilter<"Attendance"> | string | null
+  isMockLocation?: Prisma.BoolFilter<"Attendance"> | boolean
+  distanceFromOffice?: Prisma.FloatNullableFilter<"Attendance"> | number | null
+  modifiedAt?: Prisma.DateTimeFilter<"Attendance"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"Attendance"> | Date | string | null
 }
 
@@ -576,10 +796,16 @@ export type AttendanceCreateManyEmployeeInput = {
   checkInTime?: Date | string
   checkOutTime?: Date | string | null
   status?: string
-  modifiedAt?: Date | string
-  modifiedBy?: string | null
   reason?: string | null
-  createdAt?: Date | string
+  modifiedBy?: string | null
+  latitude?: number | null
+  longitude?: number | null
+  gpsAccuracy?: number | null
+  deviceId?: string | null
+  ipAddress?: string | null
+  isMockLocation?: boolean
+  distanceFromOffice?: number | null
+  modifiedAt?: Date | string
   deletedAt?: Date | string | null
 }
 
@@ -589,10 +815,16 @@ export type AttendanceUpdateWithoutEmployeeInput = {
   checkInTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   checkOutTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
-  modifiedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  modifiedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  modifiedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gpsAccuracy?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  deviceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isMockLocation?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  distanceFromOffice?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  modifiedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
@@ -602,10 +834,16 @@ export type AttendanceUncheckedUpdateWithoutEmployeeInput = {
   checkInTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   checkOutTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
-  modifiedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  modifiedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  modifiedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gpsAccuracy?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  deviceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isMockLocation?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  distanceFromOffice?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  modifiedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
@@ -615,10 +853,16 @@ export type AttendanceUncheckedUpdateManyWithoutEmployeeInput = {
   checkInTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   checkOutTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
-  modifiedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  modifiedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  modifiedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  gpsAccuracy?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  deviceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isMockLocation?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  distanceFromOffice?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  modifiedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
@@ -631,10 +875,16 @@ export type AttendanceSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   checkInTime?: boolean
   checkOutTime?: boolean
   status?: boolean
-  modifiedAt?: boolean
-  modifiedBy?: boolean
   reason?: boolean
-  createdAt?: boolean
+  modifiedBy?: boolean
+  latitude?: boolean
+  longitude?: boolean
+  gpsAccuracy?: boolean
+  deviceId?: boolean
+  ipAddress?: boolean
+  isMockLocation?: boolean
+  distanceFromOffice?: boolean
+  modifiedAt?: boolean
   deletedAt?: boolean
   employee?: boolean | Prisma.EmployeeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["attendance"]>
@@ -646,10 +896,16 @@ export type AttendanceSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   checkInTime?: boolean
   checkOutTime?: boolean
   status?: boolean
-  modifiedAt?: boolean
-  modifiedBy?: boolean
   reason?: boolean
-  createdAt?: boolean
+  modifiedBy?: boolean
+  latitude?: boolean
+  longitude?: boolean
+  gpsAccuracy?: boolean
+  deviceId?: boolean
+  ipAddress?: boolean
+  isMockLocation?: boolean
+  distanceFromOffice?: boolean
+  modifiedAt?: boolean
   deletedAt?: boolean
   employee?: boolean | Prisma.EmployeeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["attendance"]>
@@ -661,10 +917,16 @@ export type AttendanceSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   checkInTime?: boolean
   checkOutTime?: boolean
   status?: boolean
-  modifiedAt?: boolean
-  modifiedBy?: boolean
   reason?: boolean
-  createdAt?: boolean
+  modifiedBy?: boolean
+  latitude?: boolean
+  longitude?: boolean
+  gpsAccuracy?: boolean
+  deviceId?: boolean
+  ipAddress?: boolean
+  isMockLocation?: boolean
+  distanceFromOffice?: boolean
+  modifiedAt?: boolean
   deletedAt?: boolean
   employee?: boolean | Prisma.EmployeeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["attendance"]>
@@ -676,14 +938,20 @@ export type AttendanceSelectScalar = {
   checkInTime?: boolean
   checkOutTime?: boolean
   status?: boolean
-  modifiedAt?: boolean
-  modifiedBy?: boolean
   reason?: boolean
-  createdAt?: boolean
+  modifiedBy?: boolean
+  latitude?: boolean
+  longitude?: boolean
+  gpsAccuracy?: boolean
+  deviceId?: boolean
+  ipAddress?: boolean
+  isMockLocation?: boolean
+  distanceFromOffice?: boolean
+  modifiedAt?: boolean
   deletedAt?: boolean
 }
 
-export type AttendanceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "employeeId" | "date" | "checkInTime" | "checkOutTime" | "status" | "modifiedAt" | "modifiedBy" | "reason" | "createdAt" | "deletedAt", ExtArgs["result"]["attendance"]>
+export type AttendanceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "employeeId" | "date" | "checkInTime" | "checkOutTime" | "status" | "reason" | "modifiedBy" | "latitude" | "longitude" | "gpsAccuracy" | "deviceId" | "ipAddress" | "isMockLocation" | "distanceFromOffice" | "modifiedAt" | "deletedAt", ExtArgs["result"]["attendance"]>
 export type AttendanceInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   employee?: boolean | Prisma.EmployeeDefaultArgs<ExtArgs>
 }
@@ -706,10 +974,16 @@ export type $AttendancePayload<ExtArgs extends runtime.Types.Extensions.Internal
     checkInTime: Date
     checkOutTime: Date | null
     status: string
-    modifiedAt: Date
-    modifiedBy: string | null
     reason: string | null
-    createdAt: Date
+    modifiedBy: string | null
+    latitude: number | null
+    longitude: number | null
+    gpsAccuracy: number | null
+    deviceId: string | null
+    ipAddress: string | null
+    isMockLocation: boolean
+    distanceFromOffice: number | null
+    modifiedAt: Date
     deletedAt: Date | null
   }, ExtArgs["result"]["attendance"]>
   composites: {}
@@ -1141,10 +1415,16 @@ export interface AttendanceFieldRefs {
   readonly checkInTime: Prisma.FieldRef<"Attendance", 'DateTime'>
   readonly checkOutTime: Prisma.FieldRef<"Attendance", 'DateTime'>
   readonly status: Prisma.FieldRef<"Attendance", 'String'>
-  readonly modifiedAt: Prisma.FieldRef<"Attendance", 'DateTime'>
-  readonly modifiedBy: Prisma.FieldRef<"Attendance", 'String'>
   readonly reason: Prisma.FieldRef<"Attendance", 'String'>
-  readonly createdAt: Prisma.FieldRef<"Attendance", 'DateTime'>
+  readonly modifiedBy: Prisma.FieldRef<"Attendance", 'String'>
+  readonly latitude: Prisma.FieldRef<"Attendance", 'Float'>
+  readonly longitude: Prisma.FieldRef<"Attendance", 'Float'>
+  readonly gpsAccuracy: Prisma.FieldRef<"Attendance", 'Float'>
+  readonly deviceId: Prisma.FieldRef<"Attendance", 'String'>
+  readonly ipAddress: Prisma.FieldRef<"Attendance", 'String'>
+  readonly isMockLocation: Prisma.FieldRef<"Attendance", 'Boolean'>
+  readonly distanceFromOffice: Prisma.FieldRef<"Attendance", 'Float'>
+  readonly modifiedAt: Prisma.FieldRef<"Attendance", 'DateTime'>
   readonly deletedAt: Prisma.FieldRef<"Attendance", 'DateTime'>
 }
     
