@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requirePermissionOrAdmin } from "@/lib/auth";
+import { isWeeklyOff, getWeekNumberOfMonth } from "@/lib/attendanceUtils";
 
 export async function GET() {
   const auth = await requirePermissionOrAdmin("Dashboard", "view");
@@ -39,8 +40,25 @@ export async function GET() {
       }),
     ]);
 
-  const weeklyOffDays = settings?.weeklyOffDays ?? [0];
-  const isWeekOff = weeklyOffDays.includes(dayOfWeek);
+  // Handle both old and new format for backward compatibility
+  let weeklyOffConfig: Record<string, number[]> = {
+    "0": [], "1": [], "2": [], "3": [], "4": [], "5": [], "6": []
+  };
+
+  if (settings?.weeklyOffDays) {
+    if (typeof settings.weeklyOffDays === "object" && !Array.isArray(settings.weeklyOffDays)) {
+      // New format (object)
+      weeklyOffConfig = settings.weeklyOffDays as Record<string, number[]>;
+    } else if (Array.isArray(settings.weeklyOffDays)) {
+      // Old format (array) - convert to new format
+      const oldDaysArray = settings.weeklyOffDays as number[];
+      for (const day of oldDaysArray) {
+        weeklyOffConfig[day.toString()] = [1, 2, 3, 4, 5];
+      }
+    }
+  }
+
+  const isWeekOff = isWeeklyOff(todayUTC, weeklyOffConfig);
   const isHoliday = !!todayHoliday;
 
   const counts = { present: 0, absent: 0, halfDay: 0, onLeave: 0, notMarked: 0 };

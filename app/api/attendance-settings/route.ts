@@ -1,4 +1,3 @@
-
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
@@ -14,7 +13,15 @@ async function getOrCreateSettings() {
 
   return prisma.attendanceSettings.create({
     data: {
-      weeklyOffDays: [0],
+      weeklyOffDays: {
+        "0": [1, 2, 3, 4, 5],
+        "1": [],
+        "2": [],
+        "3": [],
+        "4": [],
+        "5": [],
+        "6": []
+      },
     },
   });
 }
@@ -102,23 +109,43 @@ export async function PUT(request: Request) {
 
     const { weeklyOffDays } = body;
 
-    if (
-      !Array.isArray(weeklyOffDays) ||
-      weeklyOffDays.some(
-        (d: unknown) =>
-          typeof d !== "number" ||
-          !Number.isInteger(d) ||
-          d < 0 ||
-          d > 6
-      )
-    ) {
+    // Validate new format
+    if (typeof weeklyOffDays !== "object" || Array.isArray(weeklyOffDays)) {
       return NextResponse.json(
         {
-          error:
-            "weeklyOffDays must be an array of numbers 0-6",
+          error: "weeklyOffDays must be an object with day keys (0-6) mapping to week arrays",
         },
         { status: 400 }
       );
+    }
+
+    // Validate structure: each day key should map to array of week numbers
+    const validDays = new Set(["0", "1", "2", "3", "4", "5", "6"]);
+
+    for (const [day, weeks] of Object.entries(weeklyOffDays)) {
+      if (!validDays.has(day)) {
+        return NextResponse.json(
+          { error: `Invalid day key: ${day}. Must be 0-6` },
+          { status: 400 }
+        );
+      }
+
+      if (!Array.isArray(weeks)) {
+        return NextResponse.json(
+          { error: `Day ${day} weeks must be an array` },
+          { status: 400 }
+        );
+      }
+
+      // Validate each week number
+      for (const week of weeks) {
+        if (typeof week !== "number" || !Number.isInteger(week) || week < 1 || week > 5) {
+          return NextResponse.json(
+            { error: `Invalid week number: ${week}. Must be 1-5` },
+            { status: 400 }
+          );
+        }
+      }
     }
 
     const existing = await getOrCreateSettings();
@@ -158,4 +185,3 @@ export async function PUT(request: Request) {
     );
   }
 }
-

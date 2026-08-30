@@ -1478,7 +1478,7 @@ export async function POST(
                     Saturday: 6,
                 };
 
-                const weeklyOffDays =
+                const weeklyOffDaysArray =
                     weeklyOffData
                         .filter(
                             (item) =>
@@ -1492,22 +1492,61 @@ export async function POST(
                             (a, b) => a - b
                         );
 
+                // Convert array format to new object format
+                const weeklyOffDaysNew: Record<string, number[]> = {
+                    "0": [],
+                    "1": [],
+                    "2": [],
+                    "3": [],
+                    "4": [],
+                    "5": [],
+                    "6": []
+                };
+
+                for (const day of weeklyOffDaysArray) {
+                    weeklyOffDaysNew[day.toString()] = [1, 2, 3, 4, 5];
+                }
+
                 const settings =
                     await tx.attendanceSettings.findFirst();
 
                 if (settings) {
-                    const oldDays =
-                        [...settings.weeklyOffDays]
-                            .sort(
-                                (a, b) => a - b
-                            );
+                    // Handle both old and new formats for comparison
+                    let oldDaysForComparison: Record<string, number[]>;
+
+                    if (typeof settings.weeklyOffDays === "object" && !Array.isArray(settings.weeklyOffDays)) {
+                        oldDaysForComparison = settings.weeklyOffDays as Record<string, number[]>;
+                    } else if (Array.isArray(settings.weeklyOffDays)) {
+                        oldDaysForComparison = {
+                            "0": [],
+                            "1": [],
+                            "2": [],
+                            "3": [],
+                            "4": [],
+                            "5": [],
+                            "6": []
+                        };
+                        for (const day of (settings.weeklyOffDays as number[])) {
+                            weeklyOffDaysNew[day.toString()] = [1, 2, 3, 4, 5];
+                        }
+                    } else {
+                        oldDaysForComparison = {
+                            "0": [],
+                            "1": [],
+                            "2": [],
+                            "3": [],
+                            "4": [],
+                            "5": [],
+                            "6": []
+                        };
+                    }
 
                     const changed =
                         JSON.stringify(
-                            oldDays
+                            oldDaysForComparison
                         ) !==
                         JSON.stringify(
-                            weeklyOffDays
+                            weeklyOffDaysNew
                         );
 
                     if (changed) {
@@ -1518,7 +1557,7 @@ export async function POST(
                                         settings.id,
                                 },
                                 data: {
-                                    weeklyOffDays,
+                                    weeklyOffDays: weeklyOffDaysNew,
                                 },
                             }
                         );
@@ -1531,7 +1570,7 @@ export async function POST(
                     await tx.attendanceSettings.create(
                         {
                             data: {
-                                weeklyOffDays,
+                                weeklyOffDays: weeklyOffDaysNew,
                             },
                         }
                     );

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { checkPermission } from "@/lib/permissions";
+import { isWeeklyOff, getWeekNumberOfMonth } from "@/lib/attendanceUtils";
 
 type Params = { id: string };
 
@@ -98,7 +99,23 @@ export async function GET(
     return NextResponse.json({ error: "Employee not found" }, { status: 404 });
   }
 
-  const weeklyOffDays = settings?.weeklyOffDays ?? [0];
+  // Handle both old and new format for backward compatibility
+  let weeklyOffConfig: Record<string, number[]> = {
+    "0": [], "1": [], "2": [], "3": [], "4": [], "5": [], "6": []
+  };
+
+  if (settings?.weeklyOffDays) {
+    if (typeof settings.weeklyOffDays === "object" && !Array.isArray(settings.weeklyOffDays)) {
+      // New format (object)
+      weeklyOffConfig = settings.weeklyOffDays as Record<string, number[]>;
+    } else if (Array.isArray(settings.weeklyOffDays)) {
+      // Old format (array) - convert to new format
+      const oldDaysArray = settings.weeklyOffDays as number[];
+      for (const day of oldDaysArray) {
+        weeklyOffConfig[day.toString()] = [1, 2, 3, 4, 5];
+      }
+    }
+  }
 
   const holidayByDay = new Map<number, string>();
   holidays.forEach((h) => {
@@ -139,7 +156,7 @@ export async function GET(
       counts.onLeave++;
     } else if (dateObj > todayUTC) {
       status = "FUTURE";
-    } else if (weeklyOffDays.includes(dayOfWeek)) {
+    } else if (isWeeklyOff(dateObj, weeklyOffConfig)) {
       status = "WEEK_OFF";
       counts.weekOff++;
     } else if (holidayByDay.has(d)) {

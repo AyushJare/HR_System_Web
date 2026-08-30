@@ -48,15 +48,17 @@ export default function AttendancePage() {
         throw new Error(data?.error || "Failed to load attendance");
       }
 
-      if (!Array.isArray(data)) {
+      const rows = Array.isArray(data) ? data : data?.employees;
+
+      if (!Array.isArray(rows)) {
         throw new Error("Invalid attendance response");
       }
 
-      setRows(data);
+      setRows(rows);
 
       const nextDrafts: DraftMap = {};
 
-      data.forEach((row: AttendanceRow) => {
+      rows.forEach((row: AttendanceRow) => {
         nextDrafts[row.employeeId] = {
           timeIn: toTimeInputValue(
             row.attendance?.timeIn ?? null

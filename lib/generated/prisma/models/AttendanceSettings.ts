@@ -20,18 +20,8 @@ export type AttendanceSettingsModel = runtime.Types.Result.DefaultSelection<Pris
 
 export type AggregateAttendanceSettings = {
   _count: AttendanceSettingsCountAggregateOutputType | null
-  _avg: AttendanceSettingsAvgAggregateOutputType | null
-  _sum: AttendanceSettingsSumAggregateOutputType | null
   _min: AttendanceSettingsMinAggregateOutputType | null
   _max: AttendanceSettingsMaxAggregateOutputType | null
-}
-
-export type AttendanceSettingsAvgAggregateOutputType = {
-  weeklyOffDays: number | null
-}
-
-export type AttendanceSettingsSumAggregateOutputType = {
-  weeklyOffDays: number[]
 }
 
 export type AttendanceSettingsMinAggregateOutputType = {
@@ -51,14 +41,6 @@ export type AttendanceSettingsCountAggregateOutputType = {
   _all: number
 }
 
-
-export type AttendanceSettingsAvgAggregateInputType = {
-  weeklyOffDays?: true
-}
-
-export type AttendanceSettingsSumAggregateInputType = {
-  weeklyOffDays?: true
-}
 
 export type AttendanceSettingsMinAggregateInputType = {
   id?: true
@@ -115,18 +97,6 @@ export type AttendanceSettingsAggregateArgs<ExtArgs extends runtime.Types.Extens
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    * 
-   * Select which fields to average
-  **/
-  _avg?: AttendanceSettingsAvgAggregateInputType
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-   * 
-   * Select which fields to sum
-  **/
-  _sum?: AttendanceSettingsSumAggregateInputType
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-   * 
    * Select which fields to find the minimum value
   **/
   _min?: AttendanceSettingsMinAggregateInputType
@@ -157,19 +127,15 @@ export type AttendanceSettingsGroupByArgs<ExtArgs extends runtime.Types.Extensio
   take?: number
   skip?: number
   _count?: AttendanceSettingsCountAggregateInputType | true
-  _avg?: AttendanceSettingsAvgAggregateInputType
-  _sum?: AttendanceSettingsSumAggregateInputType
   _min?: AttendanceSettingsMinAggregateInputType
   _max?: AttendanceSettingsMaxAggregateInputType
 }
 
 export type AttendanceSettingsGroupByOutputType = {
   id: string
-  weeklyOffDays: number[]
+  weeklyOffDays: runtime.JsonValue
   updatedAt: Date
   _count: AttendanceSettingsCountAggregateOutputType | null
-  _avg: AttendanceSettingsAvgAggregateOutputType | null
-  _sum: AttendanceSettingsSumAggregateOutputType | null
   _min: AttendanceSettingsMinAggregateOutputType | null
   _max: AttendanceSettingsMaxAggregateOutputType | null
 }
@@ -194,7 +160,7 @@ export type AttendanceSettingsWhereInput = {
   OR?: Prisma.AttendanceSettingsWhereInput[]
   NOT?: Prisma.AttendanceSettingsWhereInput | Prisma.AttendanceSettingsWhereInput[]
   id?: Prisma.StringFilter<"AttendanceSettings"> | string
-  weeklyOffDays?: Prisma.IntNullableListFilter<"AttendanceSettings">
+  weeklyOffDays?: Prisma.JsonFilter<"AttendanceSettings">
   updatedAt?: Prisma.DateTimeFilter<"AttendanceSettings"> | Date | string
 }
 
@@ -209,7 +175,7 @@ export type AttendanceSettingsWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.AttendanceSettingsWhereInput | Prisma.AttendanceSettingsWhereInput[]
   OR?: Prisma.AttendanceSettingsWhereInput[]
   NOT?: Prisma.AttendanceSettingsWhereInput | Prisma.AttendanceSettingsWhereInput[]
-  weeklyOffDays?: Prisma.IntNullableListFilter<"AttendanceSettings">
+  weeklyOffDays?: Prisma.JsonFilter<"AttendanceSettings">
   updatedAt?: Prisma.DateTimeFilter<"AttendanceSettings"> | Date | string
 }, "id">
 
@@ -218,10 +184,8 @@ export type AttendanceSettingsOrderByWithAggregationInput = {
   weeklyOffDays?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.AttendanceSettingsCountOrderByAggregateInput
-  _avg?: Prisma.AttendanceSettingsAvgOrderByAggregateInput
   _max?: Prisma.AttendanceSettingsMaxOrderByAggregateInput
   _min?: Prisma.AttendanceSettingsMinOrderByAggregateInput
-  _sum?: Prisma.AttendanceSettingsSumOrderByAggregateInput
 }
 
 export type AttendanceSettingsScalarWhereWithAggregatesInput = {
@@ -229,68 +193,56 @@ export type AttendanceSettingsScalarWhereWithAggregatesInput = {
   OR?: Prisma.AttendanceSettingsScalarWhereWithAggregatesInput[]
   NOT?: Prisma.AttendanceSettingsScalarWhereWithAggregatesInput | Prisma.AttendanceSettingsScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"AttendanceSettings"> | string
-  weeklyOffDays?: Prisma.IntNullableListFilter<"AttendanceSettings">
+  weeklyOffDays?: Prisma.JsonWithAggregatesFilter<"AttendanceSettings">
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"AttendanceSettings"> | Date | string
 }
 
 export type AttendanceSettingsCreateInput = {
   id?: string
-  weeklyOffDays?: Prisma.AttendanceSettingsCreateweeklyOffDaysInput | number[]
+  weeklyOffDays?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   updatedAt?: Date | string
 }
 
 export type AttendanceSettingsUncheckedCreateInput = {
   id?: string
-  weeklyOffDays?: Prisma.AttendanceSettingsCreateweeklyOffDaysInput | number[]
+  weeklyOffDays?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   updatedAt?: Date | string
 }
 
 export type AttendanceSettingsUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  weeklyOffDays?: Prisma.AttendanceSettingsUpdateweeklyOffDaysInput | number[]
+  weeklyOffDays?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type AttendanceSettingsUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  weeklyOffDays?: Prisma.AttendanceSettingsUpdateweeklyOffDaysInput | number[]
+  weeklyOffDays?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type AttendanceSettingsCreateManyInput = {
   id?: string
-  weeklyOffDays?: Prisma.AttendanceSettingsCreateweeklyOffDaysInput | number[]
+  weeklyOffDays?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   updatedAt?: Date | string
 }
 
 export type AttendanceSettingsUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  weeklyOffDays?: Prisma.AttendanceSettingsUpdateweeklyOffDaysInput | number[]
+  weeklyOffDays?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type AttendanceSettingsUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  weeklyOffDays?: Prisma.AttendanceSettingsUpdateweeklyOffDaysInput | number[]
+  weeklyOffDays?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-}
-
-export type IntNullableListFilter<$PrismaModel = never> = {
-  equals?: number[] | Prisma.ListIntFieldRefInput<$PrismaModel> | null
-  has?: number | Prisma.IntFieldRefInput<$PrismaModel> | null
-  hasEvery?: number[] | Prisma.ListIntFieldRefInput<$PrismaModel>
-  hasSome?: number[] | Prisma.ListIntFieldRefInput<$PrismaModel>
-  isEmpty?: boolean
 }
 
 export type AttendanceSettingsCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   weeklyOffDays?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-}
-
-export type AttendanceSettingsAvgOrderByAggregateInput = {
-  weeklyOffDays?: Prisma.SortOrder
 }
 
 export type AttendanceSettingsMaxOrderByAggregateInput = {
@@ -301,19 +253,6 @@ export type AttendanceSettingsMaxOrderByAggregateInput = {
 export type AttendanceSettingsMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-}
-
-export type AttendanceSettingsSumOrderByAggregateInput = {
-  weeklyOffDays?: Prisma.SortOrder
-}
-
-export type AttendanceSettingsCreateweeklyOffDaysInput = {
-  set: number[]
-}
-
-export type AttendanceSettingsUpdateweeklyOffDaysInput = {
-  set?: number[]
-  push?: number | number[]
 }
 
 
@@ -349,7 +288,7 @@ export type $AttendanceSettingsPayload<ExtArgs extends runtime.Types.Extensions.
   objects: {}
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
-    weeklyOffDays: number[]
+    weeklyOffDays: runtime.JsonValue
     updatedAt: Date
   }, ExtArgs["result"]["attendanceSettings"]>
   composites: {}
@@ -775,7 +714,7 @@ export interface Prisma__AttendanceSettingsClient<T, Null = never, ExtArgs exten
  */
 export interface AttendanceSettingsFieldRefs {
   readonly id: Prisma.FieldRef<"AttendanceSettings", 'String'>
-  readonly weeklyOffDays: Prisma.FieldRef<"AttendanceSettings", 'Int[]'>
+  readonly weeklyOffDays: Prisma.FieldRef<"AttendanceSettings", 'Json'>
   readonly updatedAt: Prisma.FieldRef<"AttendanceSettings", 'DateTime'>
 }
     

@@ -3,6 +3,11 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { checkPermission } from "@/lib/permissions";
 import { toDateOnlyUTC } from "@/lib/dateOnly";
+import {
+  getWeeklyOffSettings,
+  isWeeklyOff,
+  checkIfDateIsOff,
+} from "@/lib/attendanceUtils";
 
 export async function GET(request: NextRequest) {
   try {
@@ -45,6 +50,9 @@ export async function GET(request: NextRequest) {
 
     const date = toDateOnlyUTC(dateParam);
 
+    // ✅ NEW: Get weekly off settings for this date
+    const weeklyOffConfig = await getWeeklyOffSettings();
+
     const employees = await prisma.employee.findMany({
       where: {
         isActive: true,
@@ -76,8 +84,20 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    // ✅ NEW: Check if the date itself is a weekly off or holiday
+    const dateOffInfo = await checkIfDateIsOff(date);
+
     const result = employees.map((emp) => {
       const attendance = emp.attendances[0] ?? null;
+
+      // ✅ NEW: Determine if this date is a weekly off day
+      const isDateWeeklyOff = isWeeklyOff(date, weeklyOffConfig);
+
+      // ✅ NEW: If it's a weekly off day, the effective status should be WEEKLY_OFF
+      const effectiveStatus =
+        isDateWeeklyOff && attendance?.status === "ABSENT"
+          ? "WEEKLY_OFF"
+          : attendance?.status;
 
       return {
         employeeId: emp.id,
@@ -90,13 +110,23 @@ export async function GET(request: NextRequest) {
             timeIn: attendance.checkInTime,
             timeOut: attendance.checkOutTime,
             status: attendance.status,
+            effectiveStatus, // ✅ NEW: Show effective status
+            isWeeklyOff: isDateWeeklyOff, // ✅ NEW: Flag if weekly off
             reason: attendance.reason,
           }
           : null,
+
+        // ✅ NEW: Add info about the date itself
+        dateInfo: dateOffInfo,
       };
     });
 
-    return NextResponse.json(result);
+    return NextResponse.json({
+      date: date.toISOString().split("T")[0],
+      dateOffInfo, // ✅ NEW: Include date off info in response
+      employees: result,
+      count: result.length,
+    });
   } catch (error) {
     console.error("GET /api/attendance error:", error);
 
@@ -175,6 +205,26 @@ export async function POST(request: Request) {
 
     const attendanceDate = toDateOnlyUTC(date);
 
+    // ✅ NEW: Check if this date is a weekly off day
+    const weeklyOffConfig = await getWeeklyOffSettings();
+    const isDateWeeklyOff = isWeeklyOff(attendanceDate, weeklyOffConfig);
+
+    // ✅ NEW: Check if date is off (weekly off or holiday)
+    const dateOffInfo = await checkIfDateIsOff(attendanceDate);
+
+    // ✅ NEW: Warn if marking attendance on weekly off day
+    // (allow it, but log it)
+    if (isDateWeeklyOff && status !== "WEEKLY_OFF") {
+      console.warn(
+        `[ATTENDANCE] Marking attendance on weekly off day for employee ${targetEmployeeId} on ${date}`
+      );
+    }
+
+    // ✅ NEW: Determine effective status
+    // If it's a weekly off day and status is ABSENT, mark as WEEKLY_OFF
+    const effectiveStatus =
+      isDateWeeklyOff && status === "ABSENT" ? "WEEKLY_OFF" : status;
+
     const attendance = await prisma.attendance.upsert({
       where: {
         employeeId_date: {
@@ -198,7 +248,7 @@ export async function POST(request: Request) {
             checkOutTime: null,
           }),
 
-        status: status || "PRESENT",
+        status: effectiveStatus || "PRESENT", // ✅ UPDATED: Use effective status
         reason: reason || null,
         modifiedBy: employeeId,
       },
@@ -215,7 +265,7 @@ export async function POST(request: Request) {
           ? new Date(`${date}T${timeOut}:00`)
           : null,
 
-        status: status || "PRESENT",
+        status: effectiveStatus || "PRESENT", // ✅ UPDATED: Use effective status
         reason: reason || null,
         modifiedBy: employeeId,
       },
@@ -231,12 +281,20 @@ export async function POST(request: Request) {
         metadata: {
           forEmployeeId: targetEmployeeId,
           date,
-          status: status || "PRESENT",
+          requestedStatus: status,
+          effectiveStatus, // ✅ NEW: Log effective status
+          isWeeklyOff: isDateWeeklyOff, // ✅ NEW: Log if weekly off
+          dateOffInfo, // ✅ NEW: Log date off info
         },
       },
     });
 
-    return NextResponse.json(attendance);
+    return NextResponse.json({
+      ...attendance,
+      effectiveStatus, // ✅ NEW: Return effective status
+      isWeeklyOff: isDateWeeklyOff, // ✅ NEW: Return weekly off flag
+      dateOffInfo, // ✅ NEW: Return date off info
+    });
   } catch (error) {
     console.error("POST /api/attendance error:", error);
 
