@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { validatePassword as validatePasswordUtil } from "@/lib/validators/password";
 
 interface Option {
   id: string;
@@ -43,7 +44,7 @@ export default function AddEmployeePage() {
   const [errors, setErrors] = useState({
     fullName: "",
     email: "",
-    password: "",
+    password: [] as string[],
     mobile: "",
     role: "",
     userTypeId: "",
@@ -149,16 +150,13 @@ export default function AddEmployeePage() {
     return "";
   };
 
-  const validatePassword = (value: string) => {
+  const validatePassword = (value: string): string[] => {
     if (!value) {
-      return "Password is required";
+      return ["Password is required"];
     }
 
-    if (value.length < 8) {
-      return "Password must be at least 8 characters";
-    }
-
-    return "";
+    const validation = validatePasswordUtil(value);
+    return validation.errors;
   };
 
   const validateMobile = (value: string) => {
@@ -237,22 +235,28 @@ export default function AddEmployeePage() {
           ),
         }));
       } else {
-        let errorMessage = "";
+        if (name === "password") {
+          const passwordErrors = validatePassword(value);
+          setErrors((prevErrors) => ({
+            ...prevErrors,
+            password: passwordErrors,
+          }));
+        } else {
+          let errorMessage = "";
 
-        if (name === "fullName") {
-          errorMessage = validateFullName(value);
-        } else if (name === "email") {
-          errorMessage = validateEmail(value);
-        } else if (name === "password") {
-          errorMessage = validatePassword(value);
-        } else if (name === "mobile") {
-          errorMessage = validateMobile(value);
+          if (name === "fullName") {
+            errorMessage = validateFullName(value);
+          } else if (name === "email") {
+            errorMessage = validateEmail(value);
+          } else if (name === "mobile") {
+            errorMessage = validateMobile(value);
+          }
+
+          setErrors((prevErrors) => ({
+            ...prevErrors,
+            [name]: errorMessage,
+          }));
         }
-
-        setErrors((prevErrors) => ({
-          ...prevErrors,
-          [name]: errorMessage,
-        }));
       }
 
       return updated;
@@ -301,7 +305,7 @@ export default function AddEmployeePage() {
     if (
       fullNameError ||
       emailError ||
-      passwordError ||
+      passwordError.length > 0 ||
       mobileError ||
       roleError ||
       userTypeError
@@ -463,10 +467,17 @@ export default function AddEmployeePage() {
                 }`}
             />
 
-            {errors.password && (
-              <p className="mt-1 text-sm text-red-600">
-                {errors.password}
-              </p>
+            {errors.password && errors.password.length > 0 && (
+              <div className="mt-2 space-y-1">
+                {errors.password.map((error, index) => (
+                  <div key={index} className="flex items-start gap-2">
+                    <span className="text-red-600 mt-0.5">•</span>
+                    <p className="text-sm text-red-600">
+                      {error}
+                    </p>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
 

@@ -118,27 +118,39 @@ export default function HolidaysTab() {
   // =========================================================
 
   const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Delete "${name}"?`)) return;
+    const holiday = items.find(h => h.id === id);
+    if (!holiday) return;
 
-    const res = await fetch(`/api/holidays/${id}`, {
-      method: "DELETE",
-    });
+    const group = getHolidayGroup(holiday);
+    const dateRange = formatDateRange(holiday);
 
-    if (!res.ok) {
-      let message = "Failed to delete";
+    const confirmMsg = group.length === 1
+      ? `Delete "${name}" (${dateRange})?`
+      : `Delete all ${group.length} days of "${name}" (${dateRange})?`;
 
-      try {
-        const err = await res.json();
-        message = err.error || message;
-      } catch { }
+    if (!confirm(confirmMsg)) return;
 
-      toast.error(message);
-      return;
+    try {
+      // Delete all holidays in the group
+      const deletePromises = group.map(h =>
+        fetch(`/api/holidays/${h.id}`, {
+          method: "DELETE",
+        })
+      );
+
+      const results = await Promise.all(deletePromises);
+      const allSuccessful = results.every(res => res.ok);
+
+      if (!allSuccessful) {
+        toast.error("Failed to delete some holidays");
+        return;
+      }
+
+      toast.success(group.length === 1 ? "Holiday deleted" : `${group.length} days deleted`);
+      await load();
+    } catch (error) {
+      toast.error("Failed to delete");
     }
-
-    toast.success("Deleted");
-
-    await load();
   };
 
   // =========================================================
@@ -183,6 +195,70 @@ export default function HolidaysTab() {
     setEditingDate("");
 
     await load();
+  };
+
+  // =========================================================
+  // SAVE GROUP EDIT (INLINE IN TABLE)
+  // =========================================================
+
+  const handleGroupEditSave = async (firstHolidayId: string) => {
+    const holiday = items.find(h => h.id === firstHolidayId);
+    if (!holiday) return;
+
+    const group = getHolidayGroup(holiday);
+
+    if (!editingName.trim() || !groupStartDate || !groupEndDate) {
+      toast.error("Holiday name and dates are required");
+      return;
+    }
+
+    if (groupStartDate > groupEndDate) {
+      toast.error("Start date cannot be after end date");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/holidays/group", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ids: group.map((h) => h.id),
+          name: editingName.trim(),
+          description: editingDescription.trim() || null,
+          startDate: groupStartDate,
+          endDate: groupEndDate,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(
+          data.error || "Failed to update holiday group"
+        );
+      }
+
+      toast.success("Holiday group updated");
+
+      setEditingId(null);
+      setEditingName("");
+      setEditingDescription("");
+      setEditingDate("");
+      setGroupStartDate("");
+      setGroupEndDate("");
+
+      await load();
+    } catch (error) {
+      console.error("Holiday group save error:", error);
+
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to update holiday group"
+      );
+    }
   };
 
   // =========================================================
@@ -247,6 +323,42 @@ export default function HolidaysTab() {
     }
 
     return sameName.slice(startIndex, endIndex + 1);
+  };
+
+  // Check if this is the first holiday in its group (should be displayed)
+  const isFirstInGroup = (item: Holiday): boolean => {
+    const group = getHolidayGroup(item);
+    return group.length > 0 && group[0].id === item.id;
+  };
+
+  // Format date range for display
+  const formatDateRange = (item: Holiday): string => {
+    const group = getHolidayGroup(item);
+    if (group.length === 0) return "";
+
+    const startDate = new Date(group[0].date);
+    const endDate = new Date(group[group.length - 1].date);
+
+    const startStr = startDate.toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+    });
+
+    const endStr = endDate.toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+
+    if (group.length === 1) {
+      return startDate.toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+    }
+
+    return `${startStr} to ${endStr}`;
   };
 
   // =========================================================
@@ -774,137 +886,180 @@ export default function HolidaysTab() {
               </tr>
             )}
 
-            {items.map((item) => (
-              <tr
-                key={item.id}
-                className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors duration-200"
-              >
-                <td className="px-4 py-2.5">
-                  {editingId === item.id ? (
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleEdit(item.id)
-                        }
-                        className="text-xs font-medium text-green-600"
-                      >
-                        Save
-                      </button>
+            {items.map((item) =>
+              // Only render if this is the first holiday in its group
+              isFirstInGroup(item) ? (
+                <tr
+                  key={item.id}
+                  className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors duration-200"
+                >
+                  <td className="px-4 py-2.5">
+                    {editingId === item.id ? (
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const group = getHolidayGroup(item);
+                            if (group.length === 1) {
+                              handleEdit(item.id);
+                            } else {
+                              handleGroupEditSave(item.id);
+                            }
+                          }}
+                          className="text-xs font-medium text-green-600"
+                        >
+                          Save
+                        </button>
 
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEditingId(null);
-                          setEditingName("");
-                          setEditingDescription("");
-                          setEditingDate("");
-                        }}
-                        className="text-xs font-medium text-slate-600"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEditingId(item.id);
-                          setEditingName(item.name);
-                          setEditingDate(
-                            formatDateForInput(item.date)
-                          );
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingId(null);
+                            setEditingName("");
+                            setEditingDescription("");
+                            setEditingDate("");
+                            setGroupStartDate("");
+                            setGroupEndDate("");
+                          }}
+                          className="text-xs font-medium text-slate-600"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap gap-2">
+                        {getHolidayGroup(item).length === 1 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingId(item.id);
+                              setEditingName(item.name);
+                              setEditingDate(
+                                formatDateForInput(item.date)
+                              );
+                              setEditingDescription(
+                                item.description || ""
+                              );
+                              setEditingGroup(null);
+                              setGroupStartDate("");
+                              setGroupEndDate("");
+                            }}
+                            className="text-xs font-medium text-slate-700 hover:text-slate-900"
+                          >
+                            Edit
+                          </button>
+                        )}
+
+                        {getHolidayGroup(item).length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const group = getHolidayGroup(item);
+                              setEditingId(item.id);
+                              setEditingName(item.name);
+                              setEditingDescription(item.description || "");
+                              setGroupStartDate(formatDateForInput(group[0].date));
+                              setGroupEndDate(formatDateForInput(group[group.length - 1].date));
+                              setEditingDate("");
+                              setEditingGroup(null);
+                            }}
+                            className="text-xs font-medium text-slate-700"                          >
+                            Edit
+                          </button>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleDelete(
+                              item.id,
+                              item.name
+                            )
+                          }
+                          className="text-xs font-medium text-red-600"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
+                  </td>
+
+                  <td className="px-4 py-2.5 text-slate-700">
+                    {editingId === item.id ? (
+                      <input
+                        value={editingName}
+                        onChange={(e) =>
+                          setEditingName(e.target.value)
+                        }
+                        className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
+                      />
+                    ) : (
+                      item.name
+                    )}
+                  </td>
+
+                  <td className="px-4 py-2.5 text-slate-700">
+                    {editingId === item.id ? (
+                      getHolidayGroup(item).length === 1 ? (
+                        // Single day holiday - show one date input
+                        <input
+                          type="date"
+                          value={editingDate}
+                          onChange={(e) =>
+                            setEditingDate(e.target.value)
+                          }
+                          className="rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
+                        />
+                      ) : (
+                        // Multi-day holiday group - show start and end dates
+                        <div className="flex gap-2">
+                          <input
+                            type="date"
+                            value={groupStartDate}
+                            onChange={(e) =>
+                              setGroupStartDate(e.target.value)
+                            }
+                            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
+                            placeholder="Start"
+                          />
+                          <span className="text-slate-400">to</span>
+                          <input
+                            type="date"
+                            value={groupEndDate}
+                            onChange={(e) =>
+                              setGroupEndDate(e.target.value)
+                            }
+                            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
+                            placeholder="End"
+                          />
+                        </div>
+                      )
+                    ) : (
+                      formatDateRange(item)
+                    )}
+                  </td>
+
+                  <td className="px-4 py-2.5 text-slate-700 max-w-xs">
+                    {editingId === item.id ? (
+                      <input
+                        value={editingDescription}
+                        onChange={(e) =>
                           setEditingDescription(
-                            item.description || ""
-                          );
-                          setEditingGroup(null);
-                        }}
-                        className="text-xs font-medium text-slate-700 hover:text-slate-900"
-                      >
-                        Edit
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          startGroupEdit(item)
-                        }
-                        className="text-xs font-medium text-purple-600"
-                      >
-                        Edit Group
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleDelete(
-                            item.id,
-                            item.name
+                            e.target.value
                           )
                         }
-                        className="text-xs font-medium text-red-600"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  )}
-                </td>
-
-                <td className="px-4 py-2.5 text-slate-700">
-                  {editingId === item.id ? (
-                    <input
-                      value={editingName}
-                      onChange={(e) =>
-                        setEditingName(e.target.value)
-                      }
-                      className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
-                    />
-                  ) : (
-                    item.name
-                  )}
-                </td>
-
-                <td className="px-4 py-2.5 text-slate-700">
-                  {editingId === item.id ? (
-                    <input
-                      type="date"
-                      value={editingDate}
-                      onChange={(e) =>
-                        setEditingDate(e.target.value)
-                      }
-                      className="rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
-                    />
-                  ) : (
-                    new Date(item.date).toLocaleDateString(
-                      undefined,
-                      {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                      }
-                    )
-                  )}
-                </td>
-
-                <td className="px-4 py-2.5 text-slate-700">
-                  {editingId === item.id ? (
-                    <input
-                      value={editingDescription}
-                      onChange={(e) =>
-                        setEditingDescription(
-                          e.target.value
-                        )
-                      }
-                      placeholder="Description"
-                      className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
-                    />
-                  ) : (
-                    item.description || "-"
-                  )}
-                </td>
-              </tr>
-            ))}
+                        placeholder="Description (optional)"
+                        className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
+                      />
+                    ) : (
+                      <span className="truncate">
+                        {item.description || "-"}
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              ) : null
+            )}
           </tbody>
         </table>
       </div>
