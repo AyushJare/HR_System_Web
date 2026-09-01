@@ -118,10 +118,10 @@ export async function POST(request: Request) {
     } = body;
 
     // Required fields
-    if (!fullName || !email || !password) {
+    if (!fullName || !email || !password || !mobile) {
       return NextResponse.json(
         {
-          error: "fullName, email, and password are required",
+          error: "fullName, email, phone number and password are required",
         },
         { status: 400 }
       );
@@ -164,18 +164,16 @@ export async function POST(request: Request) {
     }
 
     // Phone validation
-    if (mobile) {
-      const phoneValidation = validatePhoneNumber(mobile);
+    const phoneValidation = validatePhoneNumber(mobile);
 
-      if (!phoneValidation.valid) {
-        return NextResponse.json(
-          {
-            error: "Enter a correct phone number",
-            errors: phoneValidation.error,
-          },
-          { status: 422 }
-        );
-      }
+    if (!phoneValidation.valid) {
+      return NextResponse.json(
+        {
+          error: "Enter a correct phone number",
+          errors: phoneValidation.error,
+        },
+        { status: 422 }
+      );
     }
 
     // Duplicate email

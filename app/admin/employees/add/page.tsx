@@ -348,9 +348,8 @@ export default function AddEmployeePage() {
   const validateMobileField = (
     value: string
   ): string[] => {
-    // Mobile is optional.
     if (!value || !value.trim()) {
-      return [];
+      return ["Phone number is required"];
     }
 
     const mobile = value.trim();
@@ -965,7 +964,7 @@ export default function AddEmployeePage() {
 
           <div>
             <label className="block text-sm font-semibold text-slate-900 mb-2">
-              Mobile
+              Phone Number *
             </label>
 
             <input
