@@ -1,9 +1,29 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+  type ChangeEvent,
+  type FocusEvent,
+  type FormEvent,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+
 import { validatePassword as validatePasswordUtil } from "@/lib/validators/password";
+
+import {
+  showErrorToast,
+  showSuccessToast,
+  handleApiError,
+  validateArrayResponse,
+} from "@/lib/utils/errorHandler";
+
+// ============================================================
+// TYPES
+// ============================================================
 
 interface Option {
   id: string;
@@ -17,115 +37,248 @@ interface UserTypeOption {
   isSystem?: boolean;
 }
 
+interface FormData {
+  fullName: string;
+  email: string;
+  password: string;
+  mobile: string;
+  gender: string;
+  departmentId: string;
+  designationId: string;
+  employeeTypeId: string;
+  userTypeId: string;
+  role: string;
+}
+
+interface FormErrors {
+  fullName: string;
+  email: string;
+  password: string[];
+  mobile: string[];
+  gender: string;
+  role: string;
+  userTypeId: string;
+  departmentId: string;
+  designationId: string;
+  employeeTypeId: string;
+}
+
+// ============================================================
+// INITIAL VALUES
+// ============================================================
+
+const initialFormData: FormData = {
+  fullName: "",
+  email: "",
+  password: "",
+  mobile: "",
+  gender: "",
+  departmentId: "",
+  designationId: "",
+  employeeTypeId: "",
+  userTypeId: "",
+  role: "EMPLOYEE",
+};
+
+const initialErrors: FormErrors = {
+  fullName: "",
+  email: "",
+  password: [],
+  mobile: [],
+  gender: "",
+  role: "",
+  userTypeId: "",
+  departmentId: "",
+  designationId: "",
+  employeeTypeId: "",
+};
+
+// ============================================================
+// PAGE
+// ============================================================
+
 export default function AddEmployeePage() {
   const router = useRouter();
 
   const [loading, setLoading] = useState(false);
   const [loadingUserTypes, setLoadingUserTypes] = useState(true);
+  const [loadingOtherData, setLoadingOtherData] = useState(true);
 
   const [departments, setDepartments] = useState<Option[]>([]);
   const [designations, setDesignations] = useState<Option[]>([]);
   const [employeeTypes, setEmployeeTypes] = useState<Option[]>([]);
   const [userTypes, setUserTypes] = useState<UserTypeOption[]>([]);
 
-  const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    password: "",
-    mobile: "",
-    gender: "",
-    departmentId: "",
-    designationId: "",
-    employeeTypeId: "",
-    userTypeId: "",
-    role: "EMPLOYEE",
-  });
+  const [formData, setFormData] =
+    useState<FormData>(initialFormData);
 
-  const [errors, setErrors] = useState({
-    fullName: "",
-    email: "",
-    password: [] as string[],
-    mobile: "",
-    role: "",
-    userTypeId: "",
-  });
+  const [errors, setErrors] =
+    useState<FormErrors>(initialErrors);
+
+  // ============================================================
+  // LOAD FORM OPTIONS
+  // ============================================================
 
   useEffect(() => {
-    const loadOptions = async () => {
+    const loadOtherData = async () => {
       try {
-        const [
-          departmentsRes,
-          designationsRes,
-          employeeTypesRes,
-          userTypesRes,
-        ] = await Promise.all([
-          fetch("/api/departments"),
-          fetch("/api/designations"),
-          fetch("/api/employee-types"),
-          fetch("/api/user-types"),
-        ]);
+        setLoadingOtherData(true);
 
-        const [
-          departmentsData,
-          designationsData,
-          employeeTypesData,
-          userTypesData,
-        ] = await Promise.all([
-          departmentsRes.json(),
-          designationsRes.json(),
-          employeeTypesRes.json(),
-          userTypesRes.json(),
-        ]);
+        const endpoints: {
+          url: string;
+          name: string;
+          setState: Dispatch<SetStateAction<Option[]>>;
+        }[] = [
+            {
+              url: "/api/departments",
+              name: "Departments",
+              setState: setDepartments,
+            },
+            {
+              url: "/api/designations",
+              name: "Designations",
+              setState: setDesignations,
+            },
+            {
+              url: "/api/employee-types",
+              name: "Employee Types",
+              setState: setEmployeeTypes,
+            },
+          ];
 
-        if (departmentsRes.ok) {
-          setDepartments(
-            Array.isArray(departmentsData)
-              ? departmentsData
-              : departmentsData.data ?? []
-          );
+        for (const endpoint of endpoints) {
+          try {
+            const res = await fetch(endpoint.url);
+
+            if (!res.ok) {
+              throw new Error(
+                `${endpoint.name}: HTTP ${res.status}`
+              );
+            }
+
+            const data: unknown = await res.json();
+
+            const validData =
+              validateArrayResponse(data, endpoint.name);
+
+            // validateArrayResponse returns unknown[],
+            // so explicitly verify/cast before updating state.
+            const options: Option[] = validData.filter(
+              (item): item is Option => {
+                return (
+                  typeof item === "object" &&
+                  item !== null &&
+                  "id" in item &&
+                  "name" in item &&
+                  typeof (item as { id?: unknown }).id === "string" &&
+                  typeof (item as { name?: unknown }).name === "string"
+                );
+              }
+            );
+
+            endpoint.setState(options);
+          } catch (error) {
+            handleApiError(
+              error,
+              `Loading ${endpoint.name}`
+            );
+
+            endpoint.setState([]);
+          }
         }
-
-        if (designationsRes.ok) {
-          setDesignations(
-            Array.isArray(designationsData)
-              ? designationsData
-              : designationsData.data ?? []
-          );
-        }
-
-        if (employeeTypesRes.ok) {
-          setEmployeeTypes(
-            Array.isArray(employeeTypesData)
-              ? employeeTypesData
-              : employeeTypesData.data ?? []
-          );
-        }
-
-        if (!userTypesRes.ok) {
-          throw new Error(
-            userTypesData.error || "Failed to load User Types"
-          );
-        }
-
-        setUserTypes(userTypesData.data ?? []);
       } catch (error) {
-        console.error("Failed to load form options:", error);
-
-        toast.error(
-          error instanceof Error
-            ? error.message
-            : "Failed to load form options"
+        handleApiError(
+          error,
+          "Loading form options"
         );
+      } finally {
+        setLoadingOtherData(false);
+      }
+    };
+
+    const loadUserTypes = async () => {
+      try {
+        setLoadingUserTypes(true);
+
+        const res = await fetch("/api/user-types");
+
+        if (!res.ok) {
+          throw new Error(
+            `HTTP ${res.status}: Failed to load User Types`
+          );
+        }
+
+        const data: unknown = await res.json();
+
+        let userTypesArray: unknown = data;
+
+        // Support both:
+        // [ ... ]
+        //
+        // and:
+        // { data: [ ... ] }
+        if (
+          data !== null &&
+          typeof data === "object" &&
+          "data" in data
+        ) {
+          userTypesArray = (
+            data as {
+              data?: unknown;
+            }
+          ).data;
+        }
+
+        const validData =
+          validateArrayResponse(
+            userTypesArray,
+            "User Types"
+          );
+
+        const validUserTypes: UserTypeOption[] =
+          validData.filter(
+            (item): item is UserTypeOption => {
+              return (
+                typeof item === "object" &&
+                item !== null &&
+                "id" in item &&
+                "name" in item &&
+                typeof (item as { id?: unknown }).id === "string" &&
+                typeof (item as { name?: unknown }).name === "string"
+              );
+            }
+          );
+
+        setUserTypes(validUserTypes);
+      } catch (error) {
+        handleApiError(
+          error,
+          "Loading User Types"
+        );
+
+        setUserTypes([]);
       } finally {
         setLoadingUserTypes(false);
       }
     };
 
-    loadOptions();
+    loadOtherData();
+    loadUserTypes();
   }, []);
 
-  const validateFullName = (value: string) => {
-    if (!value.trim()) {
+  // ============================================================
+  // VALIDATION
+  //
+  // IMPORTANT:
+  // These functions DO NOT show toasts.
+  //
+  // Errors are displayed directly below the relevant field.
+  // ============================================================
+
+  const validateFullName = (
+    value: string
+  ): string => {
+    if (!value || !value.trim()) {
       return "Full name is required";
     }
 
@@ -133,51 +286,97 @@ export default function AddEmployeePage() {
       return "Full name must be at least 2 characters";
     }
 
+    if (value.trim().length > 100) {
+      return "Full name must not exceed 100 characters";
+    }
+
     return "";
   };
 
-  const validateEmail = (value: string) => {
-    if (!value.trim()) {
+  const validateEmailField = (
+    value: string
+  ): string => {
+    if (!value || !value.trim()) {
       return "Email is required";
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const email = value.trim();
 
-    if (!emailRegex.test(value.trim())) {
+    const emailRegex =
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(email)) {
       return "Please enter a valid email address";
+    }
+
+    if (email.length > 255) {
+      return "Email must not exceed 255 characters";
     }
 
     return "";
   };
 
-  const validatePassword = (value: string): string[] => {
+  const validatePasswordField = (
+    value: string
+  ): string[] => {
     if (!value) {
       return ["Password is required"];
     }
 
-    const validation = validatePasswordUtil(value);
-    return validation.errors;
+    try {
+      const validation =
+        validatePasswordUtil(value);
+
+      if (
+        validation.errors &&
+        validation.errors.length > 0
+      ) {
+        return validation.errors;
+      }
+
+      return [];
+    } catch (error) {
+      console.error(
+        "Password validation error:",
+        error
+      );
+
+      return ["Unable to validate password"];
+    }
   };
 
-  const validateMobile = (value: string) => {
-    if (!value) {
-      return "";
+  const validateMobileField = (
+    value: string
+  ): string[] => {
+    // Mobile is optional.
+    if (!value || !value.trim()) {
+      return [];
     }
 
-    const cleaned = value.replace(/\D/g, "");
+    const mobile = value.trim();
+    const mobileErrors: string[] = [];
 
-    if (cleaned.length !== value.length) {
-      return "Phone number should contain only digits";
+    if (!/^\d+$/.test(mobile)) {
+      mobileErrors.push(
+        "Phone number should contain only digits"
+      );
+
+      return mobileErrors;
     }
 
-    if (cleaned.length !== 10) {
-      return "Phone number must be exactly 10 digits";
+    if (mobile.length !== 10) {
+      mobileErrors.push(
+        "Phone number must be exactly 10 digits"
+      );
     }
 
-    return "";
+
+    return mobileErrors;
   };
 
-  const validateRole = (value: string) => {
+  const validateRoleField = (
+    value: string
+  ): string => {
     if (!value) {
       return "Please select a role";
     }
@@ -185,12 +384,11 @@ export default function AddEmployeePage() {
     return "";
   };
 
-  const validateUserType = (
+  const validateUserTypeField = (
     value: string,
     role: string
-  ) => {
-    // Main Admin does not need a UserType because
-    // ADMIN automatically has full access.
+  ): string => {
+    // Admin does not require User Type.
     if (role === "ADMIN") {
       return "";
     }
@@ -202,192 +400,447 @@ export default function AddEmployeePage() {
     return "";
   };
 
+  // ============================================================
+  // CHANGE HANDLER
+  //
+  // No validation toast while typing.
+  // Clear the existing inline error when user edits.
+  // ============================================================
+
   const handleChange = (
-    e: React.ChangeEvent<
+    e: ChangeEvent<
       HTMLInputElement | HTMLSelectElement
     >
   ) => {
     const { name, value } = e.target;
 
-    setFormData((prev) => {
-      const updated = {
-        ...prev,
-        [name]: value,
-      };
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
 
-      // If role changes to ADMIN, UserType is not required.
-      // If role changes back to EMPLOYEE, validate UserType.
-      if (name === "role") {
-        setErrors((prevErrors) => ({
-          ...prevErrors,
-          role: validateRole(value),
-          userTypeId: validateUserType(
-            updated.userTypeId,
-            value
-          ),
-        }));
-      } else if (name === "userTypeId") {
-        setErrors((prevErrors) => ({
-          ...prevErrors,
-          userTypeId: validateUserType(
-            value,
-            updated.role
-          ),
-        }));
-      } else {
-        if (name === "password") {
-          const passwordErrors = validatePassword(value);
-          setErrors((prevErrors) => ({
-            ...prevErrors,
-            password: passwordErrors,
-          }));
-        } else {
-          let errorMessage = "";
+    setErrors((prev) => {
+      const next = { ...prev };
 
-          if (name === "fullName") {
-            errorMessage = validateFullName(value);
-          } else if (name === "email") {
-            errorMessage = validateEmail(value);
-          } else if (name === "mobile") {
-            errorMessage = validateMobile(value);
-          }
+      switch (name) {
+        case "fullName":
+          next.fullName = "";
+          break;
 
-          setErrors((prevErrors) => ({
-            ...prevErrors,
-            [name]: errorMessage,
-          }));
-        }
+        case "email":
+          next.email = "";
+          break;
+
+        case "password":
+          next.password = [];
+          break;
+
+        case "mobile":
+          next.mobile = [];
+          break;
+
+        case "gender":
+          next.gender = "";
+          break;
+
+        case "role":
+          next.role = "";
+          next.userTypeId = "";
+          break;
+
+        case "userTypeId":
+          next.userTypeId = "";
+          break;
+
+        case "departmentId":
+          next.departmentId = "";
+          break;
+
+        case "designationId":
+          next.designationId = "";
+          break;
+
+        case "employeeTypeId":
+          next.employeeTypeId = "";
+          break;
+
+        default:
+          break;
       }
 
-      return updated;
+      return next;
     });
   };
 
+  // ============================================================
+  // BLUR HANDLER
+  //
+  // Validation happens here but ONLY updates inline errors.
+  // NO TOASTS.
+  // ============================================================
+
+  const handleBlur = (
+    e: FocusEvent<
+      HTMLInputElement | HTMLSelectElement
+    >
+  ) => {
+    const { name, value } = e.target;
+
+    switch (name) {
+      case "fullName":
+        setErrors((prev) => ({
+          ...prev,
+          fullName: validateFullName(value),
+        }));
+        break;
+
+      case "email":
+        setErrors((prev) => ({
+          ...prev,
+          email: validateEmailField(value),
+        }));
+        break;
+
+      case "password":
+        setErrors((prev) => ({
+          ...prev,
+          password: validatePasswordField(value),
+        }));
+        break;
+
+      case "mobile":
+        setErrors((prev) => ({
+          ...prev,
+          mobile: validateMobileField(value),
+        }));
+        break;
+
+      case "role":
+        setErrors((prev) => ({
+          ...prev,
+          role: validateRoleField(value),
+          userTypeId: validateUserTypeField(
+            formData.userTypeId,
+            value
+          ),
+        }));
+        break;
+
+      case "userTypeId":
+        setErrors((prev) => ({
+          ...prev,
+          userTypeId: validateUserTypeField(
+            value,
+            formData.role
+          ),
+        }));
+        break;
+
+      default:
+        break;
+    }
+  };
+
+  // ============================================================
+  // SUBMIT
+  // ============================================================
+
   const handleSubmit = async (
-    e: React.FormEvent
+    e: FormEvent<HTMLFormElement>
   ) => {
     e.preventDefault();
 
-    const fullNameError = validateFullName(
-      formData.fullName
-    );
+    // Validate everything.
+    // IMPORTANT: validation functions do NOT show toasts.
+    const fullNameError =
+      validateFullName(formData.fullName);
 
-    const emailError = validateEmail(
-      formData.email
-    );
+    const emailError =
+      validateEmailField(formData.email);
 
-    const passwordError = validatePassword(
-      formData.password
-    );
+    const passwordError =
+      validatePasswordField(formData.password);
 
-    const mobileError = validateMobile(
-      formData.mobile
-    );
+    const mobileError =
+      validateMobileField(formData.mobile);
 
-    const roleError = validateRole(
-      formData.role
-    );
+    const roleError =
+      validateRoleField(formData.role);
 
-    const userTypeError = validateUserType(
-      formData.userTypeId,
-      formData.role
-    );
+    const userTypeError =
+      validateUserTypeField(
+        formData.userTypeId,
+        formData.role
+      );
 
-    setErrors({
+    const newErrors: FormErrors = {
       fullName: fullNameError,
       email: emailError,
       password: passwordError,
       mobile: mobileError,
+      gender: "",
       role: roleError,
       userTypeId: userTypeError,
-    });
+      departmentId: "",
+      designationId: "",
+      employeeTypeId: "",
+    };
 
-    if (
-      fullNameError ||
-      emailError ||
+    setErrors(newErrors);
+
+    const hasErrors =
+      Boolean(fullNameError) ||
+      Boolean(emailError) ||
       passwordError.length > 0 ||
-      mobileError ||
-      roleError ||
-      userTypeError
-    ) {
-      toast.error(
-        "Please fix the errors before submitting"
+      mobileError.length > 0 ||
+      Boolean(roleError) ||
+      Boolean(userTypeError);
+
+    if (hasErrors) {
+      // ONLY ONE general toast.
+      // Individual errors remain below their fields.
+      showErrorToast(
+        "Validation Failed",
+        "Please fix the highlighted fields before submitting"
       );
+
       return;
     }
 
-    setLoading(true);
+    // ========================================================
+    // API REQUEST
+    // ========================================================
+
+    let loadingToast: string | undefined;
 
     try {
-      const res = await fetch("/api/employees", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          fullName: formData.fullName.trim(),
-          email: formData.email.trim(),
-          password: formData.password,
-          mobile: formData.mobile || null,
-          gender: formData.gender || null,
-          departmentId:
-            formData.departmentId || null,
-          designationId:
-            formData.designationId || null,
-          employeeTypeId:
-            formData.employeeTypeId || null,
+      setLoading(true);
 
-          // ADMIN does not need a UserType.
-          // EMPLOYEE gets permissions from this UserType.
-          userTypeId:
-            formData.role === "ADMIN"
-              ? null
-              : formData.userTypeId,
+      loadingToast = toast.loading(
+        "Creating employee..."
+      );
 
-          role: formData.role,
-        }),
-      });
+      const res = await fetch(
+        "/api/employees",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            fullName:
+              formData.fullName.trim(),
 
-      const responseData = await res.json();
+            email:
+              formData.email.trim(),
+
+            password:
+              formData.password,
+
+            mobile:
+              formData.mobile.trim() || null,
+
+            gender:
+              formData.gender || null,
+
+            departmentId:
+              formData.departmentId || null,
+
+            designationId:
+              formData.designationId || null,
+
+            employeeTypeId:
+              formData.employeeTypeId || null,
+
+            userTypeId:
+              formData.role === "ADMIN"
+                ? null
+                : formData.userTypeId,
+
+            role:
+              formData.role,
+          }),
+        }
+      );
+
+      let responseData: unknown = null;
+
+      try {
+        responseData = await res.json();
+      } catch {
+        responseData = null;
+      }
+
+      // ======================================================
+      // API ERROR
+      // ======================================================
 
       if (!res.ok) {
+        let errorMessage =
+          `HTTP ${res.status}`;
+
+        if (
+          responseData !== null &&
+          typeof responseData === "object"
+        ) {
+          const responseObject =
+            responseData as {
+              error?: unknown;
+              message?: unknown;
+            };
+
+          if (
+            typeof responseObject.error ===
+            "string"
+          ) {
+            errorMessage =
+              responseObject.error;
+          } else if (
+            typeof responseObject.message ===
+            "string"
+          ) {
+            errorMessage =
+              responseObject.message;
+          }
+        }
+
+        throw new Error(errorMessage);
+      }
+
+      if (!responseData) {
         throw new Error(
-          responseData.error ||
-          "Failed to create employee"
+          "Empty response from server"
         );
       }
 
-      const newEmployee =
-        responseData.data ?? responseData;
+      // ======================================================
+      // GET CREATED EMPLOYEE NAME
+      // ======================================================
 
-      toast.success(
-        `Employee ${newEmployee.fullName ||
-        formData.fullName
-        } created!`
+      let employeeName =
+        formData.fullName;
+
+      if (
+        typeof responseData === "object" &&
+        responseData !== null
+      ) {
+        const responseObject =
+          responseData as {
+            data?: unknown;
+            fullName?: unknown;
+          };
+
+        const possibleEmployee =
+          responseObject.data ??
+          responseData;
+
+        if (
+          typeof possibleEmployee ===
+          "object" &&
+          possibleEmployee !== null
+        ) {
+          const employeeObject =
+            possibleEmployee as {
+              fullName?: unknown;
+            };
+
+          if (
+            typeof employeeObject.fullName ===
+            "string"
+          ) {
+            employeeName =
+              employeeObject.fullName;
+          }
+        }
+      }
+
+      // ======================================================
+      // SUCCESS
+      // ======================================================
+
+      if (loadingToast) {
+        toast.dismiss(loadingToast);
+      }
+
+      showSuccessToast(
+        `Employee ${employeeName} created successfully!`
       );
 
-      router.push("/admin/employees");
-      router.refresh();
+      setTimeout(() => {
+        router.push(
+          "/admin/employees"
+        );
+
+        router.refresh();
+      }, 1000);
+
     } catch (error) {
+      if (loadingToast) {
+        toast.dismiss(loadingToast);
+      }
+
       console.error(
-        "Failed to create employee:",
+        "Submission error:",
         error
       );
 
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "An error occurred"
+      // API/server errors ARE allowed to use toast.
+      handleApiError(
+        error,
+        "Employee Creation"
       );
     } finally {
       setLoading(false);
     }
   };
 
-  const isAdmin = formData.role === "ADMIN";
+  // ============================================================
+  // RESET
+  // ============================================================
+
+  const handleReset = () => {
+    try {
+      toast.dismiss();
+
+      setFormData({
+        ...initialFormData,
+      });
+
+      setErrors({
+        ...initialErrors,
+      });
+
+      showSuccessToast(
+        "Form reset successfully"
+      );
+    } catch (error) {
+      handleApiError(
+        error,
+        "Form reset"
+      );
+    }
+  };
+
+  // ============================================================
+  // FLAGS
+  // ============================================================
+
+  const isAdmin =
+    formData.role === "ADMIN";
+
+  const isLoading =
+    loading ||
+    loadingUserTypes ||
+    loadingOtherData;
+
+  // ============================================================
+  // UI
+  // ============================================================
 
   return (
     <div className="p-8 max-w-2xl">
+
+      {/* HEADER */}
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-slate-950 tracking-tight">
           Add Employee
@@ -398,12 +851,17 @@ export default function AddEmployeePage() {
         </p>
       </div>
 
+      {/* FORM */}
       <form
         onSubmit={handleSubmit}
         className="bg-white rounded-lg border border-slate-200 p-8 space-y-6 shadow-sm hover:shadow-md transition-shadow duration-200"
       >
         <div className="grid grid-cols-2 gap-6">
+
+          {/* ================================================== */}
           {/* FULL NAME */}
+          {/* ================================================== */}
+
           <div>
             <label className="block text-sm font-semibold text-slate-900 mb-2">
               Full Name *
@@ -413,6 +871,8 @@ export default function AddEmployeePage() {
               name="fullName"
               value={formData.fullName}
               onChange={handleChange}
+              onBlur={handleBlur}
+              placeholder="Enter full name"
               className={`w-full rounded-lg border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200 ${errors.fullName
                 ? "border-red-500"
                 : "border-slate-300"
@@ -426,7 +886,10 @@ export default function AddEmployeePage() {
             )}
           </div>
 
+          {/* ================================================== */}
           {/* EMAIL */}
+          {/* ================================================== */}
+
           <div>
             <label className="block text-sm font-semibold text-slate-900 mb-2">
               Email *
@@ -437,6 +900,8 @@ export default function AddEmployeePage() {
               name="email"
               value={formData.email}
               onChange={handleChange}
+              onBlur={handleBlur}
+              placeholder="Enter email address"
               className={`w-full rounded-lg border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200 ${errors.email
                 ? "border-red-500"
                 : "border-slate-300"
@@ -450,7 +915,10 @@ export default function AddEmployeePage() {
             )}
           </div>
 
+          {/* ================================================== */}
           {/* PASSWORD */}
+          {/* ================================================== */}
+
           <div>
             <label className="block text-sm font-semibold text-slate-900 mb-2">
               Password *
@@ -461,27 +929,40 @@ export default function AddEmployeePage() {
               name="password"
               value={formData.password}
               onChange={handleChange}
-              className={`w-full rounded-lg border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200 ${errors.password
+              onBlur={handleBlur}
+              placeholder="Enter password"
+              className={`w-full rounded-lg border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200 ${errors.password.length > 0
                 ? "border-red-500"
                 : "border-slate-300"
                 }`}
             />
 
-            {errors.password && errors.password.length > 0 && (
+            {errors.password.length > 0 && (
               <div className="mt-2 space-y-1">
-                {errors.password.map((error, index) => (
-                  <div key={index} className="flex items-start gap-2">
-                    <span className="text-red-600 mt-0.5">•</span>
-                    <p className="text-sm text-red-600">
-                      {error}
-                    </p>
-                  </div>
-                ))}
+                {errors.password.map(
+                  (error, index) => (
+                    <div
+                      key={`${error}-${index}`}
+                      className="flex items-start gap-2"
+                    >
+                      <span className="text-red-600 mt-0.5">
+                        •
+                      </span>
+
+                      <p className="text-sm text-red-600">
+                        {error}
+                      </p>
+                    </div>
+                  )
+                )}
               </div>
             )}
           </div>
 
+          {/* ================================================== */}
           {/* MOBILE */}
+          {/* ================================================== */}
+
           <div>
             <label className="block text-sm font-semibold text-slate-900 mb-2">
               Mobile
@@ -491,21 +972,41 @@ export default function AddEmployeePage() {
               name="mobile"
               value={formData.mobile}
               onChange={handleChange}
+              onBlur={handleBlur}
               inputMode="numeric"
-              className={`w-full rounded-lg border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200 ${errors.mobile
+              placeholder="Enter 10-digit phone number"
+              className={`w-full rounded-lg border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200 ${errors.mobile.length > 0
                 ? "border-red-500"
                 : "border-slate-300"
                 }`}
             />
 
-            {errors.mobile && (
-              <p className="mt-1 text-sm text-red-600">
-                {errors.mobile}
-              </p>
+            {errors.mobile.length > 0 && (
+              <div className="mt-2 space-y-1">
+                {errors.mobile.map(
+                  (error, index) => (
+                    <div
+                      key={`${error}-${index}`}
+                      className="flex items-start gap-2"
+                    >
+                      <span className="text-red-600 mt-0.5">
+                        •
+                      </span>
+
+                      <p className="text-sm text-red-600">
+                        {error}
+                      </p>
+                    </div>
+                  )
+                )}
+              </div>
             )}
           </div>
 
+          {/* ================================================== */}
           {/* GENDER */}
+          {/* ================================================== */}
+
           <div>
             <label className="block text-sm font-semibold text-slate-900 mb-2">
               Gender
@@ -515,22 +1016,40 @@ export default function AddEmployeePage() {
               name="gender"
               value={formData.gender}
               onChange={handleChange}
-              className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
+              onBlur={handleBlur}
+              className={`w-full rounded-lg border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200 ${errors.gender
+                ? "border-red-500"
+                : "border-slate-300"
+                }`}
             >
-              <option value="">Select</option>
+              <option value="">
+                Select gender
+              </option>
+
               <option value="male">
                 Male
               </option>
+
               <option value="female">
                 Female
               </option>
+
               <option value="other">
                 Other
               </option>
             </select>
+
+            {errors.gender && (
+              <p className="mt-1 text-sm text-red-600">
+                {errors.gender}
+              </p>
+            )}
           </div>
 
+          {/* ================================================== */}
           {/* ROLE */}
+          {/* ================================================== */}
+
           <div>
             <label className="block text-sm font-semibold text-slate-900 mb-2">
               Role *
@@ -540,6 +1059,7 @@ export default function AddEmployeePage() {
               name="role"
               value={formData.role}
               onChange={handleChange}
+              onBlur={handleBlur}
               className={`w-full rounded-lg border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200 ${errors.role
                 ? "border-red-500"
                 : "border-slate-300"
@@ -561,7 +1081,10 @@ export default function AddEmployeePage() {
             )}
           </div>
 
+          {/* ================================================== */}
           {/* USER TYPE */}
+          {/* ================================================== */}
+
           <div className="col-span-2">
             <label className="block text-sm font-semibold text-slate-900 mb-2">
               User Type {!isAdmin && "*"}
@@ -571,7 +1094,11 @@ export default function AddEmployeePage() {
               name="userTypeId"
               value={formData.userTypeId}
               onChange={handleChange}
-              disabled={isAdmin || loadingUserTypes}
+              onBlur={handleBlur}
+              disabled={
+                isAdmin ||
+                loadingUserTypes
+              }
               className={`w-full rounded-lg border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200 disabled:bg-slate-50 disabled:text-slate-500 ${errors.userTypeId
                 ? "border-red-500"
                 : "border-slate-300"
@@ -586,17 +1113,19 @@ export default function AddEmployeePage() {
               </option>
 
               {!loadingUserTypes &&
-                userTypes.map((userType) => (
-                  <option
-                    key={userType.id}
-                    value={userType.id}
-                  >
-                    {userType.name}
-                    {userType.isSystem
-                      ? " (System)"
-                      : ""}
-                  </option>
-                ))}
+                userTypes.map(
+                  (userType) => (
+                    <option
+                      key={userType.id}
+                      value={userType.id}
+                    >
+                      {userType.name}
+                      {userType.isSystem
+                        ? " (System)"
+                        : ""}
+                    </option>
+                  )
+                )}
             </select>
 
             {errors.userTypeId && (
@@ -607,20 +1136,19 @@ export default function AddEmployeePage() {
 
             {isAdmin ? (
               <p className="mt-2 text-xs text-slate-500">
-                Admin users automatically have full
-                system access. A User Type is not
-                required.
+                Admin users automatically have full system access.
               </p>
             ) : (
               <p className="mt-2 text-xs text-slate-500">
-                The selected User Type determines
-                which modules and actions this employee
-                can access.
+                The selected User Type determines which modules this employee can access.
               </p>
             )}
           </div>
 
+          {/* ================================================== */}
           {/* DEPARTMENT */}
+          {/* ================================================== */}
+
           <div>
             <label className="block text-sm font-semibold text-slate-900 mb-2">
               Department
@@ -630,24 +1158,43 @@ export default function AddEmployeePage() {
               name="departmentId"
               value={formData.departmentId}
               onChange={handleChange}
-              className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
+              onBlur={handleBlur}
+              disabled={loadingOtherData}
+              className={`w-full rounded-lg border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200 disabled:bg-slate-50 disabled:text-slate-500 ${errors.departmentId
+                ? "border-red-500"
+                : "border-slate-300"
+                }`}
             >
               <option value="">
-                Select department
+                {loadingOtherData
+                  ? "Loading..."
+                  : "Select department"}
               </option>
 
-              {departments.map((department) => (
-                <option
-                  key={department.id}
-                  value={department.id}
-                >
-                  {department.name}
-                </option>
-              ))}
+              {!loadingOtherData &&
+                departments.map(
+                  (department) => (
+                    <option
+                      key={department.id}
+                      value={department.id}
+                    >
+                      {department.name}
+                    </option>
+                  )
+                )}
             </select>
+
+            {errors.departmentId && (
+              <p className="mt-1 text-sm text-red-600">
+                {errors.departmentId}
+              </p>
+            )}
           </div>
 
+          {/* ================================================== */}
           {/* DESIGNATION */}
+          {/* ================================================== */}
+
           <div>
             <label className="block text-sm font-semibold text-slate-900 mb-2">
               Designation
@@ -657,24 +1204,43 @@ export default function AddEmployeePage() {
               name="designationId"
               value={formData.designationId}
               onChange={handleChange}
-              className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
+              onBlur={handleBlur}
+              disabled={loadingOtherData}
+              className={`w-full rounded-lg border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200 disabled:bg-slate-50 disabled:text-slate-500 ${errors.designationId
+                ? "border-red-500"
+                : "border-slate-300"
+                }`}
             >
               <option value="">
-                Select designation
+                {loadingOtherData
+                  ? "Loading..."
+                  : "Select designation"}
               </option>
 
-              {designations.map((designation) => (
-                <option
-                  key={designation.id}
-                  value={designation.id}
-                >
-                  {designation.name}
-                </option>
-              ))}
+              {!loadingOtherData &&
+                designations.map(
+                  (designation) => (
+                    <option
+                      key={designation.id}
+                      value={designation.id}
+                    >
+                      {designation.name}
+                    </option>
+                  )
+                )}
             </select>
+
+            {errors.designationId && (
+              <p className="mt-1 text-sm text-red-600">
+                {errors.designationId}
+              </p>
+            )}
           </div>
 
+          {/* ================================================== */}
           {/* EMPLOYEE TYPE */}
+          {/* ================================================== */}
+
           <div>
             <label className="block text-sm font-semibold text-slate-900 mb-2">
               Employee Type
@@ -684,25 +1250,44 @@ export default function AddEmployeePage() {
               name="employeeTypeId"
               value={formData.employeeTypeId}
               onChange={handleChange}
-              className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
+              onBlur={handleBlur}
+              disabled={loadingOtherData}
+              className={`w-full rounded-lg border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200 disabled:bg-slate-50 disabled:text-slate-500 ${errors.employeeTypeId
+                ? "border-red-500"
+                : "border-slate-300"
+                }`}
             >
               <option value="">
-                Select employee type
+                {loadingOtherData
+                  ? "Loading..."
+                  : "Select employee type"}
               </option>
 
-              {employeeTypes.map((employeeType) => (
-                <option
-                  key={employeeType.id}
-                  value={employeeType.id}
-                >
-                  {employeeType.name}
-                </option>
-              ))}
+              {!loadingOtherData &&
+                employeeTypes.map(
+                  (employeeType) => (
+                    <option
+                      key={employeeType.id}
+                      value={employeeType.id}
+                    >
+                      {employeeType.name}
+                    </option>
+                  )
+                )}
             </select>
+
+            {errors.employeeTypeId && (
+              <p className="mt-1 text-sm text-red-600">
+                {errors.employeeTypeId}
+              </p>
+            )}
           </div>
         </div>
 
+        {/* ==================================================== */}
         {/* ADMIN INFORMATION */}
+        {/* ==================================================== */}
+
         {isAdmin && (
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
             <p className="text-sm font-semibold text-amber-800">
@@ -710,21 +1295,20 @@ export default function AddEmployeePage() {
             </p>
 
             <p className="mt-1 text-xs text-amber-700">
-              This account will have full access to
-              the system regardless of User Type
-              permissions.
+              This account will have full access to the system.
             </p>
           </div>
         )}
 
+        {/* ==================================================== */}
         {/* ACTIONS */}
+        {/* ==================================================== */}
+
         <div className="flex gap-3 pt-4 border-t border-slate-100">
+
           <button
             type="submit"
-            disabled={
-              loading ||
-              loadingUserTypes
-            }
+            disabled={isLoading}
             className="bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold px-6 py-2.5 rounded-lg transition-all duration-200 hover:shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {loading
@@ -734,13 +1318,26 @@ export default function AddEmployeePage() {
 
           <button
             type="button"
+            onClick={handleReset}
+            disabled={isLoading}
+            className="border border-slate-300 text-slate-900 font-semibold text-sm px-6 py-2.5 rounded-lg hover:bg-slate-50 hover:border-slate-400 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            Reset Form
+          </button>
+
+          <button
+            type="button"
             onClick={() =>
-              router.push("/admin/employees")
+              router.push(
+                "/admin/employees"
+              )
             }
-            className="border border-slate-300 text-slate-900 font-semibold text-sm px-6 py-2.5 rounded-lg hover:bg-slate-50 hover:border-slate-400 transition-all duration-200"
+            disabled={isLoading}
+            className="border border-slate-300 text-slate-900 font-semibold text-sm px-6 py-2.5 rounded-lg hover:bg-slate-50 hover:border-slate-400 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             Cancel
           </button>
+
         </div>
       </form>
     </div>

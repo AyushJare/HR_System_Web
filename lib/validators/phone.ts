@@ -1,15 +1,15 @@
 /**
  * Phone Number Validator
  * Country-specific validation rules
- * Default: India (10 digits, starts with 9)
+ * Default: India (10 digits, starts with 6, 7, 8, or 9)
  */
 
 export type CountryCode = "IN" | "US" | "UK" | "CA" | "AU";
 
 export interface PhoneValidationRule {
   length: number;
-  prefix?: string; // First digit must match this
-  format?: string; // Display format example
+  prefix?: string;
+  format?: string;
   description: string;
 }
 
@@ -23,36 +23,38 @@ export interface PhoneValidationResult {
 
 /**
  * Country-specific phone validation rules
- * Add more countries as needed
  */
 const PHONE_RULES: Record<CountryCode, PhoneValidationRule> = {
   IN: {
     length: 10,
-    prefix: "9", // India: Must start with 9
-    format: "9XXXX-XXXXX",
-    description: "10 digits, starts with 9 (mobile only)",
+    format: "XXXXX-XXXXX",
+    description: "10 digits, starts with 6, 7, 8, or 9",
   },
+
   US: {
     length: 10,
     format: "(XXX) XXX-XXXX",
-    description: "10 digits (US & Canada format)",
+    description: "10 digits",
   },
+
   UK: {
     length: 11,
     prefix: "7",
     format: "7XXX XXXXXX",
     description: "11 digits, starts with 7",
   },
+
   CA: {
     length: 10,
     format: "(XXX) XXX-XXXX",
     description: "10 digits",
   },
+
   AU: {
     length: 10,
     prefix: "4",
     format: "4XX XXX XXXX",
-    description: "10 digits, starts with 4 (mobile)",
+    description: "10 digits, starts with 4",
   },
 };
 
@@ -63,7 +65,7 @@ export const validatePhoneNumber = (
   phone: string,
   countryCode: CountryCode = "IN"
 ): PhoneValidationResult => {
-  if (!phone) {
+  if (!phone || !phone.trim()) {
     return {
       valid: false,
       error: "Phone number is required",
@@ -73,8 +75,9 @@ export const validatePhoneNumber = (
   // Remove all non-digit characters
   const cleaned = phone.replace(/\D/g, "");
 
-  // Check if we support this country
+  // Check if country is supported
   const rule = PHONE_RULES[countryCode];
+
   if (!rule) {
     return {
       valid: false,
@@ -90,8 +93,23 @@ export const validatePhoneNumber = (
     };
   }
 
-  // Check prefix if required
-  if (rule.prefix && !cleaned.startsWith(rule.prefix)) {
+  // India-specific validation
+  // Indian mobile numbers must start with 6, 7, 8, or 9
+  if (countryCode === "IN") {
+    if (!/^[6-9]/.test(cleaned)) {
+      return {
+        valid: false,
+        error: "Indian mobile numbers must start with 6, 7, 8, or 9",
+      };
+    }
+  }
+
+  // Other country prefix validation
+  if (
+    countryCode !== "IN" &&
+    rule.prefix &&
+    !cleaned.startsWith(rule.prefix)
+  ) {
     return {
       valid: false,
       error: `${countryCode} phone numbers must start with ${rule.prefix}`,
@@ -110,37 +128,50 @@ export const validatePhoneNumber = (
 /**
  * Format phone number based on country
  */
-export const formatPhoneNumber = (phone: string, countryCode: CountryCode = "IN"): string => {
+export const formatPhoneNumber = (
+  phone: string,
+  countryCode: CountryCode = "IN"
+): string => {
   const cleaned = phone.replace(/\D/g, "");
 
   switch (countryCode) {
     case "IN":
-      // Format as: 98765-43210
+      // Format: 98765-43210
       if (cleaned.length === 10) {
         return `${cleaned.slice(0, 5)}-${cleaned.slice(5)}`;
       }
+
       return cleaned;
 
     case "US":
     case "CA":
-      // Format as: (XXX) XXX-XXXX
+      // Format: (XXX) XXX-XXXX
       if (cleaned.length === 10) {
-        return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+        return `(${cleaned.slice(0, 3)}) ${cleaned.slice(
+          3,
+          6
+        )}-${cleaned.slice(6)}`;
       }
+
       return cleaned;
 
     case "UK":
-      // Format as: XXXX XXXXXX
+      // Format: XXXX XXXXXX
       if (cleaned.length === 11) {
         return `${cleaned.slice(0, 4)} ${cleaned.slice(4)}`;
       }
+
       return cleaned;
 
     case "AU":
-      // Format as: XXXX XXX XXX
+      // Format: XXXX XXX XXX
       if (cleaned.length === 10) {
-        return `${cleaned.slice(0, 4)} ${cleaned.slice(4, 7)} ${cleaned.slice(7)}`;
+        return `${cleaned.slice(0, 4)} ${cleaned.slice(
+          4,
+          7
+        )} ${cleaned.slice(7)}`;
       }
+
       return cleaned;
 
     default:
@@ -159,11 +190,12 @@ function getCountryName(code: CountryCode): string {
     CA: "Canada",
     AU: "Australia",
   };
+
   return names[code] || code;
 }
 
 /**
- * Validate multiple phone numbers (for bulk operations)
+ * Validate multiple phone numbers
  */
 export const validatePhoneNumbers = (
   phones: string[],
@@ -174,6 +206,7 @@ export const validatePhoneNumbers = (
 } => {
   const valid: Array<{ phone: string; formatted: string }> = [];
   const invalid: Array<{ phone: string; error: string }> = [];
+
   const seen = new Set<string>();
 
   phones.forEach((phone) => {
@@ -184,56 +217,81 @@ export const validatePhoneNumbers = (
         phone,
         error: result.error || "Invalid phone number",
       });
-    } else {
-      const formatted = result.formatted!;
 
-      // Check for duplicates in batch
-      if (seen.has(formatted)) {
-        invalid.push({
-          phone,
-          error: "Duplicate phone number in batch",
-        });
-      } else {
-        valid.push({
-          phone,
-          formatted,
-        });
-        seen.add(formatted);
-      }
+      return;
     }
+
+    const formatted = result.formatted!;
+
+    // Check for duplicates in batch
+    if (seen.has(formatted)) {
+      invalid.push({
+        phone,
+        error: "Duplicate phone number in batch",
+      });
+
+      return;
+    }
+
+    valid.push({
+      phone,
+      formatted,
+    });
+
+    seen.add(formatted);
   });
 
-  return { valid, invalid };
+  return {
+    valid,
+    invalid,
+  };
 };
 
 /**
- * Detect country from phone number (heuristic)
- * Tries to guess country based on length and format
+ * Detect country from phone number
  */
-export const detectCountry = (phone: string): CountryCode | null => {
+export const detectCountry = (
+  phone: string
+): CountryCode | null => {
   const cleaned = phone.replace(/\D/g, "");
 
-  // By length (most reliable)
+  // India / Australia / US / Canada
   if (cleaned.length === 10) {
-    if (cleaned.startsWith("9")) return "IN";
-    if (cleaned.startsWith("4")) return "AU";
-    return "US"; // Default for 10-digit
+    // India: mobile numbers start with 6, 7, 8, or 9
+    if (/^[6-9]/.test(cleaned)) {
+      return "IN";
+    }
+
+    // Australia
+    if (cleaned.startsWith("4")) {
+      return "AU";
+    }
+
+    // Default remaining 10-digit number to US
+    return "US";
   }
 
+  // UK
   if (cleaned.length === 11) {
-    if (cleaned.startsWith("7")) return "UK";
+    if (cleaned.startsWith("7")) {
+      return "UK";
+    }
   }
 
   return null;
 };
 
 /**
- * Check if phone number looks valid (without country context)
- * Useful for initial UI validation
+ * Check if phone number looks valid
+ * without country context
  */
-export const isPhoneNumberLike = (phone: string): boolean => {
+export const isPhoneNumberLike = (
+  phone: string
+): boolean => {
   const cleaned = phone.replace(/\D/g, "");
-  // Must have between 7 and 15 digits (international standard)
+
+  // International standard:
+  // between 7 and 15 digits
   return cleaned.length >= 7 && cleaned.length <= 15;
 };
 
@@ -245,11 +303,13 @@ export const getSupportedCountries = (): Array<{
   name: string;
   rule: PhoneValidationRule;
 }> => {
-  return Object.entries(PHONE_RULES).map(([code, rule]) => ({
-    code: code as CountryCode,
-    name: getCountryName(code as CountryCode),
-    rule,
-  }));
+  return Object.entries(PHONE_RULES).map(
+    ([code, rule]) => ({
+      code: code as CountryCode,
+      name: getCountryName(code as CountryCode),
+      rule,
+    })
+  );
 };
 
 /**
@@ -258,29 +318,81 @@ export const getSupportedCountries = (): Array<{
 export const phoneValidatorTests = {
   india: {
     valid: [
-      { phone: "9876543210", formatted: "98765-43210" },
-      { phone: "98765-43210", formatted: "98765-43210" },
-      { phone: "+91 98765 43210", formatted: "98765-43210" },
+      {
+        phone: "9876543210",
+        formatted: "98765-43210",
+      },
+      {
+        phone: "8876543210",
+        formatted: "88765-43210",
+      },
+      {
+        phone: "7876543210",
+        formatted: "78765-43210",
+      },
+      {
+        phone: "6876543210",
+        formatted: "68765-43210",
+      },
+      {
+        phone: "98765-43210",
+        formatted: "98765-43210",
+      },
+      {
+        phone: "+91 98765 43210",
+        formatted: "98765-43210",
+      },
     ],
+
     invalid: [
-      { phone: "8876543210", error: "starts with 8 - invalid for India" },
-      { phone: "9876543", error: "too short (7 digits)" },
-      { phone: "987654321012", error: "too long (12 digits)" },
-      { phone: "+1 9876543210", error: "country prefix included" },
+      {
+        phone: "5876543210",
+        error: "starts with 5 - invalid for India",
+      },
+      {
+        phone: "4876543210",
+        error: "starts with 4 - invalid for India",
+      },
+      {
+        phone: "9876543",
+        error: "too short (7 digits)",
+      },
+      {
+        phone: "987654321012",
+        error: "too long (12 digits)",
+      },
     ],
   },
+
   us: {
     valid: [
-      { phone: "2025551234", formatted: "(202) 555-1234" },
-      { phone: "(202) 555-1234", formatted: "(202) 555-1234" },
+      {
+        phone: "2025551234",
+        formatted: "(202) 555-1234",
+      },
+      {
+        phone: "(202) 555-1234",
+        formatted: "(202) 555-1234",
+      },
     ],
+
     invalid: [
-      { phone: "202555123", error: "too short (9 digits)" },
-      { phone: "20255512345", error: "too long (11 digits)" },
+      {
+        phone: "202555123",
+        error: "too short (9 digits)",
+      },
+      {
+        phone: "20255512345",
+        error: "too long (11 digits)",
+      },
     ],
   },
+
   detection: {
     "9876543210": "IN",
+    "8876543210": "IN",
+    "7876543210": "IN",
+    "6876543210": "IN",
     "2025551234": "US",
     "74912345678": "UK",
     "0412345678": "AU",
@@ -292,36 +404,51 @@ export const phoneValidatorTests = {
  */
 export const getPhoneBulkUploadTemplate = (): string => {
   const countries = getSupportedCountries();
-  let template = "Phone Number Format Reference:\n\n";
 
-  countries.forEach(({ code, name, rule }) => {
-    template += `${code} (${name}):\n`;
-    template += `  • Length: ${rule.length} digits\n`;
-    if (rule.prefix) {
-      template += `  • Must start with: ${rule.prefix}\n`;
+  let template =
+    "Phone Number Format Reference:\n\n";
+
+  countries.forEach(
+    ({ code, name, rule }) => {
+      template += `${code} (${name}):\n`;
+      template += `  • Length: ${rule.length} digits\n`;
+
+      if (rule.prefix) {
+        template += `  • Must start with: ${rule.prefix}\n`;
+      }
+
+      template += `  • Format: ${rule.format}\n`;
+      template += `  • Example: ${generateExamplePhone(
+        code
+      )}\n\n`;
     }
-    template += `  • Format: ${rule.format}\n`;
-    template += `  • Example: ${generateExamplePhone(code)}\n\n`;
-  });
+  );
 
   return template;
 };
 
 /**
- * Generate example phone for a country (for documentation)
+ * Generate example phone for a country
  */
-function generateExamplePhone(countryCode: CountryCode): string {
+function generateExamplePhone(
+  countryCode: CountryCode
+): string {
   switch (countryCode) {
     case "IN":
       return "9876543210";
+
     case "US":
       return "2025551234";
+
     case "UK":
       return "74912345678";
+
     case "CA":
       return "4165551234";
+
     case "AU":
       return "0412345678";
+
     default:
       return "1234567890";
   }
