@@ -520,24 +520,24 @@ export async function POST(request: NextRequest) {
 
     response.cookies.set("accessToken", accessToken, {
       httpOnly: true,
-      secure: isProduction,
-      sameSite: "lax",
+      secure: true,
+      sameSite: "none",
       maxAge: 60 * 60,
       path: "/",
     });
 
     response.cookies.set("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: isProduction,
-      sameSite: "lax",
+      secure: true,
+      sameSite: "none",
       maxAge: 7 * 24 * 60 * 60,
       path: "/",
     });
 
     response.cookies.set("session", accessToken, {
       httpOnly: true,
-      secure: isProduction,
-      sameSite: "lax",
+      secure: true,
+      sameSite: "none",
       maxAge: 60 * 60,
       path: "/",
     });
