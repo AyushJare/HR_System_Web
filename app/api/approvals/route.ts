@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requirePermissionOrAdmin } from "@/lib/auth";
+import { checkIfDateIsOff } from "@/lib/attendanceUtils";
 
 export async function GET(request: NextRequest) {
   try {
@@ -87,6 +88,100 @@ export async function POST(request: NextRequest) {
 
     // Use provided actorId, otherwise current authenticated user
     const approvalActorId = actorId || auth.session.sub;
+
+    // Prevent leave requests if attendance has already been completed
+    if (type === "LEAVE") {
+      const leaveDate = details?.date;
+
+      if (!leaveDate) {
+        return NextResponse.json(
+          { error: "Leave date is required" },
+          { status: 400 }
+        );
+      }
+
+      const attendanceDate = new Date(
+        `${leaveDate}T00:00:00.000Z`
+      );
+
+      /*
+       * Prevent leave requests on weekly offs and holidays.
+       */
+      const dateOffInfo =
+        await checkIfDateIsOff(attendanceDate);
+
+      if (dateOffInfo.isOff) {
+        return NextResponse.json(
+          {
+            error:
+              dateOffInfo.reason === "HOLIDAY"
+                ? "Leave cannot be applied on a holiday."
+                : "Leave cannot be applied on a weekly off.",
+          },
+          { status: 409 }
+        );
+      }
+
+      const attendance = await prisma.attendance.findUnique({
+        where: {
+          employeeId_date: {
+            employeeId: approvalActorId,
+            date: attendanceDate,
+          },
+        },
+        select: {
+          id: true,
+          status: true,
+          checkInTime: true,
+          checkOutTime: true,
+          deletedAt: true,
+        },
+      });
+
+      if (
+        attendance &&
+        !attendance.deletedAt &&
+        attendance.checkInTime &&
+        attendance.status !== "ABSENT"
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "Leave request cannot be submitted because attendance has already been recorded for this date.",
+          },
+          { status: 409 }
+        );
+      }
+
+      // Prevent multiple active leave applications for the same day
+      const existingLeave = await prisma.approval.findFirst({
+        where: {
+          type: "LEAVE",
+          actorId: approvalActorId,
+          status: {
+            in: ["PENDING", "APPROVED"],
+          },
+          details: {
+            path: ["date"],
+            equals: leaveDate,
+          },
+        },
+        select: {
+          id: true,
+          status: true,
+        },
+      });
+
+      if (existingLeave) {
+        return NextResponse.json(
+          {
+            error:
+              "A leave application already exists for this employee on this date.",
+          },
+          { status: 409 }
+        );
+      }
+    }
 
     const approval = await prisma.approval.create({
       data: {

@@ -305,12 +305,18 @@ export default function LoginPage() {
         {/* ================================================== */}
 
         <div className="text-center mb-8">
+          <img
+            src="/images/vmc-logo.png"
+            alt="VMC Logo"
+            className="h-16 w-auto object-contain mx-auto mb-3"
+          />
+
           <h1 className="text-3xl font-bold text-slate-950">
-            Sign In
+            VMC
           </h1>
 
           <p className="text-sm text-slate-500 mt-2">
-            Sign in to your employee account
+            Sign in to your account
           </p>
         </div>
 

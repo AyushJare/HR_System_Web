@@ -6,7 +6,7 @@ import { getWeeklyOffSettings, isWeeklyOff, checkIfDateIsOff } from "@/lib/atten
 
 export async function POST(request: NextRequest) {
     try {
-        const session = await getSession();
+        const session = await getSession(request);
         if (!session) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
@@ -51,6 +51,43 @@ export async function POST(request: NextRequest) {
             return NextResponse.json(
                 { error: "Already checked in today" },
                 { status: 422 }
+            );
+        }
+        // ==========================================================
+        // PROTECT APPROVED LEAVE
+        // ==========================================================
+        // If approved leave exists for today, check-in must not
+        // create PRESENT attendance.
+        const todayString = serverDate.toISOString().slice(0, 10);
+
+        const approvedLeaveApprovals =
+            await prisma.approval.findMany({
+                where: {
+                    type: "LEAVE",
+                    status: "APPROVED",
+                    actorId: session.sub,
+                },
+                select: {
+                    details: true,
+                },
+            });
+
+        const hasApprovedLeave =
+            approvedLeaveApprovals.some((approval) => {
+                const details = approval.details as
+                    | { date?: string }
+                    | null;
+
+                return details?.date === todayString;
+            });
+
+        if (hasApprovedLeave) {
+            return NextResponse.json(
+                {
+                    error:
+                        "Cannot check in because the employee is on approved leave for today.",
+                },
+                { status: 409 }
             );
         }
 

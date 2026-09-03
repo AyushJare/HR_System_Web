@@ -19,12 +19,27 @@ export function middleware(request: NextRequest) {
   );
 
   // CORS
-  if (process.env.NODE_ENV === "production") {
-    const origin = request.headers.get("origin");
+  const origin = request.headers.get("origin");
 
-    if (origin === process.env.NEXTAUTH_URL) {
-      response.headers.set("Access-Control-Allow-Origin", origin);
-    }
+  if (
+    origin &&
+    (
+      origin === process.env.NEXTAUTH_URL ||
+      origin.startsWith("http://localhost:")
+    )
+  ) {
+    response.headers.set("Access-Control-Allow-Origin", origin);
+    response.headers.set("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+    response.headers.set(
+      "Access-Control-Allow-Headers",
+      "Content-Type, Authorization"
+    );
+    response.headers.set("Access-Control-Allow-Credentials", "true");
+  }
+
+  // Handle Flutter Web preflight requests
+  if (request.method === "OPTIONS") {
+    return new NextResponse(null, { status: 204, headers: response.headers });
   }
 
   return response;

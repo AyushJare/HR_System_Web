@@ -414,20 +414,53 @@ export async function POST(request: NextRequest) {
       });
 
       if (!existingAttendance) {
-        await prisma.attendance.create({
-          data: {
-            employeeId: employee.id,
-            date: today,
-            latitude: lat,
-            longitude: lon,
-            gpsAccuracy: hasValidAccuracy ? accuracy : null,
-            deviceId: deviceId ?? "unknown",
-            ipAddress: realIp,
-            isMockLocation: isMock,
-            distanceFromOffice,
-            status: "PRESENT",
-          },
-        });
+        // ==========================================================
+        // PROTECT APPROVED LEAVE
+        // ==========================================================
+        // Login with valid GPS must not create PRESENT attendance
+        // when the employee has approved leave for today.
+
+        const todayString = today.toISOString().slice(0, 10);
+
+        const approvedLeaveApprovals =
+          await prisma.approval.findMany({
+            where: {
+              type: "LEAVE",
+              status: "APPROVED",
+              actorId: employee.id,
+            },
+            select: {
+              details: true,
+            },
+          });
+
+        const hasApprovedLeave =
+          approvedLeaveApprovals.some((approval) => {
+            const details = approval.details as
+              | { date?: string }
+              | null;
+
+            return details?.date === todayString;
+          });
+
+        if (!hasApprovedLeave) {
+          await prisma.attendance.create({
+            data: {
+              employeeId: employee.id,
+              date: today,
+              latitude: lat,
+              longitude: lon,
+              gpsAccuracy: hasValidAccuracy
+                ? accuracy
+                : null,
+              deviceId: deviceId ?? "unknown",
+              ipAddress: realIp,
+              isMockLocation: isMock,
+              distanceFromOffice,
+              status: "PRESENT",
+            },
+          });
+        }
       }
     }
 

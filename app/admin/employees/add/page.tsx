@@ -41,6 +41,7 @@ interface FormData {
   fullName: string;
   email: string;
   password: string;
+  confirmPassword: string;
   mobile: string;
   gender: string;
   departmentId: string;
@@ -54,6 +55,7 @@ interface FormErrors {
   fullName: string;
   email: string;
   password: string[];
+  confirmPassword: string;
   mobile: string[];
   gender: string;
   role: string;
@@ -71,6 +73,7 @@ const initialFormData: FormData = {
   fullName: "",
   email: "",
   password: "",
+  confirmPassword: "",
   mobile: "",
   gender: "",
   departmentId: "",
@@ -84,6 +87,7 @@ const initialErrors: FormErrors = {
   fullName: "",
   email: "",
   password: [],
+  confirmPassword: "",
   mobile: [],
   gender: "",
   role: "",
@@ -114,6 +118,16 @@ export default function AddEmployeePage() {
 
   const [errors, setErrors] =
     useState<FormErrors>(initialErrors);
+
+  // ============================================================
+  // PASSWORD SUGGESTION
+  // ============================================================
+
+  const [showPasswordSuggestion, setShowPasswordSuggestion] =
+    useState(false);
+
+  const [suggestedPassword, setSuggestedPassword] =
+    useState("");
 
   // ============================================================
   // LOAD FORM OPTIONS
@@ -345,6 +359,21 @@ export default function AddEmployeePage() {
     }
   };
 
+  const validateConfirmPasswordField = (
+    value: string,
+    password: string
+  ): string => {
+    if (!value) {
+      return "Please confirm your password";
+    }
+
+    if (value !== password) {
+      return "Passwords do not match";
+    }
+
+    return "";
+  };
+
   const validateMobileField = (
     value: string
   ): string[] => {
@@ -368,7 +397,6 @@ export default function AddEmployeePage() {
         "Phone number must be exactly 10 digits"
       );
     }
-
 
     return mobileErrors;
   };
@@ -397,6 +425,134 @@ export default function AddEmployeePage() {
     }
 
     return "";
+  };
+
+  // ============================================================
+  // PASSWORD SUGGESTION
+  // ============================================================
+
+  const generateSuggestedPassword = (): string => {
+    const uppercase =
+      "ABCDEFGHJKLMNPQRSTUVWXYZ";
+
+    const lowercase =
+      "abcdefghijkmnopqrstuvwxyz";
+
+    const numbers =
+      "23456789";
+
+    const symbols =
+      "!@#$%^&*";
+
+    const allCharacters =
+      uppercase +
+      lowercase +
+      numbers +
+      symbols;
+
+    const randomCharacter = (
+      characters: string
+    ): string => {
+      const randomValues =
+        new Uint32Array(1);
+
+      crypto.getRandomValues(
+        randomValues
+      );
+
+      return characters[
+        randomValues[0] % characters.length
+      ];
+    };
+
+    // Guarantee at least one character
+    // from each required category.
+    const passwordCharacters = [
+      randomCharacter(uppercase),
+      randomCharacter(lowercase),
+      randomCharacter(numbers),
+      randomCharacter(symbols),
+    ];
+
+    // Add remaining random characters.
+    for (
+      let i = passwordCharacters.length;
+      i < 16;
+      i++
+    ) {
+      passwordCharacters.push(
+        randomCharacter(allCharacters)
+      );
+    }
+
+    // Securely shuffle the generated password.
+    for (
+      let i = passwordCharacters.length - 1;
+      i > 0;
+      i--
+    ) {
+      const randomValues =
+        new Uint32Array(1);
+
+      crypto.getRandomValues(
+        randomValues
+      );
+
+      const j =
+        randomValues[0] % (i + 1);
+
+      [
+        passwordCharacters[i],
+        passwordCharacters[j],
+      ] = [
+          passwordCharacters[j],
+          passwordCharacters[i],
+        ];
+    }
+
+    return passwordCharacters.join("");
+  };
+
+  const handlePasswordFocus = () => {
+    if (!formData.password) {
+      const generatedPassword =
+        generateSuggestedPassword();
+
+      setSuggestedPassword(
+        generatedPassword
+      );
+
+      setShowPasswordSuggestion(true);
+    }
+  };
+
+  const handleUseSuggestedPassword = () => {
+    if (!suggestedPassword) {
+      return;
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      password: suggestedPassword,
+      confirmPassword: suggestedPassword,
+    }));
+
+    setErrors((prev) => ({
+      ...prev,
+      password: [],
+      confirmPassword: "",
+    }));
+
+    setShowPasswordSuggestion(false);
+  };
+
+  const handleGenerateAnotherPassword = () => {
+    const generatedPassword =
+      generateSuggestedPassword();
+
+    setSuggestedPassword(
+      generatedPassword
+    );
   };
 
   // ============================================================
@@ -432,6 +588,10 @@ export default function AddEmployeePage() {
 
         case "password":
           next.password = [];
+          break;
+
+        case "confirmPassword":
+          next.confirmPassword = "";
           break;
 
         case "mobile":
@@ -507,6 +667,17 @@ export default function AddEmployeePage() {
         }));
         break;
 
+      case "confirmPassword":
+        setErrors((prev) => ({
+          ...prev,
+          confirmPassword:
+            validateConfirmPasswordField(
+              value,
+              formData.password
+            ),
+        }));
+        break;
+
       case "mobile":
         setErrors((prev) => ({
           ...prev,
@@ -518,20 +689,22 @@ export default function AddEmployeePage() {
         setErrors((prev) => ({
           ...prev,
           role: validateRoleField(value),
-          userTypeId: validateUserTypeField(
-            formData.userTypeId,
-            value
-          ),
+          userTypeId:
+            validateUserTypeField(
+              formData.userTypeId,
+              value
+            ),
         }));
         break;
 
       case "userTypeId":
         setErrors((prev) => ({
           ...prev,
-          userTypeId: validateUserTypeField(
-            value,
-            formData.role
-          ),
+          userTypeId:
+            validateUserTypeField(
+              value,
+              formData.role
+            ),
         }));
         break;
 
@@ -558,13 +731,25 @@ export default function AddEmployeePage() {
       validateEmailField(formData.email);
 
     const passwordError =
-      validatePasswordField(formData.password);
+      validatePasswordField(
+        formData.password
+      );
+
+    const confirmPasswordError =
+      validateConfirmPasswordField(
+        formData.confirmPassword,
+        formData.password
+      );
 
     const mobileError =
-      validateMobileField(formData.mobile);
+      validateMobileField(
+        formData.mobile
+      );
 
     const roleError =
-      validateRoleField(formData.role);
+      validateRoleField(
+        formData.role
+      );
 
     const userTypeError =
       validateUserTypeField(
@@ -576,6 +761,8 @@ export default function AddEmployeePage() {
       fullName: fullNameError,
       email: emailError,
       password: passwordError,
+      confirmPassword:
+        confirmPasswordError,
       mobile: mobileError,
       gender: "",
       role: roleError,
@@ -591,6 +778,7 @@ export default function AddEmployeePage() {
       Boolean(fullNameError) ||
       Boolean(emailError) ||
       passwordError.length > 0 ||
+      Boolean(confirmPasswordError) ||
       mobileError.length > 0 ||
       Boolean(roleError) ||
       Boolean(userTypeError);
@@ -610,7 +798,9 @@ export default function AddEmployeePage() {
     // API REQUEST
     // ========================================================
 
-    let loadingToast: string | undefined;
+    let loadingToast:
+      | string
+      | undefined;
 
     try {
       setLoading(true);
@@ -624,7 +814,8 @@ export default function AddEmployeePage() {
         {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type":
+              "application/json",
           },
           body: JSON.stringify({
             fullName:
@@ -637,19 +828,23 @@ export default function AddEmployeePage() {
               formData.password,
 
             mobile:
-              formData.mobile.trim() || null,
+              formData.mobile.trim() ||
+              null,
 
             gender:
               formData.gender || null,
 
             departmentId:
-              formData.departmentId || null,
+              formData.departmentId ||
+              null,
 
             designationId:
-              formData.designationId || null,
+              formData.designationId ||
+              null,
 
             employeeTypeId:
-              formData.employeeTypeId || null,
+              formData.employeeTypeId ||
+              null,
 
             userTypeId:
               formData.role === "ADMIN"
@@ -662,10 +857,12 @@ export default function AddEmployeePage() {
         }
       );
 
-      let responseData: unknown = null;
+      let responseData: unknown =
+        null;
 
       try {
-        responseData = await res.json();
+        responseData =
+          await res.json();
       } catch {
         responseData = null;
       }
@@ -680,7 +877,8 @@ export default function AddEmployeePage() {
 
         if (
           responseData !== null &&
-          typeof responseData === "object"
+          typeof responseData ===
+          "object"
         ) {
           const responseObject =
             responseData as {
@@ -703,7 +901,9 @@ export default function AddEmployeePage() {
           }
         }
 
-        throw new Error(errorMessage);
+        throw new Error(
+          errorMessage
+        );
       }
 
       if (!responseData) {
@@ -720,7 +920,8 @@ export default function AddEmployeePage() {
         formData.fullName;
 
       if (
-        typeof responseData === "object" &&
+        typeof responseData ===
+        "object" &&
         responseData !== null
       ) {
         const responseObject =
@@ -758,7 +959,9 @@ export default function AddEmployeePage() {
       // ======================================================
 
       if (loadingToast) {
-        toast.dismiss(loadingToast);
+        toast.dismiss(
+          loadingToast
+        );
       }
 
       showSuccessToast(
@@ -775,7 +978,9 @@ export default function AddEmployeePage() {
 
     } catch (error) {
       if (loadingToast) {
-        toast.dismiss(loadingToast);
+        toast.dismiss(
+          loadingToast
+        );
       }
 
       console.error(
@@ -808,6 +1013,10 @@ export default function AddEmployeePage() {
       setErrors({
         ...initialErrors,
       });
+
+      setSuggestedPassword("");
+
+      setShowPasswordSuggestion(false);
 
       showSuccessToast(
         "Form reset successfully"
@@ -918,7 +1127,7 @@ export default function AddEmployeePage() {
           {/* PASSWORD */}
           {/* ================================================== */}
 
-          <div>
+          <div className="relative">
             <label className="block text-sm font-semibold text-slate-900 mb-2">
               Password *
             </label>
@@ -928,13 +1137,74 @@ export default function AddEmployeePage() {
               name="password"
               value={formData.password}
               onChange={handleChange}
-              onBlur={handleBlur}
+              onFocus={handlePasswordFocus}
+              onBlur={(e) => {
+                handleBlur(e);
+
+                setTimeout(() => {
+                  setShowPasswordSuggestion(
+                    false
+                  );
+                }, 150);
+              }}
               placeholder="Enter password"
+              autoComplete="new-password"
               className={`w-full rounded-lg border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200 ${errors.password.length > 0
                 ? "border-red-500"
                 : "border-slate-300"
                 }`}
             />
+
+            {/* SUGGESTED PASSWORD */}
+            {showPasswordSuggestion && (
+              <div className="absolute z-20 left-0 right-0 mt-2 rounded-lg border border-slate-200 bg-white p-4 shadow-lg">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">
+                      Suggested password
+                    </p>
+
+                    <p className="text-xs text-slate-500 mt-1">
+                      Use a strong, randomly generated password.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onMouseDown={(e) =>
+                      e.preventDefault()
+                    }
+                    onClick={
+                      handleGenerateAnotherPassword
+                    }
+                    className="text-xs font-semibold text-slate-700 hover:text-slate-950"
+                  >
+                    Generate another
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
+                    <code className="text-sm text-slate-800 break-all">
+                      {suggestedPassword}
+                    </code>
+                  </div>
+
+                  <button
+                    type="button"
+                    onMouseDown={(e) =>
+                      e.preventDefault()
+                    }
+                    onClick={
+                      handleUseSuggestedPassword
+                    }
+                    className="shrink-0 rounded-md bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 transition-colors"
+                  >
+                    Use password
+                  </button>
+                </div>
+              </div>
+            )}
 
             {errors.password.length > 0 && (
               <div className="mt-2 space-y-1">
@@ -955,6 +1225,36 @@ export default function AddEmployeePage() {
                   )
                 )}
               </div>
+            )}
+          </div>
+
+          {/* ================================================== */}
+          {/* CONFIRM PASSWORD */}
+          {/* ================================================== */}
+
+          <div>
+            <label className="block text-sm font-semibold text-slate-900 mb-2">
+              Confirm Password *
+            </label>
+
+            <input
+              type="password"
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              placeholder="Confirm password"
+              autoComplete="new-password"
+              className={`w-full rounded-lg border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200 ${errors.confirmPassword
+                ? "border-red-500"
+                : "border-slate-300"
+                }`}
+            />
+
+            {errors.confirmPassword && (
+              <p className="mt-1 text-sm text-red-600">
+                {errors.confirmPassword}
+              </p>
             )}
           </div>
 

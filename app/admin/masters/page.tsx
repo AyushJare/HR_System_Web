@@ -8,7 +8,7 @@ import HolidaysTab from "./HolidaysTab";
 import LeaveTypesTab from "./LeaveTypesTab";
 import WeeklyOffTab from "./WeeklyOffTab";
 import PermissionGate from "../PermissionGate";
-
+import { usePermission } from "@/lib/hooks/userPermission";
 
 const tabs = [
   { key: "departments", label: "Departments" },
@@ -28,6 +28,11 @@ export default function MastersPage() {
   const [uploading, setUploading] = useState(false);
   const [uploadResult, setUploadResult] = useState<any>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+
+  const {
+    hasPermission: canExportMasters,
+    loading: exportPermissionLoading,
+  } = usePermission("Masters", "export");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -89,6 +94,7 @@ export default function MastersPage() {
       setUploading(false);
     }
   }
+
   return (
     <PermissionGate moduleName="Masters" action="view">
       <div className="p-8">
@@ -103,18 +109,29 @@ export default function MastersPage() {
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={() => {
-              setShowBulkUpload(true);
-              setSelectedFile(null);
-              setUploadError(null);
-              setUploadResult(null);
-            }}
-            className="bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2.5 px-6 rounded-lg transition-all duration-200 hover:shadow-md"
-          >
-            Bulk Upload
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                setShowBulkUpload(true);
+                setSelectedFile(null);
+                setUploadError(null);
+                setUploadResult(null);
+              }}
+              className="bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2.5 px-6 rounded-lg transition-all duration-200 hover:shadow-md"
+            >
+              Bulk Upload
+            </button>
+
+            {!exportPermissionLoading && canExportMasters && (
+              <a
+                href="/api/masters/export"
+                className="border border-slate-300 text-slate-900 font-semibold py-2.5 px-6 rounded-lg hover:bg-slate-50 hover:border-slate-400 transition-all duration-200"
+              >
+                Export Excel
+              </a>
+            )}
+          </div>
         </div>
 
         <div className="border-b border-slate-200 mb-6 flex gap-6">
@@ -143,7 +160,6 @@ export default function MastersPage() {
         {showBulkUpload && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
             <div className="w-full max-w-xl rounded-lg bg-white p-6 border border-slate-200 shadow-sm">
-
               <div className="flex items-start justify-between">
                 <div>
                   <h2 className="text-lg font-semibold text-slate-950 tracking-tight">
@@ -152,7 +168,8 @@ export default function MastersPage() {
 
                   <p className="mt-1 text-sm text-slate-500 font-normal">
                     Upload Departments, Designations, Employee Types,
-                    Holidays, Leave Types and Weekly Off data using one Excel file.
+                    Holidays, Leave Types and Weekly Off data using one
+                    Excel file.
                   </p>
                 </div>
 
@@ -176,8 +193,8 @@ export default function MastersPage() {
                   and upload it here.
                 </p>
 
-
-                <a href="/api/templates/masters"
+                <a
+                  href="/api/templates/masters"
                   className="mt-3 inline-block border border-slate-300 text-slate-900 font-semibold py-2.5 px-6 rounded-lg hover:bg-slate-50 hover:border-slate-400 transition-all duration-200"
                 >
                   Download Excel Template
@@ -193,9 +210,15 @@ export default function MastersPage() {
                       accept=".xlsx"
                       className="hidden"
                       onChange={(event) => {
-                        const file = event.target.files?.[0] || null;
+                        const file =
+                          event.target.files?.[0] || null;
 
-                        if (file && !file.name.toLowerCase().endsWith(".xlsx")) {
+                        if (
+                          file &&
+                          !file.name
+                            .toLowerCase()
+                            .endsWith(".xlsx")
+                        ) {
                           setUploadError(
                             "Please select a valid .xlsx Excel file."
                           );
@@ -210,7 +233,9 @@ export default function MastersPage() {
 
                     <button
                       type="button"
-                      onClick={() => fileInputRef.current?.click()}
+                      onClick={() =>
+                        fileInputRef.current?.click()
+                      }
                       className="flex w-full flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 px-6 py-10 text-center hover:border-slate-400 hover:bg-slate-50 transition-all duration-200"
                     >
                       <span className="text-sm font-medium text-slate-700">
@@ -234,7 +259,9 @@ export default function MastersPage() {
                   <div className="mt-6 flex justify-end gap-3">
                     <button
                       type="button"
-                      onClick={() => setShowBulkUpload(false)}
+                      onClick={() =>
+                        setShowBulkUpload(false)
+                      }
                       disabled={uploading}
                       className="border border-slate-300 text-slate-900 font-semibold py-2.5 px-6 rounded-lg hover:bg-slate-50 hover:border-slate-400 transition-all duration-200"
                     >
@@ -247,7 +274,9 @@ export default function MastersPage() {
                       disabled={!selectedFile || uploading}
                       className="bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2.5 px-6 rounded-lg transition-all duration-200 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      {uploading ? "Uploading..." : "Upload Data"}
+                      {uploading
+                        ? "Uploading..."
+                        : "Upload Data"}
                     </button>
                   </div>
                 </>
@@ -261,47 +290,68 @@ export default function MastersPage() {
                     </h3>
 
                     <p className="mt-1 text-sm text-emerald-700">
-                      Created: {uploadResult.summary.created} ·
-                      Updated: {uploadResult.summary.updated} ·
-                      Skipped: {uploadResult.summary.skipped}
+                      Created:{" "}
+                      {uploadResult.summary.created} ·
+                      Updated:{" "}
+                      {uploadResult.summary.updated} ·
+                      Skipped:{" "}
+                      {uploadResult.summary.skipped}
                     </p>
                   </div>
 
                   <div className="mt-4 space-y-2 text-sm text-slate-600">
                     <div>
-                      Departments — Created: {uploadResult.details.departments.created},
-                      Updated: {uploadResult.details.departments.updated},
-                      Skipped: {uploadResult.details.departments.skipped}
+                      Departments — Created:{" "}
+                      {uploadResult.details.departments.created},
+                      Updated:{" "}
+                      {uploadResult.details.departments.updated},
+                      Skipped:{" "}
+                      {uploadResult.details.departments.skipped}
                     </div>
 
                     <div>
-                      Designations — Created: {uploadResult.details.designations.created},
-                      Updated: {uploadResult.details.designations.updated},
-                      Skipped: {uploadResult.details.designations.skipped}
+                      Designations — Created:{" "}
+                      {uploadResult.details.designations.created},
+                      Updated:{" "}
+                      {uploadResult.details.designations.updated},
+                      Skipped:{" "}
+                      {uploadResult.details.designations.skipped}
                     </div>
 
                     <div>
-                      Employee Types — Created: {uploadResult.details.employeeTypes.created},
-                      Updated: {uploadResult.details.employeeTypes.updated},
-                      Skipped: {uploadResult.details.employeeTypes.skipped}
+                      Employee Types — Created:{" "}
+                      {uploadResult.details.employeeTypes.created},
+                      Updated:{" "}
+                      {uploadResult.details.employeeTypes.updated},
+                      Skipped:{" "}
+                      {uploadResult.details.employeeTypes.skipped}
                     </div>
 
                     <div>
-                      Holidays — Created: {uploadResult.details.holidays.created},
-                      Updated: {uploadResult.details.holidays.updated},
-                      Skipped: {uploadResult.details.holidays.skipped}
+                      Holidays — Created:{" "}
+                      {uploadResult.details.holidays.created},
+                      Updated:{" "}
+                      {uploadResult.details.holidays.updated},
+                      Skipped:{" "}
+                      {uploadResult.details.holidays.skipped}
                     </div>
 
                     <div>
-                      Leave Types — Created: {uploadResult.details.leaveTypes.created},
-                      Updated: {uploadResult.details.leaveTypes.updated},
-                      Skipped: {uploadResult.details.leaveTypes.skipped}
+                      Leave Types — Created:{" "}
+                      {uploadResult.details.leaveTypes.created},
+                      Updated:{" "}
+                      {uploadResult.details.leaveTypes.updated},
+                      Skipped:{" "}
+                      {uploadResult.details.leaveTypes.skipped}
                     </div>
 
                     <div>
-                      Weekly Off — Created: {uploadResult.details.weeklyOff.created},
-                      Updated: {uploadResult.details.weeklyOff.updated},
-                      Skipped: {uploadResult.details.weeklyOff.skipped}
+                      Weekly Off — Created:{" "}
+                      {uploadResult.details.weeklyOff.created},
+                      Updated:{" "}
+                      {uploadResult.details.weeklyOff.updated},
+                      Skipped:{" "}
+                      {uploadResult.details.weeklyOff.skipped}
                     </div>
                   </div>
 
@@ -321,9 +371,8 @@ export default function MastersPage() {
               )}
             </div>
           </div>
-        )
-        }
-      </div >
+        )}
+      </div>
     </PermissionGate>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { usePermission } from "@/lib/hooks/userPermission";
 
 interface Holiday {
   id: string;
@@ -26,6 +27,11 @@ interface UploadResult {
 export default function HolidaysTab() {
   const [items, setItems] = useState<Holiday[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const {
+    hasPermission: canExportHolidays,
+    loading: exportPermissionLoading,
+  } = usePermission("Holidays", "export");
 
   // Single holiday
   const [newName, setNewName] = useState("");
@@ -111,10 +117,7 @@ export default function HolidaysTab() {
       const existingName = holiday.name.trim().toLowerCase();
       const existingDate = formatDateForInput(holiday.date);
 
-      return (
-        existingName === normalizedName &&
-        existingDate === date
-      );
+      return existingName === normalizedName && existingDate === date;
     });
   };
 
@@ -138,9 +141,7 @@ export default function HolidaysTab() {
     // =====================================================
 
     if (isDuplicateHoliday(trimmedName, newDate)) {
-      toast.error(
-        `${trimmedName} is already added for this date.`
-      );
+      toast.error(`${trimmedName} is already added for this date.`);
       return;
     }
 
@@ -166,9 +167,7 @@ export default function HolidaysTab() {
       }
 
       if (!res.ok) {
-        toast.error(
-          data?.error || "Failed to add holiday"
-        );
+        toast.error(data?.error || "Failed to add holiday");
         return;
       }
 
@@ -181,7 +180,6 @@ export default function HolidaysTab() {
       await load();
     } catch (error) {
       console.error("Add holiday error:", error);
-
       toast.error("Failed to add holiday");
     }
   };
@@ -214,9 +212,7 @@ export default function HolidaysTab() {
 
       const results = await Promise.all(deletePromises);
 
-      const allSuccessful = results.every(
-        (res) => res.ok
-      );
+      const allSuccessful = results.every((res) => res.ok);
 
       if (!allSuccessful) {
         toast.error("Failed to delete some holidays");
@@ -249,16 +245,8 @@ export default function HolidaysTab() {
     }
 
     // Prevent editing into an existing duplicate
-    if (
-      isDuplicateHoliday(
-        trimmedName,
-        editingDate,
-        id
-      )
-    ) {
-      toast.error(
-        `${trimmedName} is already added for this date.`
-      );
+    if (isDuplicateHoliday(trimmedName, editingDate, id)) {
+      toast.error(`${trimmedName} is already added for this date.`);
       return;
     }
 
@@ -270,8 +258,7 @@ export default function HolidaysTab() {
         },
         body: JSON.stringify({
           name: trimmedName,
-          description:
-            editingDescription.trim() || null,
+          description: editingDescription.trim() || null,
           date: editingDate,
         }),
       });
@@ -308,10 +295,7 @@ export default function HolidaysTab() {
   // DATE DIFFERENCE
   // =========================================================
 
-  const getDateDifference = (
-    first: string,
-    second: string
-  ) => {
+  const getDateDifference = (first: string, second: string) => {
     const firstDate = new Date(first);
     const secondDate = new Date(second);
 
@@ -319,8 +303,7 @@ export default function HolidaysTab() {
     secondDate.setHours(0, 0, 0, 0);
 
     return Math.round(
-      (secondDate.getTime() -
-        firstDate.getTime()) /
+      (secondDate.getTime() - firstDate.getTime()) /
       (1000 * 60 * 60 * 24)
     );
   };
@@ -338,8 +321,7 @@ export default function HolidaysTab() {
       )
       .sort(
         (a, b) =>
-          new Date(a.date).getTime() -
-          new Date(b.date).getTime()
+          new Date(a.date).getTime() - new Date(b.date).getTime()
       );
 
     if (sameName.length === 0) {
@@ -377,26 +359,16 @@ export default function HolidaysTab() {
       endIndex++;
     }
 
-    return sameName.slice(
-      startIndex,
-      endIndex + 1
-    );
+    return sameName.slice(startIndex, endIndex + 1);
   };
 
-  const isFirstInGroup = (
-    item: Holiday
-  ): boolean => {
+  const isFirstInGroup = (item: Holiday): boolean => {
     const group = getHolidayGroup(item);
 
-    return (
-      group.length > 0 &&
-      group[0].id === item.id
-    );
+    return group.length > 0 && group[0].id === item.id;
   };
 
-  const formatDateRange = (
-    item: Holiday
-  ): string => {
+  const formatDateRange = (item: Holiday): string => {
     const group = getHolidayGroup(item);
 
     if (group.length === 0) {
@@ -404,39 +376,26 @@ export default function HolidaysTab() {
     }
 
     const startDate = new Date(group[0].date);
-    const endDate = new Date(
-      group[group.length - 1].date
-    );
+    const endDate = new Date(group[group.length - 1].date);
 
     if (group.length === 1) {
-      return startDate.toLocaleDateString(
-        undefined,
-        {
-          month: "short",
-          day: "numeric",
-          year: "numeric",
-        }
-      );
+      return startDate.toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
     }
 
-    const startStr =
-      startDate.toLocaleDateString(
-        undefined,
-        {
-          month: "short",
-          day: "numeric",
-        }
-      );
+    const startStr = startDate.toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+    });
 
-    const endStr =
-      endDate.toLocaleDateString(
-        undefined,
-        {
-          month: "short",
-          day: "numeric",
-          year: "numeric",
-        }
-      );
+    const endStr = endDate.toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
 
     return `${startStr} to ${endStr}`;
   };
@@ -445,23 +404,15 @@ export default function HolidaysTab() {
   // START GROUP EDIT
   // =========================================================
 
-  const startGroupEdit = (
-    item: Holiday
-  ) => {
+  const startGroupEdit = (item: Holiday) => {
     const group = getHolidayGroup(item);
 
     setEditingGroup(group);
     setGroupName(group[0].name);
-    setGroupDescription(
-      group[0].description || ""
-    );
-    setGroupStartDate(
-      formatDateForInput(group[0].date)
-    );
+    setGroupDescription(group[0].description || "");
+    setGroupStartDate(formatDateForInput(group[0].date));
     setGroupEndDate(
-      formatDateForInput(
-        group[group.length - 1].date
-      )
+      formatDateForInput(group[group.length - 1].date)
     );
 
     setEditingId(null);
@@ -478,52 +429,39 @@ export default function HolidaysTab() {
       !groupStartDate ||
       !groupEndDate
     ) {
-      toast.error(
-        "Group name and dates are required"
-      );
+      toast.error("Group name and dates are required");
       return;
     }
 
     if (groupStartDate > groupEndDate) {
-      toast.error(
-        "Start date cannot be after end date"
-      );
+      toast.error("Start date cannot be after end date");
       return;
     }
 
     try {
-      const res = await fetch(
-        "/api/holidays/group",
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            ids: editingGroup.map(
-              (holiday) => holiday.id
-            ),
-            name: groupName.trim(),
-            description:
-              groupDescription.trim() || null,
-            startDate: groupStartDate,
-            endDate: groupEndDate,
-          }),
-        }
-      );
+      const res = await fetch("/api/holidays/group", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ids: editingGroup.map((holiday) => holiday.id),
+          name: groupName.trim(),
+          description: groupDescription.trim() || null,
+          startDate: groupStartDate,
+          endDate: groupEndDate,
+        }),
+      });
 
       const data = await res.json();
 
       if (!res.ok) {
         throw new Error(
-          data.error ||
-          "Failed to update holiday group"
+          data.error || "Failed to update holiday group"
         );
       }
 
-      toast.success(
-        "Holiday group updated"
-      );
+      toast.success("Holiday group updated");
 
       setEditingGroup(null);
       setGroupName("");
@@ -533,10 +471,7 @@ export default function HolidaysTab() {
 
       await load();
     } catch (error) {
-      console.error(
-        "Holiday group update error:",
-        error
-      );
+      console.error("Holiday group update error:", error);
 
       toast.error(
         error instanceof Error
@@ -550,66 +485,47 @@ export default function HolidaysTab() {
   // GROUP EDIT SAVE FROM TABLE
   // =========================================================
 
-  const handleGroupEditSave = async (
-    firstHolidayId: string
-  ) => {
-    const holiday = items.find(
-      (h) => h.id === firstHolidayId
-    );
+  const handleGroupEditSave = async (firstHolidayId: string) => {
+    const holiday = items.find((h) => h.id === firstHolidayId);
 
     if (!holiday) return;
 
     const group = getHolidayGroup(holiday);
 
-    if (
-      !editingName.trim() ||
-      !groupStartDate ||
-      !groupEndDate
-    ) {
-      toast.error(
-        "Holiday name and dates are required"
-      );
+    if (!editingName.trim() || !groupStartDate || !groupEndDate) {
+      toast.error("Holiday name and dates are required");
       return;
     }
 
     if (groupStartDate > groupEndDate) {
-      toast.error(
-        "Start date cannot be after end date"
-      );
+      toast.error("Start date cannot be after end date");
       return;
     }
 
     try {
-      const res = await fetch(
-        "/api/holidays/group",
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            ids: group.map((h) => h.id),
-            name: editingName.trim(),
-            description:
-              editingDescription.trim() || null,
-            startDate: groupStartDate,
-            endDate: groupEndDate,
-          }),
-        }
-      );
+      const res = await fetch("/api/holidays/group", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ids: group.map((h) => h.id),
+          name: editingName.trim(),
+          description: editingDescription.trim() || null,
+          startDate: groupStartDate,
+          endDate: groupEndDate,
+        }),
+      });
 
       const data = await res.json();
 
       if (!res.ok) {
         throw new Error(
-          data.error ||
-          "Failed to update holiday group"
+          data.error || "Failed to update holiday group"
         );
       }
 
-      toast.success(
-        "Holiday group updated"
-      );
+      toast.success("Holiday group updated");
 
       setEditingId(null);
       setEditingName("");
@@ -620,10 +536,7 @@ export default function HolidaysTab() {
 
       await load();
     } catch (error) {
-      console.error(
-        "Holiday group save error:",
-        error
-      );
+      console.error("Holiday group save error:", error);
 
       toast.error(
         error instanceof Error
@@ -639,19 +552,13 @@ export default function HolidaysTab() {
 
   const handleDownloadTemplate = async () => {
     try {
-      toast.loading(
-        "Preparing template...",
-        {
-          id: "holiday-template",
-        }
-      );
+      toast.loading("Preparing template...", {
+        id: "holiday-template",
+      });
 
-      const res = await fetch(
-        "/api/templates/holiday",
-        {
-          method: "GET",
-        }
-      );
+      const res = await fetch("/api/templates/holiday", {
+        method: "GET",
+      });
 
       if (!res.ok) {
         const text = await res.text();
@@ -670,20 +577,15 @@ export default function HolidaysTab() {
       const blob = await res.blob();
 
       if (blob.size === 0) {
-        throw new Error(
-          "Template file is empty"
-        );
+        throw new Error("Template file is empty");
       }
 
-      const url =
-        window.URL.createObjectURL(blob);
+      const url = window.URL.createObjectURL(blob);
 
-      const a =
-        document.createElement("a");
+      const a = document.createElement("a");
 
       a.href = url;
-      a.download =
-        "holiday_template.xlsx";
+      a.download = "holiday_template.xlsx";
 
       document.body.appendChild(a);
       a.click();
@@ -691,12 +593,9 @@ export default function HolidaysTab() {
 
       window.URL.revokeObjectURL(url);
 
-      toast.success(
-        "Template downloaded",
-        {
-          id: "holiday-template",
-        }
-      );
+      toast.success("Template downloaded", {
+        id: "holiday-template",
+      });
     } catch (error) {
       console.error(
         "Holiday template download error:",
@@ -718,15 +617,11 @@ export default function HolidaysTab() {
   // BULK UPLOAD
   // =========================================================
 
-  const handleUpload = async (
-    e: React.FormEvent
-  ) => {
+  const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!file) {
-      toast.error(
-        "Please select an Excel file"
-      );
+      toast.error("Please select an Excel file");
       return;
     }
 
@@ -738,21 +633,15 @@ export default function HolidaysTab() {
     formData.append("file", file);
 
     try {
-      const res = await fetch(
-        "/api/holidays/bulk-upload",
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+      const res = await fetch("/api/holidays/bulk-upload", {
+        method: "POST",
+        body: formData,
+      });
 
       const data = await res.json();
 
       if (!res.ok) {
-        toast.error(
-          data.error ||
-          "Holiday upload failed"
-        );
+        toast.error(data.error || "Holiday upload failed");
 
         setUploadResult(data);
         return;
@@ -767,17 +656,14 @@ export default function HolidaysTab() {
       }
 
       if (data.failed > 0) {
-        toast.error(
-          `${data.failed} row(s) failed`
-        );
+        toast.error(`${data.failed} row(s) failed`);
       }
 
       setFile(null);
 
-      const input =
-        document.getElementById(
-          "holiday-upload"
-        ) as HTMLInputElement | null;
+      const input = document.getElementById(
+        "holiday-upload"
+      ) as HTMLInputElement | null;
 
       if (input) {
         input.value = "";
@@ -785,14 +671,9 @@ export default function HolidaysTab() {
 
       await load();
     } catch (error) {
-      console.error(
-        "Holiday upload error:",
-        error
-      );
+      console.error("Holiday upload error:", error);
 
-      toast.error(
-        "Holiday upload failed"
-      );
+      toast.error("Holiday upload failed");
     } finally {
       setUploading(false);
     }
@@ -865,9 +746,7 @@ export default function HolidaysTab() {
             type="file"
             accept=".xlsx"
             onChange={(e) =>
-              setFile(
-                e.target.files?.[0] || null
-              )
+              setFile(e.target.files?.[0] || null)
             }
             className="block rounded-md border border-slate-300 bg-white text-sm text-slate-600 file:mr-3 file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-slate-700"
           />
@@ -877,9 +756,7 @@ export default function HolidaysTab() {
             disabled={!file || uploading}
             className="rounded-lg bg-slate-900 px-6 py-2.5 font-semibold text-white transition-all duration-200 hover:bg-slate-800 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {uploading
-              ? "Uploading..."
-              : "Upload Holidays"}
+            {uploading ? "Uploading..." : "Upload Holidays"}
           </button>
         </form>
 
@@ -891,13 +768,11 @@ export default function HolidaysTab() {
 
             <div className="mt-2 flex gap-6 text-sm">
               <span className="text-emerald-700">
-                ✓ Created:{" "}
-                {uploadResult.success ?? 0}
+                ✓ Created: {uploadResult.success ?? 0}
               </span>
 
               <span className="text-red-700">
-                ✗ Failed:{" "}
-                {uploadResult.failed ?? 0}
+                ✗ Failed: {uploadResult.failed ?? 0}
               </span>
             </div>
 
@@ -960,9 +835,7 @@ export default function HolidaysTab() {
       >
         <input
           value={newName}
-          onChange={(e) =>
-            setNewName(e.target.value)
-          }
+          onChange={(e) => setNewName(e.target.value)}
           placeholder="Holiday name"
           className="max-w-sm flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all duration-200"
         />
@@ -970,18 +843,14 @@ export default function HolidaysTab() {
         <input
           type="date"
           value={newDate}
-          onChange={(e) =>
-            setNewDate(e.target.value)
-          }
+          onChange={(e) => setNewDate(e.target.value)}
           className="rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all duration-200"
         />
 
         <input
           value={newDescription}
           onChange={(e) =>
-            setNewDescription(
-              e.target.value
-            )
+            setNewDescription(e.target.value)
           }
           placeholder="Description"
           className="max-w-sm flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all duration-200"
@@ -993,6 +862,15 @@ export default function HolidaysTab() {
         >
           Add
         </button>
+
+        {!exportPermissionLoading && canExportHolidays && (
+          <a
+            href="/api/holidays/export"
+            className="rounded-lg border border-slate-300 bg-white px-6 py-2.5 font-semibold text-slate-900 transition-all duration-200 hover:border-slate-400 hover:bg-slate-50"
+          >
+            Export Excel
+          </a>
+        )}
       </form>
 
       {/* =====================================================
@@ -1007,8 +885,7 @@ export default function HolidaysTab() {
             </h3>
 
             <p className="mt-1 text-xs text-slate-600">
-              This group contains{" "}
-              {editingGroup.length} consecutive
+              This group contains {editingGroup.length} consecutive
               day(s).
             </p>
           </div>
@@ -1022,9 +899,7 @@ export default function HolidaysTab() {
               <input
                 value={groupName}
                 onChange={(e) =>
-                  setGroupName(
-                    e.target.value
-                  )
+                  setGroupName(e.target.value)
                 }
                 className="w-64 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all duration-200"
               />
@@ -1038,9 +913,7 @@ export default function HolidaysTab() {
               <input
                 value={groupDescription}
                 onChange={(e) =>
-                  setGroupDescription(
-                    e.target.value
-                  )
+                  setGroupDescription(e.target.value)
                 }
                 placeholder="Description"
                 className="w-64 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all duration-200"
@@ -1056,9 +929,7 @@ export default function HolidaysTab() {
                 type="date"
                 value={groupStartDate}
                 onChange={(e) =>
-                  setGroupStartDate(
-                    e.target.value
-                  )
+                  setGroupStartDate(e.target.value)
                 }
                 className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all duration-200"
               />
@@ -1073,9 +944,7 @@ export default function HolidaysTab() {
                 type="date"
                 value={groupEndDate}
                 onChange={(e) =>
-                  setGroupEndDate(
-                    e.target.value
-                  )
+                  setGroupEndDate(e.target.value)
                 }
                 className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all duration-200"
               />
@@ -1138,17 +1007,16 @@ export default function HolidaysTab() {
               </tr>
             )}
 
-            {!loading &&
-              items.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={4}
-                    className="px-4 py-6 text-center text-slate-400"
-                  >
-                    No holidays yet.
-                  </td>
-                </tr>
-              )}
+            {!loading && items.length === 0 && (
+              <tr>
+                <td
+                  colSpan={4}
+                  className="px-4 py-6 text-center text-slate-400"
+                >
+                  No holidays yet.
+                </td>
+              </tr>
+            )}
 
             {items.map((item) =>
               isFirstInGroup(item) ? (
@@ -1164,20 +1032,12 @@ export default function HolidaysTab() {
                           type="button"
                           onClick={() => {
                             const group =
-                              getHolidayGroup(
-                                item
-                              );
+                              getHolidayGroup(item);
 
-                            if (
-                              group.length === 1
-                            ) {
-                              handleEdit(
-                                item.id
-                              );
+                            if (group.length === 1) {
+                              handleEdit(item.id);
                             } else {
-                              handleGroupEditSave(
-                                item.id
-                              );
+                              handleGroupEditSave(item.id);
                             }
                           }}
                           className="text-xs font-medium text-green-600 hover:text-green-700"
@@ -1187,9 +1047,7 @@ export default function HolidaysTab() {
 
                         <button
                           type="button"
-                          onClick={
-                            cancelInlineEdit
-                          }
+                          onClick={cancelInlineEdit}
                           className="text-xs font-medium text-slate-600 hover:text-slate-900"
                         >
                           Cancel
@@ -1201,53 +1059,29 @@ export default function HolidaysTab() {
                           type="button"
                           onClick={() => {
                             const group =
-                              getHolidayGroup(
-                                item
-                              );
+                              getHolidayGroup(item);
 
-                            setEditingId(
-                              item.id
-                            );
-                            setEditingName(
-                              item.name
-                            );
+                            setEditingId(item.id);
+                            setEditingName(item.name);
                             setEditingDescription(
-                              item.description ||
-                              ""
+                              item.description || ""
                             );
-                            setEditingGroup(
-                              null
-                            );
+                            setEditingGroup(null);
 
-                            if (
-                              group.length === 1
-                            ) {
+                            if (group.length === 1) {
                               setEditingDate(
-                                formatDateForInput(
-                                  item.date
-                                )
+                                formatDateForInput(item.date)
                               );
-                              setGroupStartDate(
-                                ""
-                              );
-                              setGroupEndDate(
-                                ""
-                              );
+                              setGroupStartDate("");
+                              setGroupEndDate("");
                             } else {
-                              setEditingDate(
-                                ""
-                              );
+                              setEditingDate("");
                               setGroupStartDate(
-                                formatDateForInput(
-                                  group[0].date
-                                )
+                                formatDateForInput(group[0].date)
                               );
                               setGroupEndDate(
                                 formatDateForInput(
-                                  group[
-                                    group.length -
-                                    1
-                                  ].date
+                                  group[group.length - 1].date
                                 )
                               );
                             }
@@ -1279,9 +1113,7 @@ export default function HolidaysTab() {
                       <input
                         value={editingName}
                         onChange={(e) =>
-                          setEditingName(
-                            e.target.value
-                          )
+                          setEditingName(e.target.value)
                         }
                         className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all duration-200"
                       />
@@ -1293,15 +1125,12 @@ export default function HolidaysTab() {
                   {/* DATE */}
                   <td className="px-4 py-2.5 text-slate-700">
                     {editingId === item.id ? (
-                      getHolidayGroup(item)
-                        .length === 1 ? (
+                      getHolidayGroup(item).length === 1 ? (
                         <input
                           type="date"
                           value={editingDate}
                           onChange={(e) =>
-                            setEditingDate(
-                              e.target.value
-                            )
+                            setEditingDate(e.target.value)
                           }
                           className="rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all duration-200"
                         />
@@ -1309,13 +1138,9 @@ export default function HolidaysTab() {
                         <div className="flex gap-2">
                           <input
                             type="date"
-                            value={
-                              groupStartDate
-                            }
+                            value={groupStartDate}
                             onChange={(e) =>
-                              setGroupStartDate(
-                                e.target.value
-                              )
+                              setGroupStartDate(e.target.value)
                             }
                             className="rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all duration-200"
                           />
@@ -1326,13 +1151,9 @@ export default function HolidaysTab() {
 
                           <input
                             type="date"
-                            value={
-                              groupEndDate
-                            }
+                            value={groupEndDate}
                             onChange={(e) =>
-                              setGroupEndDate(
-                                e.target.value
-                              )
+                              setGroupEndDate(e.target.value)
                             }
                             className="rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all duration-200"
                           />
@@ -1347,13 +1168,9 @@ export default function HolidaysTab() {
                   <td className="max-w-xs px-4 py-2.5 text-slate-700">
                     {editingId === item.id ? (
                       <input
-                        value={
-                          editingDescription
-                        }
+                        value={editingDescription}
                         onChange={(e) =>
-                          setEditingDescription(
-                            e.target.value
-                          )
+                          setEditingDescription(e.target.value)
                         }
                         placeholder="Description (optional)"
                         className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all duration-200"

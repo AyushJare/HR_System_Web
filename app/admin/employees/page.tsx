@@ -49,6 +49,16 @@ export default function EmployeesPage() {
     loading: importLoading,
   } = usePermission("Employee Bulk Upload", "import");
 
+  const {
+    hasPermission: canViewExport,
+    loading: exportViewLoading,
+  } = usePermission("Employee Export", "view");
+
+  const {
+    hasPermission: canExportEmployees,
+    loading: employeeExportLoading,
+  } = usePermission("Employee Export", "export");
+
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -61,7 +71,9 @@ export default function EmployeesPage() {
     addLoading ||
     editLoading ||
     deleteLoading ||
-    importLoading;
+    importLoading ||
+    exportViewLoading ||
+    employeeExportLoading;
 
   useEffect(() => {
     if (!viewLoading && canView) {
@@ -206,6 +218,76 @@ export default function EmployeesPage() {
         </div>
 
         <div className="flex gap-3">
+          {/* Employee Export permission */}
+          {canViewExport && canExportEmployees && (
+            <button
+              onClick={async () => {
+                if (!canExportEmployees) {
+                  toast.error(
+                    "You do not have permission to export employees"
+                  );
+                  return;
+                }
+
+                try {
+                  const res = await fetch(
+                    "/api/employees/export"
+                  );
+
+                  if (!res.ok) {
+                    if (res.status === 403) {
+                      toast.error(
+                        "You do not have permission to export employees"
+                      );
+                    } else {
+                      toast.error(
+                        "Failed to export employees"
+                      );
+                    }
+
+                    return;
+                  }
+
+                  const blob = await res.blob();
+
+                  const url =
+                    window.URL.createObjectURL(blob);
+
+                  const a =
+                    document.createElement("a");
+
+                  a.href = url;
+                  a.download = "employees.xlsx";
+
+                  document.body.appendChild(a);
+
+                  a.click();
+
+                  a.remove();
+
+                  window.URL.revokeObjectURL(url);
+
+                  toast.success(
+                    "Employees exported successfully"
+                  );
+                } catch (error) {
+                  console.error(
+                    "Employee export error:",
+                    error
+                  );
+
+                  toast.error(
+                    "Failed to export employees"
+                  );
+                }
+              }}
+              disabled={!canExportEmployees}
+              className="bg-slate-900 hover:bg-slate-800 disabled:bg-slate-400 disabled:cursor-not-allowed text-white font-semibold py-2.5 px-6 rounded-lg transition-all duration-200 hover:shadow-md"
+            >
+              Export Excel
+            </button>
+          )}
+
           {/* Import permission */}
           {canImport && (
             <button

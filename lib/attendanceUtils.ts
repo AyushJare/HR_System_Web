@@ -153,13 +153,32 @@ export async function checkIfDateIsOff(date: Date | string): Promise<{
     details?: string;
 }> {
     try {
-        const dateObj = typeof date === "string" ? new Date(date) : date;
+        const dateObj =
+            typeof date === "string"
+                ? new Date(`${date}T00:00:00`)
+                : date;
 
-        // Get weekly off settings
-        const weeklyOffConfig = await getWeeklyOffSettings();
+        if (Number.isNaN(dateObj.getTime())) {
+            return {
+                isOff: false,
+            };
+        }
 
-        // Check if it's a weekly off day
-        if (isWeeklyOff(dateObj, weeklyOffConfig)) {
+        /*
+         * Get weekly off settings.
+         */
+        const weeklyOffConfig =
+            await getWeeklyOffSettings();
+
+        /*
+         * Check weekly off first.
+         */
+        if (
+            isWeeklyOff(
+                dateObj,
+                weeklyOffConfig
+            )
+        ) {
             const dayName = [
                 "Sunday",
                 "Monday",
@@ -170,8 +189,18 @@ export async function checkIfDateIsOff(date: Date | string): Promise<{
                 "Saturday",
             ][dateObj.getDay()];
 
-            const weekNum = getWeekNumberOfMonth(dateObj);
-            const weekLabels = ["1st", "2nd", "3rd", "4th", "5th"];
+            const weekNum =
+                getWeekNumberOfMonth(
+                    dateObj
+                );
+
+            const weekLabels = [
+                "1st",
+                "2nd",
+                "3rd",
+                "4th",
+                "5th",
+            ];
 
             return {
                 isOff: true,
@@ -180,20 +209,41 @@ export async function checkIfDateIsOff(date: Date | string): Promise<{
             };
         }
 
-        // ✅ FIX: Check holidays properly by date range
-        const dateOnly = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
+        /*
+         * Check holiday using a date range instead
+         * of requiring an exact timestamp match.
+         *
+         * This makes the check reliable even if the
+         * database holiday contains a time component.
+         */
+        const startOfDay = new Date(
+            dateObj.getFullYear(),
+            dateObj.getMonth(),
+            dateObj.getDate()
+        );
 
-        const holidayRecord = await prisma.holiday.findFirst({
-            where: {
-                date: dateOnly,
-            },
-        });
+        const endOfDay = new Date(
+            dateObj.getFullYear(),
+            dateObj.getMonth(),
+            dateObj.getDate() + 1
+        );
+
+        const holidayRecord =
+            await prisma.holiday.findFirst({
+                where: {
+                    date: {
+                        gte: startOfDay,
+                        lt: endOfDay,
+                    },
+                },
+            });
 
         if (holidayRecord) {
             return {
                 isOff: true,
                 reason: "HOLIDAY",
-                details: holidayRecord.name,
+                details:
+                    holidayRecord.name,
             };
         }
 
@@ -201,7 +251,11 @@ export async function checkIfDateIsOff(date: Date | string): Promise<{
             isOff: false,
         };
     } catch (error) {
-        console.error("Error checking if date is off:", error);
+        console.error(
+            "Error checking if date is off:",
+            error
+        );
+
         return {
             isOff: false,
         };

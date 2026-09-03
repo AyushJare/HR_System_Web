@@ -37,7 +37,7 @@ export const PERMISSION_MODULES: ModuleConfig[] = [
     {
         key: "Attendance",
         label: "Attendance",
-        actions: ["view", "add", "edit", "delete", "import", "export"],
+        actions: ["view", "add", "edit"],
         children: [
             { key: "Daily Attendance", label: "Daily Attendance", actions: ["view", "add", "edit"] },
             { key: "Check In", label: "Check In", actions: ["view", "add"] },
@@ -60,13 +60,13 @@ export const PERMISSION_MODULES: ModuleConfig[] = [
                 children: [
                     { key: "Holiday Groups", label: "Holiday Groups", actions: ["view", "add", "edit", "delete"] },
                     { key: "Holiday Bulk Upload", label: "Holiday Bulk Upload", actions: ["view", "import"] },
-                    { key: "Holiday Template", label: "Holiday Template", actions: ["view", "export"] },
+                    { key: "Holiday Template", label: "Holiday Template", actions: ["view"] },
                 ],
             },
             { key: "Leave Types", label: "Leave Types", actions: ["view", "add", "edit", "delete"] },
             { key: "Weekly Off", label: "Weekly Off", actions: ["view", "edit"] },
             { key: "Masters Bulk Upload", label: "Masters Bulk Upload", actions: ["view", "import"] },
-            { key: "Masters Template", label: "Masters Template", actions: ["view", "export"] },
+            { key: "Masters Template", label: "Masters Template", actions: ["view"] },
         ],
     },
 

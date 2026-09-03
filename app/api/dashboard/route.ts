@@ -9,8 +9,18 @@ export async function GET() {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
-  const today = new Date();
-  const todayUTC = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+  const indiaToday = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+  }).format(new Date());
+
+  const [year, month, day] = indiaToday
+    .split("-")
+    .map(Number);
+
+  const todayUTC = new Date(
+    Date.UTC(year, month - 1, day)
+  );
+
   const dayOfWeek = todayUTC.getUTCDay();
 
   const [settings, todayHoliday, activeEmployeeCount, todayAttendance, pendingApprovals, upcomingHolidays, recentLogs] =

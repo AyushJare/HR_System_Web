@@ -52,9 +52,12 @@ export default function DashboardPage() {
     <div className="p-12 text-red-400">Failed to load dashboard.</div>;    </PermissionGate>
 
 
-  const attendancePercentage = Math.round(
-    (data.counts.present / (data.counts.present + data.counts.absent)) * 100
-  ) || 0;
+  const attendancePercentage =
+    data.activeEmployeeCount > 0
+      ? Math.round(
+        (data.counts.present / data.activeEmployeeCount) * 100
+      )
+      : 0;
 
   return (
     <PermissionGate moduleName="Dashboard" action="view">
@@ -85,8 +88,10 @@ export default function DashboardPage() {
                   <div className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">{attendancePercentage}%</div>
                   <div className="flex gap-2">
                     <div className="flex-1 h-1 bg-white/40 rounded-full overflow-hidden">
-                      <div className="h-full w-2/3 bg-gradient-to-r from-blue-500 to-purple-500"></div>
-                    </div>
+                      <div
+                        className="h-full bg-gradient-to-r from-blue-500 to-purple-500"
+                        style={{ width: `${attendancePercentage}%` }}
+                      ></div>                    </div>
                   </div>
                 </div>
               </div>

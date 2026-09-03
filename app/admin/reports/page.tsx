@@ -86,12 +86,22 @@ export default function ReportsPage() {
               Consolidated
             </button>
           </div>
-          <input
-            type="month"
-            value={month}
-            onChange={(e) => setMonth(e.target.value)}
-            className="rounded-lg border border-slate-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
-          />
+
+          <div className="flex items-center gap-3">
+            <input
+              type="month"
+              value={month}
+              onChange={(e) => setMonth(e.target.value)}
+              className="rounded-lg border border-slate-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
+            />
+
+            <a
+              href={`/api/reports/export?month=${month}`}
+              className="rounded-lg bg-slate-900 px-6 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-slate-800"
+            >
+              Export Excel
+            </a>
+          </div>
         </div>
 
         {tab === "summary" && (

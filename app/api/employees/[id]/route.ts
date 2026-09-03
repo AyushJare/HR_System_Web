@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { checkPermission } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
+import { hashPassword, verifyPassword } from "@/lib/password";
 
 type Params = {
   id: string;
@@ -85,6 +86,12 @@ export async function GET(
         isActive: true,
         role: true,
 
+        // Added direct IDs for Edit Employee page
+        departmentId: true,
+        designationId: true,
+        employeeTypeId: true,
+        userTypeId: true,
+
         department: {
           select: {
             id: true,
@@ -103,6 +110,16 @@ export async function GET(
           select: {
             id: true,
             name: true,
+          },
+        },
+
+        // Added User Type relation
+        userType: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            isSystem: true,
           },
         },
 
@@ -148,14 +165,64 @@ export async function PUT(
 
     const {
       fullName,
+      email,
+      password,
       mobile,
       gender,
       isActive,
       departmentId,
       designationId,
       employeeTypeId,
+      userTypeId,
       role,
     } = body;
+
+    // =====================================================
+    // PASSWORD CHECK
+    // =====================================================
+
+    let passwordHash: string | undefined = undefined;
+
+    if (password && password.trim() !== "") {
+      const existingEmployee = await prisma.employee.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          passwordHash: true,
+        },
+      });
+
+      if (!existingEmployee) {
+        return NextResponse.json(
+          { error: "Employee not found" },
+          { status: 404 }
+        );
+      }
+
+      // Compare entered password with current hashed password
+      const isSamePassword = await verifyPassword(
+        password,
+        existingEmployee.passwordHash
+      );
+
+      // STOP THE UPDATE COMPLETELY IF PASSWORD IS THE SAME
+      if (isSamePassword) {
+        return NextResponse.json(
+          {
+            error:
+              "Please enter a new password. The new password cannot be the same as the current password.",
+          },
+          { status: 400 }
+        );
+      }
+
+      // Only hash password if it is genuinely different
+      passwordHash = await hashPassword(password);
+    }
+
+    // =====================================================
+    // UPDATE EMPLOYEE
+    // =====================================================
 
     const employee = await prisma.employee.update({
       where: { id },
@@ -164,6 +231,16 @@ export async function PUT(
         fullName:
           fullName !== undefined
             ? fullName
+            : undefined,
+
+        email:
+          email !== undefined
+            ? email
+            : undefined,
+
+        passwordHash:
+          passwordHash !== undefined
+            ? passwordHash
             : undefined,
 
         mobile:
@@ -194,6 +271,11 @@ export async function PUT(
         employeeTypeId:
           employeeTypeId !== undefined
             ? employeeTypeId || null
+            : undefined,
+
+        userTypeId:
+          userTypeId !== undefined
+            ? userTypeId || null
             : undefined,
 
         role:
