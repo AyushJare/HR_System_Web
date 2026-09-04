@@ -298,7 +298,7 @@ export async function getOffDatesForMonth(
         for (let day = 1; day <= daysInMonth; day++) {
             const date = new Date(year, month - 1, day);
 
-            // Check weekly off
+            // Check weekly off FIRST (priority over holiday)
             if (isWeeklyOff(date, weeklyOffConfig)) {
                 const dayName = [
                     "Sunday",
@@ -318,21 +318,21 @@ export async function getOffDatesForMonth(
                     reason: "WEEKLY_OFF",
                     details: `${weekLabels[weekNum - 1]} ${dayName}`,
                 });
-            }
+            } else {
+                // Only check holidays if NOT a weekly off
+                const holiday = holidays.find(
+                    (h) =>
+                        h.date.toISOString().split("T")[0] ===
+                        date.toISOString().split("T")[0]
+                );
 
-            // Check holidays
-            const holiday = holidays.find(
-                (h) =>
-                    h.date.toISOString().split("T")[0] ===
-                    date.toISOString().split("T")[0]
-            );
-
-            if (holiday) {
-                offDates.push({
-                    date,
-                    reason: "HOLIDAY",
-                    details: holiday.name,
-                });
+                if (holiday) {
+                    offDates.push({
+                        date,
+                        reason: "HOLIDAY",
+                        details: holiday.name,
+                    });
+                }
             }
         }
 

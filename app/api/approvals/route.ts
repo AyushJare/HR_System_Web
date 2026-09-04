@@ -5,8 +5,12 @@ import { checkIfDateIsOff } from "@/lib/attendanceUtils";
 
 export async function GET(request: NextRequest) {
   try {
-    const auth = await requirePermissionOrAdmin("Approvals", "view");
+    const auth = await requirePermissionOrAdmin(
+      "Approvals",
+      "view",
+      request
 
+    );
     if (!auth.ok) {
       return NextResponse.json(
         { error: auth.error },
@@ -41,7 +45,43 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    return NextResponse.json(approvals);
+    // Enrich leave approvals with the actual leave type name.
+    // Existing approvals may only contain leaveTypeId, so resolve it
+    // here instead of requiring old approval records to be recreated.
+    const enrichedApprovals = await Promise.all(
+      approvals.map(async (approval) => {
+        if (approval.type !== "LEAVE") {
+          return approval;
+        }
+
+        const details = approval.details as
+          | { leaveTypeId?: string | null; leaveTypeName?: string | null }
+          | null;
+
+        if (!details?.leaveTypeId || details.leaveTypeName) {
+          return approval;
+        }
+
+        const leaveType = await prisma.leaveType.findUnique({
+          where: { id: details.leaveTypeId },
+          select: { name: true },
+        });
+
+        if (!leaveType) {
+          return approval;
+        }
+
+        return {
+          ...approval,
+          details: {
+            ...(details ?? {}),
+            leaveTypeName: leaveType.name,
+          },
+        };
+      })
+    );
+
+    return NextResponse.json(enrichedApprovals);
   } catch (error) {
     console.error("GET /api/approvals error:", error);
 
@@ -54,8 +94,11 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const auth = await requirePermissionOrAdmin("Approvals", "edit");
-
+    const auth = await requirePermissionOrAdmin(
+      "Approvals",
+      "view",
+      request
+    );
     if (!auth.ok) {
       return NextResponse.json(
         { error: auth.error },

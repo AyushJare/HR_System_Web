@@ -12,6 +12,8 @@ type LeaveDetails = {
   date?: string;
   reason?: string;
   leaveTypeId?: string;
+  fromDate?: string;
+  toDate?: string;
 };
 
 export async function PUT(
@@ -28,7 +30,8 @@ export async function PUT(
     const auth =
       await requirePermissionOrAdmin(
         "Approvals",
-        "edit"
+        "edit",
+        request
       );
 
     if (!auth.ok) {
@@ -100,17 +103,23 @@ export async function PUT(
         | LeaveDetails
         | null;
 
-      if (!details?.date) {
+      const fromDateString =
+        details?.fromDate ?? details?.date;
+
+      const toDateString =
+        details?.toDate ?? details?.date;
+
+      if (!fromDateString || !toDateString) {
         return NextResponse.json(
           {
             error:
-              "Leave approval is missing the leave date",
+              "Leave approval is missing the leave dates",
           },
           { status: 400 }
         );
       }
 
-      if (!details.leaveTypeId) {
+      if (!details?.leaveTypeId) {
         return NextResponse.json(
           {
             error:
@@ -130,10 +139,35 @@ export async function PUT(
         );
       }
 
-      const leaveDate =
-        toDateOnlyUTC(
-          details.date
+      const leaveStartDate =
+        toDateOnlyUTC(fromDateString);
+
+      const leaveEndDate =
+        toDateOnlyUTC(toDateString);
+
+      if (leaveStartDate > leaveEndDate) {
+        return NextResponse.json(
+          {
+            error:
+              "Leave start date cannot be after the end date",
+          },
+          { status: 400 }
         );
+      }
+
+      const leaveDates: Date[] = [];
+
+      for (
+        let current = new Date(leaveStartDate);
+        current <= leaveEndDate;
+        current.setUTCDate(
+          current.getUTCDate() + 1
+        )
+      ) {
+        leaveDates.push(
+          new Date(current)
+        );
+      }
 
       /*
        * Employee validation.
@@ -180,7 +214,7 @@ export async function PUT(
         await prisma.leaveType.findUnique(
           {
             where: {
-              id: details.leaveTypeId,
+              id: details?.leaveTypeId,
             },
 
             select: {
@@ -205,35 +239,27 @@ export async function PUT(
        * Leave cannot be approved on a weekly off
        * or holiday.
        */
-      const dateOffInfo =
-        await checkIfDateIsOff(
-          leaveDate
-        );
+      for (const leaveDate of leaveDates) {
+        const dateOffInfo =
+          await checkIfDateIsOff(
+            leaveDate
+          );
 
-      console.log("LEAVE OFF-DATE DEBUG:", {
-        leaveDate,
-        dateOffInfo,
-      });
-
-      if (dateOffInfo.isOff) {
-        return NextResponse.json(
-          {
-            error:
-              "Leave cannot be approved for a weekly off or holiday",
-            dateOffInfo,
-          },
-          { status: 400 }
-        );
+        if (dateOffInfo.isOff) {
+          return NextResponse.json(
+            {
+              error:
+                "Leave cannot be approved for a weekly off or holiday",
+              date:
+                leaveDate
+                  .toISOString()
+                  .split("T")[0],
+              dateOffInfo,
+            },
+            { status: 400 }
+          );
+        }
       }
-
-
-      const leaveYear =
-        Number(
-          details.date.substring(
-            0,
-            4
-          )
-        );
 
       /*
        * ==========================================================
@@ -272,184 +298,206 @@ export async function PUT(
               });
 
             /*
-             * Check existing attendance.
+             * Process every day in the leave range.
              */
-            const attendance =
-              await tx.attendance.findUnique(
-                {
-                  where: {
-                    employeeId_date: {
+            for (const leaveDate of leaveDates) {
+              const currentDateString =
+                leaveDate
+                  .toISOString()
+                  .split("T")[0];
+
+              /*
+               * Check existing attendance.
+               */
+              const attendance =
+                await tx.attendance.findUnique(
+                  {
+                    where: {
+                      employeeId_date: {
+                        employeeId:
+                          existing.actorId!,
+                        date:
+                          leaveDate,
+                      },
+                    },
+
+                    select: {
+                      id: true,
+                      status: true,
+                      deletedAt: true,
+                    },
+                  }
+                );
+
+              /*
+               * An employee cannot be placed on leave after attendance
+               * has already been recorded for that date.
+               *
+               * ABSENT is the only exception because it can legitimately
+               * be converted to ON_LEAVE.
+               */
+              if (
+                attendance &&
+                attendance.deletedAt === null &&
+                attendance.status !== "ABSENT"
+              ) {
+                throw new Error(
+                  "Leave cannot be approved because attendance has already been recorded for this date."
+                );
+              }
+
+              /*
+               * If the employee was automatically marked
+               * ABSENT, convert that record to ON_LEAVE.
+               */
+              if (
+                attendance?.status ===
+                "ABSENT"
+              ) {
+                await tx.attendance.update(
+                  {
+                    where: {
+                      id:
+                        attendance.id,
+                    },
+
+                    data: {
+                      status:
+                        "ON_LEAVE",
+
+                      reason:
+                        details?.reason ||
+                        `Approved leave: ${leaveType.name}`,
+
+                      modifiedBy:
+                        auth.session.sub,
+
+                      deletedAt:
+                        null,
+                    },
+                  }
+                );
+              }
+
+              /*
+               * If there is no attendance record,
+               * create ON_LEAVE.
+               */
+              if (!attendance) {
+                await tx.attendance.create(
+                  {
+                    data: {
                       employeeId:
                         existing.actorId!,
+
                       date:
                         leaveDate,
+
+                      /*
+                       * Attendance.checkInTime is required.
+                       * Midnight is the neutral value for leave.
+                       */
+                      checkInTime:
+                        new Date(
+                          `${currentDateString}T00:00:00+05:30`
+                        ),
+
+                      checkOutTime:
+                        null,
+
+                      status:
+                        "ON_LEAVE",
+
+                      reason:
+                        details?.reason ||
+                        `Approved leave: ${leaveType.name}`,
+
+                      modifiedBy:
+                        auth.session.sub,
                     },
-                  },
+                  }
+                );
+              }
 
-                  select: {
-                    id: true,
-                    status: true,
-                    deletedAt: true,
-                  },
-                }
-              );
-            /*
-* An employee cannot be placed on leave after attendance
-* has already been recorded for that date.
-*
-* ABSENT is the only exception because it can legitimately
-* be converted to ON_LEAVE.
-*/
-            if (
-              attendance &&
-              attendance.deletedAt === null &&
-              attendance.status !== "ABSENT"
-            ) {
-              throw new Error(
-                "Leave cannot be approved because attendance has already been recorded for this date."
-              );
-            }
+              /*
+               * ======================================================
+               * LEAVE BALANCE
+               * ======================================================
+               */
 
-            /*
-             * If the employee was automatically marked
-             * ABSENT, convert that record to ON_LEAVE.
-             */
-            if (
-              attendance?.status ===
-              "ABSENT"
-            ) {
-              await tx.attendance.update(
-                {
-                  where: {
-                    id:
-                      attendance.id,
-                  },
+              const leaveYear =
+                Number(
+                  currentDateString.substring(
+                    0,
+                    4
+                  )
+                );
 
-                  data: {
-                    status:
-                      "ON_LEAVE",
+              const existingBalance =
+                await tx.leaveBalance.findUnique(
+                  {
+                    where: {
+                      employeeId_leaveTypeId_year:
+                      {
+                        employeeId:
+                          existing.actorId!,
+                        leaveTypeId:
+                          details.leaveTypeId!,
+                        year:
+                          leaveYear,
+                      },
+                    },
+                  }
+                );
 
-                    reason:
-                      details.reason ||
-                      `Approved leave: ${leaveType.name}`,
+              if (
+                existingBalance &&
+                existingBalance.used >=
+                existingBalance.allocated
+              ) {
+                throw new Error(
+                  "Insufficient leave balance. The employee has no remaining leave days for this leave type."
+                );
+              }
 
-                    modifiedBy:
-                      auth.session.sub,
+              if (
+                existingBalance
+              ) {
+                await tx.leaveBalance.update(
+                  {
+                    where: {
+                      id:
+                        existingBalance.id,
+                    },
 
-                    deletedAt:
-                      null,
-                  },
-                }
-              );
-            }
-
-            /*
-             * If there is no attendance record,
-             * create ON_LEAVE.
-             */
-            if (!attendance) {
-              await tx.attendance.create(
-                {
-                  data: {
-                    employeeId:
-                      existing.actorId!,
-
-                    date:
-                      leaveDate,
-
-                    /*
-                     * Attendance.checkInTime is required.
-                     * Midnight is the neutral value for leave.
-                     */
-                    checkInTime:
-                      new Date(
-                        `${details.date}T00:00:00+05:30`
-                      ),
-
-                    checkOutTime:
-                      null,
-
-                    status:
-                      "ON_LEAVE",
-
-                    reason:
-                      details.reason ||
-                      `Approved leave: ${leaveType.name}`,
-
-                    modifiedBy:
-                      auth.session.sub,
-                  },
-                }
-              );
-            }
-            /*
-             * ======================================================
-             * LEAVE BALANCE
-             * ======================================================
-             */
-
-            const existingBalance =
-              await tx.leaveBalance.findUnique(
-                {
-                  where: {
-                    employeeId_leaveTypeId_year:
-                    {
+                    data: {
+                      used: {
+                        increment: 1,
+                      },
+                    },
+                  }
+                );
+              } else {
+                await tx.leaveBalance.create(
+                  {
+                    data: {
                       employeeId:
                         existing.actorId!,
+
                       leaveTypeId:
                         details.leaveTypeId!,
+
                       year:
                         leaveYear,
+
+                      allocated:
+                        leaveType.defaultAnnualQuota,
+
+                      used: 1,
                     },
-                  },
-                }
-              );
-            if (
-              existingBalance &&
-              existingBalance.used >= existingBalance.allocated
-            ) {
-              throw new Error(
-                "Insufficient leave balance. The employee has no remaining leave days for this leave type."
-              );
-            }
-
-            if (
-              existingBalance
-            ) {
-              await tx.leaveBalance.update(
-                {
-                  where: {
-                    id:
-                      existingBalance.id,
-                  },
-
-                  data: {
-                    used: {
-                      increment: 1,
-                    },
-                  },
-                }
-              );
-            } else {
-              await tx.leaveBalance.create(
-                {
-                  data: {
-                    employeeId:
-                      existing.actorId!,
-
-                    leaveTypeId:
-                      details.leaveTypeId!,
-
-                    year:
-                      leaveYear,
-
-                    allocated:
-                      leaveType.defaultAnnualQuota,
-
-                    used: 1,
-                  },
-                }
-              );
+                  }
+                );
+              }
             }
 
             /*
@@ -483,17 +531,23 @@ export async function PUT(
                     leaveType.name,
 
                   date:
-                    details.date,
+                    fromDateString,
+
+                  fromDate:
+                    fromDateString,
+
+                  toDate:
+                    toDateString,
 
                   reason:
-                    details.reason ??
+                    details?.reason ??
                     null,
 
                   approvedBy:
                     auth.session.sub,
 
                   message:
-                    `${employee.fullName}'s ${leaveType.name} leave for ${details.date} was approved`,
+                    `${employee.fullName}'s ${leaveType.name} leave from ${fromDateString} to ${toDateString} was approved`,
                 },
               },
             });
@@ -665,18 +719,21 @@ export async function PUT(
 
     return NextResponse.json(
       {
-        error: "Failed to update approval",
-        details: errorMessage,
+        error:
+          "Failed to update approval",
+        details:
+          errorMessage,
       },
       { status: 500 }
     );
   }
 }
+
 /*
-* ============================================================
-* GET APPROVAL
-* ============================================================
-*/
+ * ============================================================
+ * GET APPROVAL
+ * ============================================================
+ */
 
 export async function GET(
   request: NextRequest,
@@ -692,7 +749,8 @@ export async function GET(
     const auth =
       await requirePermissionOrAdmin(
         "Approvals",
-        "view"
+        "edit",
+        request
       );
 
     if (!auth.ok) {
@@ -721,13 +779,16 @@ export async function GET(
     if (!approval) {
       return NextResponse.json(
         {
-          error: "Approval not found",
+          error:
+            "Approval not found",
         },
         { status: 404 }
       );
     }
 
-    return NextResponse.json(approval);
+    return NextResponse.json(
+      approval
+    );
   } catch (error) {
     console.error(
       "GET /api/approvals/[id] error:",
@@ -736,7 +797,8 @@ export async function GET(
 
     return NextResponse.json(
       {
-        error: "Failed to load approval",
+        error:
+          "Failed to load approval",
       },
       { status: 500 }
     );

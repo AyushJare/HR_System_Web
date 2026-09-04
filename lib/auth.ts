@@ -84,9 +84,10 @@ export async function requireAdmin(): Promise<AdminCheckResult> {
  */
 export async function requirePermissionOrAdmin(
   moduleName: string,
-  action: PermissionAction = "view"
+  action: PermissionAction = "view",
+  request?: Request
 ): Promise<AdminCheckResult> {
-  const session = await getSession();
+  const session = await getSession(request);
 
   if (!session) {
     return {

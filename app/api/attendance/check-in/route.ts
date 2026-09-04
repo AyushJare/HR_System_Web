@@ -1,4 +1,5 @@
-import { validateAttendanceCheckIn, getTodayDate } from "@/lib/validators/attendance";
+import { validateAttendanceCheckIn } from "@/lib/validators/attendance";
+import { getTodayIndiaDateString } from "@/lib/attendanceAutomation";
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -11,17 +12,9 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        // CRITICAL: Always use server date, never trust client
-        const serverDate = getTodayDate();
+        const serverDateString = getTodayIndiaDateString();
+        const serverDate = new Date(`${serverDateString}T00:00:00.000Z`);
 
-        // Validate date
-        const validation = validateAttendanceCheckIn(serverDate);
-        if (!validation.allowed) {
-            return NextResponse.json(
-                { error: validation.reason },
-                { status: 422 }
-            );
-        }
 
         // ✅ NEW: Check if today is a weekly off day or holiday
         const dateOffInfo = await checkIfDateIsOff(serverDate);
@@ -109,13 +102,13 @@ export async function POST(request: NextRequest) {
         await prisma.auditLog.create({
             data: {
                 employeeId: session.sub,
-                action: "CHECK_IN",
+                action: "ATTENDANCE_LOGGED_IN",
                 entity: "Attendance",
                 entityId: attendance.id,
                 metadata: {
                     date: serverDate.toISOString().split("T")[0],
                     isWeeklyOff: isDateWeeklyOff,
-                    checkInTime: attendance.checkInTime,
+                    attendanceTime: attendance.checkInTime,
                 },
             },
         });

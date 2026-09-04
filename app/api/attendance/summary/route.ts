@@ -7,8 +7,10 @@ import {
     isWeeklyOff,
     getOffDatesForMonth,
 } from "@/lib/attendanceUtils";
+import { getTodayIndiaDateString } from "@/lib/attendanceAutomation";
 
 export async function GET(request: NextRequest) {
+    console.log("ATTENDANCE SUMMARY ROUTE HIT");
     try {
         const session = await getSession(request);
 
@@ -80,7 +82,17 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        const monthStart = new Date(year, month - 1, 1);
+        const monthStart = new Date(
+            `${year}-${String(month).padStart(2, "0")}-01T00:00:00+05:30`
+        );
+
+        const nextMonthStart =
+            month === 12
+                ? new Date(`${year + 1}-01-01T00:00:00+05:30`)
+                : new Date(
+                    `${year}-${String(month + 1).padStart(2, "0")}-01T00:00:00+05:30`
+                );
+
         const monthEnd = new Date(year, month, 0);
 
         const weeklyOffConfig = await getWeeklyOffSettings();
@@ -91,7 +103,7 @@ export async function GET(request: NextRequest) {
                 employeeId,
                 date: {
                     gte: monthStart,
-                    lte: monthEnd,
+                    lt: nextMonthStart,
                 },
                 deletedAt: null,
             },
@@ -105,6 +117,19 @@ export async function GET(request: NextRequest) {
             orderBy: {
                 date: "asc",
             },
+        });
+        console.log(
+            "SUMMARY ATTENDANCE DATES:",
+            attendances.map((att) => ({
+                id: att.id,
+                date: att.date.toISOString(),
+            }))
+        );
+        const todayIndia = getTodayIndiaDateString();
+
+        const todayAttendance = attendances.find((att) => {
+            const attDate = att.date.toISOString().slice(0, 10);
+            return attDate === todayIndia;
         });
 
         let presentDays = 0;
@@ -199,6 +224,16 @@ export async function GET(request: NextRequest) {
                 weeklyOffDays,
                 holidayDays,
             },
+
+            todayAttendance: todayAttendance
+                ? {
+                    id: todayAttendance.id,
+                    date: todayIndia,
+                    status: todayAttendance.status,
+                    timeIn: todayAttendance.checkInTime,
+                    timeOut: todayAttendance.checkOutTime,
+                }
+                : null,
 
             calculations: {
                 totalRecordedDays: attendances.length,

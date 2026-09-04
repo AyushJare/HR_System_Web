@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import PermissionGate from "../PermissionGate";
 
-
 interface Employee {
   id: string;
   fullName: string;
@@ -13,9 +12,28 @@ interface Employee {
 
 interface ApprovalItem {
   id: string;
-  type: "LEAVE" | "ATTENDANCE_CORRECTION";
+  type: "LEAVE" | "ATTENDANCE_CORRECTION" | "LOCATION_BASED_LOGIN";
   status: "PENDING" | "APPROVED" | "REJECTED";
-  details: { date?: string; reason?: string; timeIn?: string; timeOut?: string; status?: string; leaveTypeId?: string } | null;
+  details: {
+    date?: string;
+    fromDate?: string;
+    toDate?: string;
+    reason?: string;
+    timeIn?: string;
+    timeOut?: string;
+    status?: string;
+    leaveTypeId?: string;
+
+    latitude?: number;
+    longitude?: number;
+    gpsAccuracy?: number;
+    distanceFromOffice?: number;
+    allowedRadius?: number;
+    officeLatitude?: number;
+    officeLongitude?: number;
+    locationMode?: string;
+    approvalRequired?: boolean;
+  } | null;
   remarks: string | null;
   createdAt: string;
   actor: { fullName: string; employeeCode: number };
@@ -59,7 +77,11 @@ export default function ApprovalsPage() {
   }, []);
 
   useEffect(() => {
-    if (!formEmployeeId) { setBalances([]); return; }
+    if (!formEmployeeId) {
+      setBalances([]);
+      return;
+    }
+
     fetch(`/api/leave-balances?employeeId=${formEmployeeId}`)
       .then((r) => (r.ok ? r.json() : []))
       .then((d) => setBalances(Array.isArray(d) ? d : []))
@@ -70,11 +92,14 @@ export default function ApprovalsPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!formEmployeeId || !formDate) {
       toast.error("Employee and date are required");
       return;
     }
+
     setSubmitting(true);
+
     try {
       if (formType === "LEAVE" && !formLeaveTypeId) {
         toast.error("Please select a leave type");
@@ -84,18 +109,33 @@ export default function ApprovalsPage() {
 
       const details =
         formType === "LEAVE"
-          ? { date: formDate, reason: formReason, leaveTypeId: formLeaveTypeId }
-          : { date: formDate, timeIn: formTimeIn || undefined, timeOut: formTimeOut || undefined, status: formStatus };
+          ? {
+            date: formDate,
+            reason: formReason,
+            leaveTypeId: formLeaveTypeId,
+          }
+          : {
+            date: formDate,
+            timeIn: formTimeIn || undefined,
+            timeOut: formTimeOut || undefined,
+            status: formStatus,
+          };
 
       const res = await fetch("/api/approvals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: formType, actorId: formEmployeeId, details }),
+        body: JSON.stringify({
+          type: formType,
+          actorId: formEmployeeId,
+          details,
+        }),
       });
+
       if (!res.ok) {
         const err = await res.json();
         throw new Error(err.error || "Failed to create request");
       }
+
       toast.success("Request logged");
       setShowForm(false);
       setFormEmployeeId("");
@@ -112,18 +152,26 @@ export default function ApprovalsPage() {
     }
   };
 
-  const handleDecision = async (id: string, decision: "APPROVED" | "REJECTED") => {
+  const handleDecision = async (
+    id: string,
+    decision: "APPROVED" | "REJECTED"
+  ) => {
     const res = await fetch(`/api/approvals/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ decision }),
     });
+
     if (!res.ok) {
       const err = await res.json();
       toast.error(err.error || "Failed to update request");
       return;
     }
-    toast.success(decision === "APPROVED" ? "Request approved" : "Request rejected");
+
+    toast.success(
+      decision === "APPROVED" ? "Request approved" : "Request rejected"
+    );
+
     load();
   };
 
@@ -137,6 +185,7 @@ export default function ApprovalsPage() {
               Leave requests and attendance corrections requiring sign-off.
             </p>
           </div>
+
           <button
             onClick={() => setShowForm(!showForm)}
             className="bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2.5 px-6 rounded-lg transition-all duration-200 hover:shadow-md"
@@ -146,27 +195,46 @@ export default function ApprovalsPage() {
         </div>
 
         {showForm && (
-          <form onSubmit={handleCreate} className="bg-white rounded-lg border border-slate-200 p-6 mb-6 space-y-4">
+          <form
+            onSubmit={handleCreate}
+            className="bg-white rounded-lg border border-slate-200 p-6 mb-6 space-y-4"
+          >
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Request Type</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Request Type
+                </label>
+
                 <select
                   value={formType}
-                  onChange={(e) => setFormType(e.target.value as "LEAVE" | "ATTENDANCE_CORRECTION")}
+                  onChange={(e) =>
+                    setFormType(
+                      e.target.value as
+                      | "LEAVE"
+                      | "ATTENDANCE_CORRECTION"
+                    )
+                  }
                   className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
                 >
                   <option value="LEAVE">Leave Request</option>
-                  <option value="ATTENDANCE_CORRECTION">Attendance Correction</option>
+                  <option value="ATTENDANCE_CORRECTION">
+                    Attendance Correction
+                  </option>
                 </select>
               </div>
+
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Employee</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Employee
+                </label>
+
                 <select
                   value={formEmployeeId}
                   onChange={(e) => setFormEmployeeId(e.target.value)}
                   className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
                 >
                   <option value="">Select employee</option>
+
                   {employees.map((e) => (
                     <option key={e.id} value={e.id}>
                       {e.fullName} (#{e.employeeCode})
@@ -174,8 +242,12 @@ export default function ApprovalsPage() {
                   ))}
                 </select>
               </div>
+
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Date</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Date
+                </label>
+
                 <input
                   type="date"
                   value={formDate}
@@ -187,25 +259,37 @@ export default function ApprovalsPage() {
               {formType === "LEAVE" && (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Leave Type</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      Leave Type
+                    </label>
+
                     <select
                       value={formLeaveTypeId}
                       onChange={(e) => setFormLeaveTypeId(e.target.value)}
                       className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
                     >
                       <option value="">Select leave type</option>
+
                       {leaveTypes.map((lt) => {
-                        const bal = balances.find((b) => b.leaveTypeId === lt.id);
+                        const bal = balances.find(
+                          (b) => b.leaveTypeId === lt.id
+                        );
+
                         return (
                           <option key={lt.id} value={lt.id}>
-                            {lt.name} ({lt.code}){bal ? ` — ${bal.remaining} remaining` : ""}
+                            {lt.name} ({lt.code})
+                            {bal ? ` — ${bal.remaining} remaining` : ""}
                           </option>
                         );
                       })}
                     </select>
                   </div>
+
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Reason</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      Reason
+                    </label>
+
                     <input
                       type="text"
                       value={formReason}
@@ -220,7 +304,10 @@ export default function ApprovalsPage() {
               {formType === "ATTENDANCE_CORRECTION" && (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Corrected Status</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      Corrected Status
+                    </label>
+
                     <select
                       value={formStatus}
                       onChange={(e) => setFormStatus(e.target.value)}
@@ -232,8 +319,12 @@ export default function ApprovalsPage() {
                       <option value="ON_LEAVE">On Leave</option>
                     </select>
                   </div>
+
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Corrected Time In</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      Corrected Time In
+                    </label>
+
                     <input
                       type="time"
                       value={formTimeIn}
@@ -241,8 +332,12 @@ export default function ApprovalsPage() {
                       className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
                     />
                   </div>
+
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Corrected Time Out</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      Corrected Time Out
+                    </label>
+
                     <input
                       type="time"
                       value={formTimeOut}
@@ -284,38 +379,165 @@ export default function ApprovalsPage() {
           <table className="w-full text-sm">
             <thead className="bg-slate-50 border-b-2 border-slate-200">
               <tr>
-                <th className="text-left px-4 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide">Employee</th>
-                <th className="text-left px-4 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide">Type</th>
-                <th className="text-left px-4 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide">Details</th>
-                <th className="text-left px-4 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide">Status</th>
-                <th className="text-left px-4 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide w-40">Action</th>
+                <th className="text-left px-4 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide">
+                  Employee
+                </th>
+
+                <th className="text-left px-4 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide">
+                  Type
+                </th>
+
+                <th className="text-left px-4 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide">
+                  Details
+                </th>
+
+                <th className="text-left px-4 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide">
+                  Status
+                </th>
+
+                <th className="text-left px-4 py-4 text-xs font-bold text-slate-950 uppercase tracking-wide w-40">
+                  Action
+                </th>
               </tr>
             </thead>
+
             <tbody>
               {loading && (
-                <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-400">Loading...</td></tr>
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="px-4 py-8 text-center text-slate-400"
+                  >
+                    Loading...
+                  </td>
+                </tr>
               )}
+
               {!loading && filtered.length === 0 && (
-                <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-400">No requests found.</td></tr>
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="px-4 py-8 text-center text-slate-400"
+                  >
+                    No requests found.
+                  </td>
+                </tr>
               )}
+
               {filtered.map((a) => (
-                <tr key={a.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors duration-200">
+                <tr
+                  key={a.id}
+                  className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors duration-200"
+                >
                   <td className="px-4 py-3 text-slate-700">
-                    {a.actor.fullName} <span className="text-slate-400 text-xs">#{a.actor.employeeCode}</span>
+                    {a.actor.fullName}{" "}
+                    <span className="text-slate-400 text-xs">
+                      #{a.actor.employeeCode}
+                    </span>
                   </td>
+
                   <td className="px-4 py-3 text-slate-700">
-                    {a.type === "LEAVE" ? "Leave" : "Attendance Correction"}
+                    {a.type === "LEAVE"
+                      ? "Leave"
+                      : a.type === "LOCATION_BASED_LOGIN"
+                        ? "Location Login"
+                        : "Attendance Correction"}
                   </td>
+
                   <td className="px-4 py-3 text-slate-500 text-xs">
-                    {a.details?.date && <div>Date: {a.details.date}</div>}
-                    {a.details?.leaveTypeId && (
-                      <div>Type: {leaveTypes.find((lt) => lt.id === a.details?.leaveTypeId)?.name ?? "—"}</div>
+                    {a.type === "LOCATION_BASED_LOGIN" ? (
+                      <>
+                        {a.details?.date && (
+                          <div>Date: {a.details.date}</div>
+                        )}
+
+                        {a.details?.distanceFromOffice != null && (
+                          <div>
+                            Distance from Office:{" "}
+                            {a.details.distanceFromOffice.toFixed(2)} m
+                          </div>
+                        )}
+
+                        {a.details?.allowedRadius != null && (
+                          <div>
+                            Allowed Radius: {a.details.allowedRadius} m
+                          </div>
+                        )}
+
+                        {a.details?.latitude != null && (
+                          <div>
+                            Latitude: {a.details.latitude}
+                          </div>
+                        )}
+
+                        {a.details?.longitude != null && (
+                          <div>
+                            Longitude: {a.details.longitude}
+                          </div>
+                        )}
+
+                        {a.details?.gpsAccuracy != null && (
+                          <div>
+                            GPS Accuracy: {a.details.gpsAccuracy.toFixed(2)} m
+                          </div>
+                        )}
+
+                        {a.details?.locationMode && (
+                          <div>
+                            Location Mode: {a.details.locationMode}
+                          </div>
+                        )}
+
+                        {a.details?.approvalRequired != null && (
+                          <div>
+                            Approval Required:{" "}
+                            {a.details.approvalRequired ? "Yes" : "No"}
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        {a.details?.fromDate ? (
+                          <>
+                            <div>From: {a.details.fromDate}</div>
+                            <div>To: {a.details.toDate ?? "—"}</div>
+                          </>
+                        ) : (
+                          a.details?.date && (
+                            <div>Date: {a.details.date}</div>
+                          )
+                        )}
+
+                        {a.details?.leaveTypeId && (
+                          <div>
+                            Type:{" "}
+                            {leaveTypes.find(
+                              (lt) => lt.id === a.details?.leaveTypeId
+                            )?.name ?? "—"}
+                          </div>
+                        )}
+
+                        {a.details?.reason && (
+                          <div>Reason: {a.details.reason}</div>
+                        )}
+
+                        {a.details?.timeIn && (
+                          <div>Time In: {a.details.timeIn}</div>
+                        )}
+
+                        {a.details?.timeOut && (
+                          <div>Time Out: {a.details.timeOut}</div>
+                        )}
+
+                        {a.details?.status && (
+                          <div>
+                            Corrected Status: {a.details.status}
+                          </div>
+                        )}
+                      </>
                     )}
-                    {a.details?.reason && <div>Reason: {a.details.reason}</div>}
-                    {a.details?.timeIn && <div>Time In: {a.details.timeIn}</div>}
-                    {a.details?.timeOut && <div>Time Out: {a.details.timeOut}</div>}
-                    {a.details?.status && <div>Corrected Status: {a.details.status}</div>}
                   </td>
+
                   <td className="px-4 py-3">
                     <span
                       className={
@@ -329,17 +551,23 @@ export default function ApprovalsPage() {
                       {a.status}
                     </span>
                   </td>
+
                   <td className="px-4 py-3">
                     {a.status === "PENDING" && (
                       <div className="flex gap-2">
                         <button
-                          onClick={() => handleDecision(a.id, "APPROVED")}
+                          onClick={() =>
+                            handleDecision(a.id, "APPROVED")
+                          }
                           className="text-green-600 hover:text-green-800 text-xs font-medium"
                         >
                           Approve
                         </button>
+
                         <button
-                          onClick={() => handleDecision(a.id, "REJECTED")}
+                          onClick={() =>
+                            handleDecision(a.id, "REJECTED")
+                          }
                           className="text-red-600 hover:text-red-800 text-xs font-medium"
                         >
                           Reject

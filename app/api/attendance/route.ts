@@ -296,9 +296,9 @@ export async function GET(request: NextRequest) {
  * ============================================================
  */
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const session = await getSession();
+    const session = await getSession(request);
 
     if (!session) {
       return NextResponse.json(
@@ -356,11 +356,11 @@ export async function POST(request: Request) {
       action === "LOGIN" ||
       action === "LOGOUT"
     ) {
-      if (session.role !== "EMPLOYEE") {
+      if (session.role !== "EMPLOYEE" && session.role !== "ADMIN") {
         return NextResponse.json(
           {
             error:
-              "Login/logout actions are only available to employees",
+              "Login/logout actions are only available to employees and admins",
           },
           { status: 403 }
         );
