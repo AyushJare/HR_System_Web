@@ -40,3 +40,15 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Mobile App
+hr_system_mobile/node_modules/
+hr_system_mobile/.gradle/
+hr_system_mobile/build/
+hr_system_mobile/.DS_Store
+hr_system_mobile/ios/Pods/
+hr_system_mobile/android/.gradle/
+hr_system_mobile/*.jks
+hr_system_mobile/*.keystore
+hr_system_mobile/.env
+hr_system_mobile/.env.local
