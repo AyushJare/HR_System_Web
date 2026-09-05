@@ -22,6 +22,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   DateTime? _checkInTime;
   DateTime? _checkOutTime;
 
+  static const Color _brandGreen = Color(0xFF16A34A);
+  static const Color _pageBg = Color(0xFFF4F6FB);
+
   @override
   void initState() {
     super.initState();
@@ -183,6 +186,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
         title: const Text('Confirm Check Out'),
         content: const Text('Are you sure you want to check out?'),
         actions: [
@@ -191,6 +197,13 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _brandGreen,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
             onPressed: () => Navigator.pop(context, true),
             child: const Text('Confirm'),
           ),
@@ -302,19 +315,61 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     return data[key]?.toString() ?? '0';
   }
 
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      backgroundColor: Colors.white,
+      surfaceTintColor: Colors.white,
+      elevation: 0,
+      scrolledUnderElevation: 1,
+      shadowColor: Colors.black12,
+      title: const Text(
+        'Attendance',
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          color: Colors.black87,
+        ),
+      ),
+      actions: [
+        IconButton(
+          onPressed: loading ? null : loadAttendance,
+          icon: const Icon(Icons.refresh, color: Colors.black54),
+        ),
+      ],
+    );
+  }
+
+  Widget _sectionLabel(String text) {
+    return Row(
+      children: [
+        Container(
+          width: 4,
+          height: 18,
+          decoration: BoxDecoration(
+            color: _brandGreen,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          text,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.8,
+            color: Colors.black87,
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Attendance'),
-        actions: [
-          IconButton(
-            onPressed: loading ? null : loadAttendance,
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
-      ),
+      backgroundColor: _pageBg,
+      appBar: _buildAppBar(),
       body: RefreshIndicator(
+        color: _brandGreen,
         onRefresh: loadAttendance,
         child: _buildBody(),
       ),
@@ -329,7 +384,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           SizedBox(
             height: 300,
             child: Center(
-              child: CircularProgressIndicator(),
+              child: CircularProgressIndicator(color: _brandGreen),
             ),
           ),
         ],
@@ -341,18 +396,22 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(20),
         children: [
-          const SizedBox(height: 100),
-          const Icon(Icons.error_outline, size: 60, color: Colors.red),
-          const SizedBox(height: 16),
-          Text(
-            error!,
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.red, fontSize: 16),
-          ),
+          const SizedBox(height: 80),
+          _errorCard(error!),
           const SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: loadAttendance,
-            child: const Text('Retry'),
+          SizedBox(
+            height: 48,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _brandGreen,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onPressed: loadAttendance,
+              child: const Text('Retry'),
+            ),
           ),
         ],
       );
@@ -371,81 +430,132 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
       children: [
+        Text(
+          'ATTENDANCE',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.2,
+            color: _brandGreen,
+          ),
+        ),
+        const SizedBox(height: 6),
         const Text(
           'Attendance',
-          style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 26,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
         ),
         const SizedBox(height: 6),
         Text(
           monthName,
-          style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
+          style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
         ),
-        const SizedBox(height: 24),
-        if (error != null)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(14),
-            margin: const EdgeInsets.only(bottom: 16),
-            decoration:
-                BoxDecoration(color: Colors.red.shade50, borderRadius: BorderRadius.circular(10)),
-            child: Text(error!, style: TextStyle(color: Colors.red.shade700)),
-          ),
-        
+        const SizedBox(height: 20),
+        if (error != null) ...[
+          _errorCard(error!),
+          const SizedBox(height: 16),
+        ],
+
         // TODAY'S ATTENDANCE CARD
         _buildTodayAttendanceCard(),
         const SizedBox(height: 24),
 
         // ATTENDANCE PERCENTAGE
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              children: [
-                const Icon(Icons.analytics_outlined, size: 48),
-                const SizedBox(height: 12),
-                Text(
-                  '$percentage%',
-                  style: const TextStyle(fontSize: 38, fontWeight: FontWeight.bold),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          child: Column(
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: _brandGreen.withOpacity(0.1),
+                  shape: BoxShape.circle,
                 ),
-                const SizedBox(height: 4),
-                const Text('Attendance Percentage', style: TextStyle(fontSize: 16)),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    color: Colors.grey.shade200,
+                alignment: Alignment.center,
+                child: const Icon(
+                  Icons.analytics_outlined,
+                  size: 30,
+                  color: _brandGreen,
+                ),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                '$percentage%',
+                style: const TextStyle(
+                  fontSize: 38,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Attendance Percentage',
+                style: TextStyle(fontSize: 15, color: Colors.grey.shade600),
+              ),
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  color: _brandGreen.withOpacity(0.1),
+                ),
+                child: Text(
+                  status,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: _brandGreen,
                   ),
-                  child: Text(status, style: const TextStyle(fontWeight: FontWeight.bold)),
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  summaryData['message']?.toString() ?? '',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey.shade700),
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                summaryData['message']?.toString() ?? '',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey.shade700),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 28),
 
-        const Text(
-          'Monthly Summary',
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-        ),
+        _sectionLabel('MONTHLY SUMMARY'),
         const SizedBox(height: 14),
 
         Row(
           children: [
             Expanded(
-              child: _SummaryCard(title: 'Present', value: present, icon: Icons.check_circle_outline),
+              child: _SummaryCard(
+                title: 'Present',
+                value: present,
+                icon: Icons.check_circle_outline,
+                accentColor: const Color(0xFF16A34A),
+                backgroundColor: const Color(0xFFE9F9EF),
+              ),
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: _SummaryCard(title: 'Half Days', value: halfDays, icon: Icons.timelapse),
+              child: _SummaryCard(
+                title: 'Half Days',
+                value: halfDays,
+                icon: Icons.timelapse,
+                accentColor: const Color(0xFFD97706),
+                backgroundColor: const Color(0xFFFDF3E3),
+              ),
             ),
           ],
         ),
@@ -454,11 +564,23 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         Row(
           children: [
             Expanded(
-              child: _SummaryCard(title: 'Absent', value: absent, icon: Icons.cancel_outlined),
+              child: _SummaryCard(
+                title: 'Absent',
+                value: absent,
+                icon: Icons.cancel_outlined,
+                accentColor: const Color(0xFFDC2626),
+                backgroundColor: const Color(0xFFFCEAEA),
+              ),
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: _SummaryCard(title: 'On Leave', value: leave, icon: Icons.beach_access_outlined),
+              child: _SummaryCard(
+                title: 'On Leave',
+                value: leave,
+                icon: Icons.beach_access_outlined,
+                accentColor: const Color(0xFF2563EB),
+                backgroundColor: const Color(0xFFEAF1FE),
+              ),
             ),
           ],
         ),
@@ -467,156 +589,261 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         Row(
           children: [
             Expanded(
-              child: _SummaryCard(title: 'Weekly Off', value: weeklyOff, icon: Icons.weekend_outlined),
+              child: _SummaryCard(
+                title: 'Weekly Off',
+                value: weeklyOff,
+                icon: Icons.weekend_outlined,
+                accentColor: const Color(0xFF9333EA),
+                backgroundColor: const Color(0xFFF3E9FD),
+              ),
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: _SummaryCard(title: 'Holidays', value: holidays, icon: Icons.celebration_outlined),
+              child: _SummaryCard(
+                title: 'Holidays',
+                value: holidays,
+                icon: Icons.celebration_outlined,
+                accentColor: const Color(0xFFDB2777),
+                backgroundColor: const Color(0xFFFCE7F1),
+              ),
             ),
           ],
         ),
         const SizedBox(height: 10),
 
-        _SummaryCard(title: 'Working Days', value: workingDays, icon: Icons.work_outline),
+        _SummaryCard(
+          title: 'Working Days',
+          value: workingDays,
+          icon: Icons.work_outline,
+          accentColor: const Color(0xFF0D9488),
+          backgroundColor: const Color(0xFFE6F6F4),
+        ),
       ],
     );
   }
 
+  Widget _errorCard(String message) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.red.shade50,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.red.shade100),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.error_outline, color: Colors.red.shade400, size: 22),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(
+                color: Colors.red.shade700,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildTodayAttendanceCard() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            Icon(
+    final Color statusColor = _isCheckedOut
+        ? const Color(0xFF2563EB)
+        : _isCheckedIn
+            ? const Color(0xFF16A34A)
+            : const Color(0xFFD97706);
+
+    final Color statusBg = _isCheckedOut
+        ? const Color(0xFFEAF1FE)
+        : _isCheckedIn
+            ? const Color(0xFFE9F9EF)
+            : const Color(0xFFFDF3E3);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: statusBg,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: statusColor.withOpacity(0.15)),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: statusColor.withOpacity(0.18),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            alignment: Alignment.center,
+            child: Icon(
               _isCheckedOut
                   ? Icons.task_alt
                   : _isCheckedIn
                       ? Icons.check_circle
                       : Icons.location_on,
-              size: 52,
+              size: 32,
+              color: statusColor,
             ),
-            const SizedBox(height: 12),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            _isCheckedOut
+                ? 'Checked out'
+                : _isCheckedIn
+                    ? 'Checked in'
+                    : 'Not checked in today',
+            style: TextStyle(
+              fontSize: 19,
+              fontWeight: FontWeight.bold,
+              color: statusColor,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 6),
+          if (!_isCheckedIn)
             Text(
-              _isCheckedOut
-                  ? 'Checked out'
-                  : _isCheckedIn
-                      ? 'Checked in'
-                      : 'Not checked in today',
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              'Use your current location to check in.',
               textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey.shade700),
+            )
+          else if (!_isCheckedOut)
+            Text(
+              'You are checked in. Check out when you finish for today.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey.shade700),
+            )
+          else
+            Text(
+              'Your check-in and check-out have been recorded.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey.shade700),
             ),
-            const SizedBox(height: 8),
-            if (!_isCheckedIn)
-              const Text(
-                'Use your current location to check in.',
-                textAlign: TextAlign.center,
-              )
-            else if (!_isCheckedOut)
-              const Text(
-                'You are checked in. Check out when you finish for today.',
-                textAlign: TextAlign.center,
-              )
-            else
-              const Text(
-                'Your check-in and check-out have been recorded.',
-                textAlign: TextAlign.center,
-              ),
 
-            // TIMES
-            if (_isCheckedIn) ...[
-              const SizedBox(height: 18),
-              _TimeRow(
-                icon: Icons.login,
-                label: 'Check-in Time',
-                value: _formatTime(_checkInTime),
-              ),
-            ],
-
-            if (_isCheckedIn && !_isCheckedOut) ...[
-              const SizedBox(height: 10),
-              _TimeRow(
-                icon: Icons.schedule,
-                label: 'Time Worked',
-                value: _calculateWorkedTime(),
-              ),
-            ],
-
-            if (_isCheckedOut) ...[
-              const SizedBox(height: 10),
-              _TimeRow(
-                icon: Icons.logout,
-                label: 'Check-out Time',
-                value: _formatTime(_checkOutTime),
-              ),
-              const SizedBox(height: 10),
-              _TimeRow(
-                icon: Icons.schedule,
-                label: 'Total Time Worked',
-                value: _calculateWorkedTime(),
-              ),
-            ],
-
+          // TIMES
+          if (_isCheckedIn) ...[
             const SizedBox(height: 18),
+            _TimeRow(
+              icon: Icons.login,
+              label: 'Check-in Time',
+              value: _formatTime(_checkInTime),
+            ),
+          ],
 
-            // BUTTONS
-            if (!_isCheckedIn)
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton.icon(
-                  onPressed: actionLoading ? null : handleCheckIn,
-                  icon: actionLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.login),
-                  label: Text(actionLoading ? 'Getting location...' : 'Check In'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
+          if (_isCheckedIn && !_isCheckedOut) ...[
+            const SizedBox(height: 10),
+            _TimeRow(
+              icon: Icons.schedule,
+              label: 'Time Worked',
+              value: _calculateWorkedTime(),
+            ),
+          ],
+
+          if (_isCheckedOut) ...[
+            const SizedBox(height: 10),
+            _TimeRow(
+              icon: Icons.logout,
+              label: 'Check-out Time',
+              value: _formatTime(_checkOutTime),
+            ),
+            const SizedBox(height: 10),
+            _TimeRow(
+              icon: Icons.schedule,
+              label: 'Total Time Worked',
+              value: _calculateWorkedTime(),
+            ),
+          ],
+
+          const SizedBox(height: 18),
+
+          // BUTTONS
+          if (!_isCheckedIn)
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton.icon(
+                onPressed: actionLoading ? null : handleCheckIn,
+                icon: actionLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.login),
+                label: Text(actionLoading ? 'Getting location...' : 'Check In'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _brandGreen,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                ),
-              )
-            else if (!_isCheckedOut)
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton.icon(
-                  onPressed: actionLoading ? null : handleCheckOut,
-                  icon: actionLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.logout),
-                  label: Text(actionLoading ? 'Processing...' : 'Check Out'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    foregroundColor: Colors.white,
-                  ),
-                ),
-              )
-            else
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                decoration:
-                    BoxDecoration(borderRadius: BorderRadius.circular(10), color: Colors.grey.shade200),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.check_circle),
-                    SizedBox(width: 8),
-                    Text('Checkout Complete', style: TextStyle(fontWeight: FontWeight.bold)),
-                  ],
                 ),
               ),
-          ],
-        ),
+            )
+          else if (!_isCheckedOut)
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton.icon(
+                onPressed: actionLoading ? null : handleCheckOut,
+                icon: actionLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.logout),
+                label: Text(actionLoading ? 'Processing...' : 'Check Out'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFDC2626),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            )
+          else
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: Colors.white,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.check_circle, color: statusColor),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Checkout Complete',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: statusColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -642,17 +869,26 @@ class _TimeRow extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
-        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(12),
+        color: Colors.white,
       ),
       child: Row(
         children: [
-          Icon(icon, size: 22),
+          Icon(icon, size: 20, color: Colors.black54),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontWeight: FontWeight.w500,
+                color: Colors.black87,
+              ),
+            ),
           ),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text(
+            value,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
         ],
       ),
     );
@@ -666,33 +902,69 @@ class _SummaryCard extends StatelessWidget {
   final String title;
   final String value;
   final IconData icon;
+  final Color accentColor;
+  final Color backgroundColor;
 
   const _SummaryCard({
     required this.title,
     required this.value,
     required this.icon,
+    required this.accentColor,
+    required this.backgroundColor,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Icon(icon, size: 30),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                  Text(title, style: TextStyle(color: Colors.grey.shade600)),
-                ],
-              ),
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: accentColor.withOpacity(0.12)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(11),
+              boxShadow: [
+                BoxShadow(
+                  color: accentColor.withOpacity(0.15),
+                  blurRadius: 5,
+                  offset: const Offset(0, 3),
+                ),
+              ],
             ),
-          ],
-        ),
+            alignment: Alignment.center,
+            child: Icon(icon, size: 19, color: accentColor),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: Colors.grey.shade600,
+                    fontSize: 12.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

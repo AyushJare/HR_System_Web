@@ -26,6 +26,9 @@ class _LeaveScreenState extends State<LeaveScreen> {
   bool submitting = false;
   String? error;
 
+  static const Color _brandGreen = Color(0xFF16A34A);
+  static const Color _pageBg = Color(0xFFF4F6FB);
+
   @override
   void initState() {
     super.initState();
@@ -269,22 +272,85 @@ class _LeaveScreenState extends State<LeaveScreen> {
   }
 
   // ============================================================
+  // SECTION LABEL (matches dashboard style)
+  // ============================================================
+
+  Widget _sectionLabel(String text) {
+    return Row(
+      children: [
+        Container(
+          width: 4,
+          height: 18,
+          decoration: BoxDecoration(
+            color: _brandGreen,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          text,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.8,
+            color: Colors.black87,
+          ),
+        ),
+      ],
+    );
+  }
+
+  InputDecoration _fieldDecoration({
+    required String label,
+    Widget? suffixIcon,
+  }) {
+    return InputDecoration(
+      labelText: label,
+      filled: true,
+      fillColor: Colors.white,
+      suffixIcon: suffixIcon,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade300),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade300),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: _brandGreen, width: 1.5),
+      ),
+    );
+  }
+
+  // ============================================================
   // BUILD
   // ============================================================
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: _pageBg,
       appBar: AppBar(
-        title: const Text('Leave'),
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        elevation: 0,
+        scrolledUnderElevation: 1,
+        shadowColor: Colors.black12,
+        title: const Text(
+          'Leave',
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+        ),
         actions: [
           IconButton(
             onPressed: loading ? null : loadLeaveData,
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh, color: Colors.black54),
           ),
         ],
       ),
       body: RefreshIndicator(
+        color: _brandGreen,
         onRefresh: loadLeaveData,
         child: loading
             ? _loadingView()
@@ -306,7 +372,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
         SizedBox(
           height: 350,
           child: Center(
-            child: CircularProgressIndicator(),
+            child: CircularProgressIndicator(color: _brandGreen),
           ),
         ),
       ],
@@ -322,25 +388,44 @@ class _LeaveScreenState extends State<LeaveScreen> {
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(20),
       children: [
-        const SizedBox(height: 100),
-        const Icon(
-          Icons.error_outline,
-          size: 60,
-          color: Colors.red,
-        ),
-        const SizedBox(height: 16),
-        Text(
-          error!,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: Colors.red,
-            fontSize: 16,
+        const SizedBox(height: 80),
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.red.shade100),
+          ),
+          child: Column(
+            children: [
+              Icon(Icons.error_outline, color: Colors.red.shade400, size: 32),
+              const SizedBox(height: 12),
+              Text(
+                error!,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.red.shade600,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 20),
-        ElevatedButton(
-          onPressed: loadLeaveData,
-          child: const Text('Retry'),
+        SizedBox(
+          height: 48,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _brandGreen,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            onPressed: loadLeaveData,
+            child: const Text('Retry'),
+          ),
         ),
       ],
     );
@@ -353,30 +438,16 @@ class _LeaveScreenState extends State<LeaveScreen> {
   Widget _contentView() {
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
       children: [
-        const Text(
-          'Leave Balance',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-
+        _sectionLabel('LEAVE BALANCE'),
         const SizedBox(height: 14),
 
         _buildBalanceCards(),
 
         const SizedBox(height: 30),
 
-        const Text(
-          'Apply for Leave',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-
+        _sectionLabel('APPLY FOR LEAVE'),
         const SizedBox(height: 8),
 
         Text(
@@ -389,94 +460,97 @@ class _LeaveScreenState extends State<LeaveScreen> {
         const SizedBox(height: 20),
 
         // ======================================================
-        // LEAVE TYPE
+        // FORM CARD
         // ======================================================
 
-        DropdownButtonFormField<String>(
-          initialValue: leaveType,
-          decoration: const InputDecoration(
-            labelText: 'Leave Type',
-            border: OutlineInputBorder(),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: Colors.grey.shade200),
           ),
-          items: balances
-              .map(
-                (balance) => DropdownMenuItem(
-                  value: balance['name']?.toString() ?? '',
+          child: Column(
+            children: [
+              // LEAVE TYPE
+              DropdownButtonFormField<String>(
+                initialValue: leaveType,
+                decoration: _fieldDecoration(label: 'Leave Type'),
+                items: balances
+                    .map(
+                      (balance) => DropdownMenuItem(
+                        value: balance['name']?.toString() ?? '',
+                        child: Text(
+                          balance['name']?.toString() ?? '',
+                        ),
+                      ),
+                    )
+                    .toList(),
+                onChanged: submitting
+                    ? null
+                    : (value) {
+                        if (value == null) return;
+
+                        setState(() {
+                          leaveType = value;
+                        });
+                      },
+              ),
+
+              const SizedBox(height: 16),
+
+              // START DATE
+              InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: submitting ? null : selectStartDate,
+                child: InputDecorator(
+                  decoration: _fieldDecoration(
+                    label: 'Start Date',
+                    suffixIcon: const Icon(
+                      Icons.calendar_today,
+                      color: _brandGreen,
+                      size: 20,
+                    ),
+                  ),
                   child: Text(
-                    balance['name']?.toString() ?? '',
+                    _formatDate(startDate),
                   ),
                 ),
-              )
-              .toList(),
-          onChanged: submitting
-              ? null
-              : (value) {
-                  if (value == null) return;
-
-                  setState(() {
-                    leaveType = value;
-                  });
-                },
-        ),
-
-        const SizedBox(height: 16),
-
-        // ======================================================
-        // START DATE
-        // ======================================================
-
-        InkWell(
-          onTap: submitting ? null : selectStartDate,
-          child: InputDecorator(
-            decoration: const InputDecoration(
-              labelText: 'Start Date',
-              border: OutlineInputBorder(),
-              suffixIcon: Icon(
-                Icons.calendar_today,
               ),
-            ),
-            child: Text(
-              _formatDate(startDate),
-            ),
-          ),
-        ),
 
-        const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-        // ======================================================
-        // END DATE
-        // ======================================================
-
-        InkWell(
-          onTap: submitting ? null : selectEndDate,
-          child: InputDecorator(
-            decoration: const InputDecoration(
-              labelText: 'End Date',
-              border: OutlineInputBorder(),
-              suffixIcon: Icon(
-                Icons.calendar_today,
+              // END DATE
+              InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: submitting ? null : selectEndDate,
+                child: InputDecorator(
+                  decoration: _fieldDecoration(
+                    label: 'End Date',
+                    suffixIcon: const Icon(
+                      Icons.calendar_today,
+                      color: _brandGreen,
+                      size: 20,
+                    ),
+                  ),
+                  child: Text(
+                    _formatDate(endDate),
+                  ),
+                ),
               ),
-            ),
-            child: Text(
-              _formatDate(endDate),
-            ),
-          ),
-        ),
 
-        const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-        // ======================================================
-        // REASON
-        // ======================================================
-
-        TextField(
-          controller: reasonController,
-          enabled: !submitting,
-          maxLines: 4,
-          decoration: const InputDecoration(
-            labelText: 'Reason',
-            alignLabelWithHint: true,
-            border: OutlineInputBorder(),
+              // REASON
+              TextField(
+                controller: reasonController,
+                enabled: !submitting,
+                maxLines: 4,
+                decoration: _fieldDecoration(label: 'Reason').copyWith(
+                  alignLabelWithHint: true,
+                ),
+              ),
+            ],
           ),
         ),
 
@@ -489,6 +563,13 @@ class _LeaveScreenState extends State<LeaveScreen> {
         SizedBox(
           height: 52,
           child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _brandGreen,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
             onPressed: submitting ? null : submitLeave,
             child: submitting
                 ? const SizedBox(
@@ -496,6 +577,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                     width: 24,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
+                      color: Colors.white,
                     ),
                   )
                 : const Text(
@@ -514,13 +596,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
         // REQUESTS
         // ======================================================
 
-        const Text(
-          'My Leave Requests',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        _sectionLabel('MY LEAVE REQUESTS'),
 
         const SizedBox(height: 14),
 
@@ -564,6 +640,9 @@ class _LeaveScreenState extends State<LeaveScreen> {
               child: _BalanceCard(
                 title: 'Casual',
                 value: balanceFor('CL'),
+                icon: Icons.wb_sunny_outlined,
+                accentColor: const Color(0xFF2563EB),
+                backgroundColor: const Color(0xFFEAF1FE),
               ),
             ),
             const SizedBox(width: 12),
@@ -571,6 +650,9 @@ class _LeaveScreenState extends State<LeaveScreen> {
               child: _BalanceCard(
                 title: 'Sick',
                 value: balanceFor('SL'),
+                icon: Icons.healing_outlined,
+                accentColor: const Color(0xFFDC2626),
+                backgroundColor: const Color(0xFFFCEAEA),
               ),
             ),
           ],
@@ -584,6 +666,9 @@ class _LeaveScreenState extends State<LeaveScreen> {
               child: _BalanceCard(
                 title: 'Earned',
                 value: balanceFor('EL'),
+                icon: Icons.savings_outlined,
+                accentColor: const Color(0xFF16A34A),
+                backgroundColor: const Color(0xFFE9F9EF),
               ),
             ),
             const SizedBox(width: 12),
@@ -591,6 +676,9 @@ class _LeaveScreenState extends State<LeaveScreen> {
               child: _BalanceCard(
                 title: 'Total',
                 value: totalRemaining.toString(),
+                icon: Icons.event_available_outlined,
+                accentColor: const Color(0xFF9333EA),
+                backgroundColor: const Color(0xFFF3E9FD),
               ),
             ),
           ],
@@ -604,33 +692,48 @@ class _LeaveScreenState extends State<LeaveScreen> {
   // ============================================================
 
   Widget _emptyRequests() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            const Icon(
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: _brandGreen.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            alignment: Alignment.center,
+            child: const Icon(
               Icons.event_note_outlined,
-              size: 50,
+              size: 26,
+              color: _brandGreen,
             ),
-            const SizedBox(height: 12),
-            const Text(
-              'No leave requests',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+          ),
+          const SizedBox(height: 14),
+          const Text(
+            'No leave requests',
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
             ),
-            const SizedBox(height: 6),
-            Text(
-              'Your submitted leave requests will appear here.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.grey.shade600,
-              ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Your submitted leave requests will appear here.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.grey.shade600,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -643,37 +746,65 @@ class _LeaveScreenState extends State<LeaveScreen> {
 class _BalanceCard extends StatelessWidget {
   final String title;
   final String value;
+  final IconData icon;
+  final Color accentColor;
+  final Color backgroundColor;
 
   const _BalanceCard({
     required this.title,
     required this.value,
+    required this.icon,
+    required this.accentColor,
+    required this.backgroundColor,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: TextStyle(
-                color: Colors.grey.shade600,
-              ),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: accentColor.withOpacity(0.12)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: accentColor.withOpacity(0.15),
+                  blurRadius: 5,
+                  offset: const Offset(0, 3),
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+            alignment: Alignment.center,
+            child: Icon(icon, size: 17, color: accentColor),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            title,
+            style: TextStyle(
+              color: Colors.grey.shade600,
+              fontSize: 12.5,
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -715,61 +846,77 @@ class _LeaveRequestCard extends StatelessWidget {
         request['endDate']?.toString() ??
         '-';
 
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(
-                  Icons.event_note,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEAF1FE),
+                  borderRadius: BorderRadius.circular(11),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    type,
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold,
-                    ),
+                alignment: Alignment.center,
+                child: const Icon(
+                  Icons.event_note,
+                  size: 19,
+                  color: Color(0xFF2563EB),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  type,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
                   ),
                 ),
-                _StatusBadge(
-                  status: status,
-                ),
-              ],
-            ),
-
-            const Divider(height: 24),
-
-            Text(
-              'From: $fromDate',
-              style: const TextStyle(
-                fontWeight: FontWeight.w500,
               ),
-            ),
-
-            const SizedBox(height: 5),
-
-            Text(
-              'To: $toDate',
-              style: const TextStyle(
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-
-            if (reason.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              Text(
-                'Reason: $reason',
+              _StatusBadge(
+                status: status,
               ),
             ],
+          ),
+
+          const Divider(height: 24),
+
+          Text(
+            'From: $fromDate',
+            style: const TextStyle(
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+
+          const SizedBox(height: 5),
+
+          Text(
+            'To: $toDate',
+            style: const TextStyle(
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+
+          if (reason.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(
+              'Reason: $reason',
+              style: TextStyle(color: Colors.grey.shade700),
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -786,8 +933,24 @@ class _StatusBadge extends StatelessWidget {
     required this.status,
   });
 
+  Color _colorFor(String status) {
+    final normalized = status.toUpperCase();
+
+    if (normalized.contains('APPROV')) {
+      return const Color(0xFF16A34A);
+    }
+
+    if (normalized.contains('REJECT')) {
+      return const Color(0xFFDC2626);
+    }
+
+    return const Color(0xFFD97706);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final color = _colorFor(status);
+
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: 10,
@@ -795,12 +958,14 @@ class _StatusBadge extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        color: Colors.grey.shade200,
+        color: color.withOpacity(0.12),
       ),
       child: Text(
         status,
-        style: const TextStyle(
-          fontWeight: FontWeight.w600,
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 12,
+          color: color,
         ),
       ),
     );

@@ -20,6 +20,9 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
   bool loading = true;
   String? error;
 
+  static const Color _brandGreen = Color(0xFF16A34A);
+  static const Color _pageBg = Color(0xFFF4F6FB);
+
   @override
   void initState() {
     super.initState();
@@ -167,13 +170,18 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: Text(title),
           content: TextField(
             controller: controller,
             maxLines: 3,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Reason',
-              border: OutlineInputBorder(),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
           ),
           actions: [
@@ -184,6 +192,13 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
               child: const Text('Cancel'),
             ),
             ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFDC2626),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
               onPressed: () {
                 final reason = controller.text.trim();
 
@@ -218,16 +233,29 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: _pageBg,
       appBar: AppBar(
-        title: const Text('Approvals'),
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        elevation: 0,
+        scrolledUnderElevation: 1,
+        shadowColor: Colors.black12,
+        title: const Text(
+          'Approvals',
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+        ),
         actions: [
           IconButton(
             onPressed: loading ? null : loadApprovals,
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh, color: Colors.black54),
           ),
         ],
         bottom: TabBar(
           controller: tabController,
+          labelColor: _brandGreen,
+          unselectedLabelColor: Colors.black45,
+          indicatorColor: _brandGreen,
+          indicatorWeight: 3,
           tabs: const [
             Tab(
               text: 'Login',
@@ -246,7 +274,7 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
       ),
       body: loading
           ? const Center(
-              child: CircularProgressIndicator(),
+              child: CircularProgressIndicator(color: _brandGreen),
             )
           : error != null
               ? _buildError()
@@ -263,30 +291,50 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
 
   Widget _buildError() {
     return RefreshIndicator(
+      color: _brandGreen,
       onRefresh: loadApprovals,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(20),
         children: [
-          const SizedBox(height: 100),
-          const Icon(
-            Icons.error_outline,
-            size: 60,
-            color: Colors.red,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            error!,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.red,
-              fontSize: 16,
+          const SizedBox(height: 80),
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.red.shade100),
+            ),
+            child: Column(
+              children: [
+                Icon(Icons.error_outline, color: Colors.red.shade400, size: 32),
+                const SizedBox(height: 12),
+                Text(
+                  error!,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.red.shade600,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: loadApprovals,
-            child: const Text('Retry'),
+          SizedBox(
+            height: 48,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _brandGreen,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onPressed: loadApprovals,
+              child: const Text('Retry'),
+            ),
           ),
         ],
       ),
@@ -302,6 +350,8 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
       loginApprovals,
       'LOGIN',
       Icons.location_on_outlined,
+      const Color(0xFF2563EB),
+      const Color(0xFFEAF1FE),
     );
   }
 
@@ -314,6 +364,8 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
       leaveApprovals,
       'LEAVE',
       Icons.event_note_outlined,
+      const Color(0xFF9333EA),
+      const Color(0xFFF3E9FD),
     );
   }
 
@@ -328,6 +380,8 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
       attendanceApprovals,
       'ATTENDANCE',
       Icons.access_time,
+      const Color(0xFF0D9488),
+      const Color(0xFFE6F6F4),
     );
   }
 
@@ -335,8 +389,11 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
     List<Map<String, dynamic>> approvals,
     String type,
     IconData icon,
+    Color accentColor,
+    Color backgroundColor,
   ) {
     return RefreshIndicator(
+      color: _brandGreen,
       onRefresh: loadApprovals,
       child: ListView.builder(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -357,6 +414,8 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
             ),
             status: _status(approval),
             icon: icon,
+            accentColor: accentColor,
+            backgroundColor: backgroundColor,
             onApprove: () => approveApproval(
               approval,
               type,
@@ -373,23 +432,40 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
 
   Widget _emptyView(String message) {
     return RefreshIndicator(
+      color: _brandGreen,
       onRefresh: loadApprovals,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         children: [
-          const SizedBox(height: 150),
-          const Icon(
-            Icons.check_circle_outline,
-            size: 60,
+          const SizedBox(height: 130),
+          Center(
+            child: Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: _brandGreen.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              alignment: Alignment.center,
+              child: const Icon(
+                Icons.check_circle_outline,
+                size: 30,
+                color: _brandGreen,
+              ),
+            ),
           ),
           const SizedBox(height: 16),
           Center(
-            child: Text(
-              message,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Text(
+                message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
               ),
             ),
           ),
@@ -609,6 +685,8 @@ class _ApprovalCard extends StatelessWidget {
   final List<MapEntry<String, String>> details;
   final String status;
   final IconData icon;
+  final Color accentColor;
+  final Color backgroundColor;
   final VoidCallback onApprove;
   final VoidCallback onReject;
 
@@ -618,110 +696,152 @@ class _ApprovalCard extends StatelessWidget {
     required this.details,
     required this.status,
     required this.icon,
+    required this.accentColor,
+    required this.backgroundColor,
     required this.onApprove,
     required this.onReject,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(
         bottom: 12,
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
-              children: [
-                CircleAvatar(
-                  child: Icon(icon),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: backgroundColor,
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.bold,
+                alignment: Alignment.center,
+                child: Icon(icon, color: accentColor, size: 21),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      requestType,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: accentColor,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              _StatusChip(
+                status: status,
+              ),
+            ],
+          ),
+          if (details.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF7F8FB),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                children: details
+                    .map(
+                      (detail) => Padding(
+                        padding: const EdgeInsets.only(
+                          bottom: 8,
+                        ),
+                        child: Row(
+                          crossAxisAlignment:
+                              CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(
+                              width: 125,
+                              child: Text(
+                                detail.key,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: Text(
+                                detail.value,
+                                style: TextStyle(
+                                  color: Colors.grey.shade700,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        requestType,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                _StatusChip(
-                  status: status,
-                ),
-              ],
+                    )
+                    .toList(),
+              ),
             ),
-            if (details.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              const Divider(),
-              const SizedBox(height: 8),
-              ...details.map(
-                (detail) => Padding(
-                  padding: const EdgeInsets.only(
-                    bottom: 8,
+          ],
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFDC2626),
+                    side: const BorderSide(color: Color(0xFFDC2626)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                  child: Row(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                        width: 125,
-                        child: Text(
-                          detail.key,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: Text(
-                          detail.value,
-                        ),
-                      ),
-                    ],
+                  onPressed: onReject,
+                  child: const Text('Reject'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF16A34A),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
+                  onPressed: onApprove,
+                  child: const Text('Approve'),
                 ),
               ),
             ],
-            const SizedBox(height: 8),
-            const Divider(),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: onReject,
-                    child: const Text('Reject'),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: onApprove,
-                    child: const Text('Approve'),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -734,8 +854,24 @@ class _StatusChip extends StatelessWidget {
     required this.status,
   });
 
+  Color _colorFor(String status) {
+    final normalized = status.toUpperCase();
+
+    if (normalized.contains('APPROV')) {
+      return const Color(0xFF16A34A);
+    }
+
+    if (normalized.contains('REJECT')) {
+      return const Color(0xFFDC2626);
+    }
+
+    return const Color(0xFFD97706);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final color = _colorFor(status);
+
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: 10,
@@ -743,15 +879,16 @@ class _StatusChip extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        color: Colors.orange.withValues(
-          alpha: 0.15,
+        color: color.withValues(
+          alpha: 0.12,
         ),
       ),
       child: Text(
         status,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.bold,
+          color: color,
         ),
       ),
     );
