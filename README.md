@@ -236,29 +236,29 @@ Tech Stack: Next.js, React, TypeScript, Tailwind CSS, PostgreSQL, Prisma ORM
 
 Location: Repository root
 
-Run:
+Run:/n
 
-bash
-npm install
+bash/n
+npm install/n
 npm run dev
 
 Deploy: Vercel (automatic cron job support)
 
 Mobile App Setup
-1. Navigate to Mobile App
-bash
+1. Navigate to Mobile App/n
+bash/n
 cd hr_system_mobile
-2. Install Dependencies
-bash
-flutter pub get
-3. Environment Configuration
+2. Install Dependencies/n
+bash/n
+flutter pub get/n
+3. Environment Configuration/n
 
-Create .env file in mobile app root with API endpoint:
+Create .env file in mobile app root with API endpoint:/n
 
-env
-API_URL=http://your-api-url.com
-4. Run on Device/Emulator
-bash
+env/n
+API_URL=http://your-api-url.com/n
+4. Run on Device/Emulator/n
+bash/n
 # For Android
 flutter run -d android
 
