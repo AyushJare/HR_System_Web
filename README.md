@@ -1,25 +1,40 @@
 # HR Management System
+
 ![Next.js](https://img.shields.io/badge/Next.js-16-black)
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4-38B2AC?logo=tailwind-css&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14%2B-336791)
 ![Prisma](https://img.shields.io/badge/Prisma-7-2D3748)
+![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?logo=node.js&logoColor=white)
+![Flutter](https://img.shields.io/badge/Flutter-3-02569B?logo=flutter&logoColor=white)
+![Dart](https://img.shields.io/badge/Dart-3-0175C2?logo=dart&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-> A role-based HR management platform built for a real institution's admin workflows — employee records, attendance, leave, and approvals in one auditable system.
+> Enterprise HR Management System for institutional administration featuring real-time attendance tracking, employee management, leave workflows, and role-based access control across web and mobile platforms.
 
 ## Overview
 
-This is a full-stack HR administration system built with Next.js and PostgreSQL, designed around a single API layer that both the web admin panel and a future mobile app will share — no client ever touches the database directly. Every write action is enforced server-side by role and logged to a permanent audit trail, not just hidden behind UI buttons.
+A full-stack HR administration system built with a single API layer shared by web and mobile applications. Every write action is enforced server-side by role-based permissions and logged to a permanent audit trail — no database access from clients.
 
-The system was built from a real internal architecture spec (employee management, attendance, masters, approvals, audit logging, reporting) and has grown to include configurable leave-type balance tracking, weekly-off/holiday-aware attendance calculations, and per-employee monthly attendance views.
+Built around real institutional requirements, the system covers employee management, real-time location-based attendance tracking, leave management with configurable balance tracking, approval workflows, and comprehensive audit logging. Holiday and weekly-off aware calculations ensure accurate attendance records.
 
 ## Why This Architecture
 
-Single API, multiple future clients — a mobile app can plug into the exact same endpoints already built and tested for web, with zero duplicated backend logic.
-No client ever touches the database directly — every read and write is routed through an authenticated API layer, so access rules are enforced in exactly one place, not scattered across UIs.
-Server-enforced role checks, not UI-hidden buttons — an admin-only action rejects unauthorized requests at the API level, verified even if the UI were bypassed entirely.
-Audit logging built into the schema from day one — every create/update/delete/approval writes to a permanent, queryable audit trail.
-JWT over cookie-only sessions — chosen specifically so a future mobile client (which can't use browser cookies) requires no rewrite of the auth system.
+**Single API, Multiple Clients**
+A shared API layer lets the mobile app plug into the exact same endpoints already built and tested for web — zero duplicated backend logic.
+
+**No Direct Database Access**
+Every read and write routes through an authenticated API layer. Access rules are enforced in one place, not scattered across UI code.
+
+**Server-Enforced Permissions**
+Admin-only actions are validated at the API level — rejecting unauthorized requests even if the UI were bypassed entirely. Not just hidden buttons.
+
+**Audit Logging Built-In**
+From day one, every create/update/delete/approval writes to a permanent, queryable audit trail. Compliance and accountability by design.
+
+**JWT Authentication**
+Chosen specifically for mobile compatibility — cookies won't work on Flutter, but JWT requires no backend rewrite. Future clients just need the token.
 
 ## Key Features
 
@@ -211,6 +226,58 @@ prisma/
 --> No password reset flow — admin must currently reset credentials manually via the database
 --> Local PostgreSQL only — no managed hosting or automated backup strategy configured yet
 --> Admin-managed attendance marking — until employee self-service exists, all attendance is entered by an admin rather than self-reported
+
+
+
+📱 Applications
+Web Application
+
+Tech Stack: Next.js, React, TypeScript, Tailwind CSS, PostgreSQL, Prisma ORM
+
+Location: Repository root
+
+Run:
+
+bash
+npm install
+npm run dev
+
+Deploy: Vercel (automatic cron job support)
+
+Mobile App Setup
+1. Navigate to Mobile App
+bash
+cd hr_system_mobile
+2. Install Dependencies
+bash
+flutter pub get
+3. Environment Configuration
+
+Create .env file in mobile app root with API endpoint:
+
+env
+API_URL=http://your-api-url.com
+4. Run on Device/Emulator
+bash
+# For Android
+flutter run -d android
+
+# For iOS
+flutter run -d ios
+
+# For Web
+flutter run -d chrome
+5. Build Release
+bash
+# Android APK
+flutter build apk
+
+# iOS
+flutter build ios
+
+# Web
+flutter build web
+
 
 ## License
 
