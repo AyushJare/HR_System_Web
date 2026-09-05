@@ -229,54 +229,87 @@ prisma/
 
 
 
-📱 Applications
-Web Application
+## 📱 Applications
 
-Tech Stack: Next.js, React, TypeScript, Tailwind CSS, PostgreSQL, Prisma ORM
+### 🌐 Web Application
 
-Location: Repository root
+**Tech Stack:** Next.js, React, TypeScript, Tailwind CSS, PostgreSQL, Prisma ORM
 
-Run:/n
+**Location:** Repository root
 
-bash/n
-npm install/n
+**Run:**
+
+```bash
+npm install
 npm run dev
+```
 
-Deploy: Vercel (automatic cron job support)
+**Deploy:** Vercel (automatic cron job support)
 
-Mobile App Setup
-1. Navigate to Mobile App/n
-bash/n
+---
+
+### 📱 Mobile App Setup
+
+**1. Navigate to Mobile App**
+
+```bash
 cd hr_system_mobile
-2. Install Dependencies/n
-bash/n
-flutter pub get/n
-3. Environment Configuration/n
+```
 
-Create .env file in mobile app root with API endpoint:/n
+**2. Install Dependencies**
 
-env/n
-API_URL=http://your-api-url.com/n
-4. Run on Device/Emulator/n
-bash/n
-# For Android
+```bash
+flutter pub get
+```
+
+**3. Environment Configuration**
+
+Create a `.env` file in the mobile app root with the API endpoint:
+
+```env
+API_URL=https://your-api-url.com
+```
+
+**4. Run on Device/Emulator**
+
+**For Android**
+
+```bash
 flutter run -d android
+```
 
-# For iOS
+**For iOS**
+
+```bash
 flutter run -d ios
+```
 
-# For Web
+**For Web**
+
+```bash
 flutter run -d chrome
-5. Build Release
-bash
-# Android APK
+```
+
+**5. Build Release**
+
+**Android APK**
+
+```bash
 flutter build apk
+```
 
-# iOS
+**iOS**
+
+```bash
 flutter build ios
+```
 
-# Web
+**Web**
+
+```bash
 flutter build web
+```
+
 
 
 ## License
