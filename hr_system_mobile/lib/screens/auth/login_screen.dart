@@ -18,8 +18,7 @@ class _LoginScreenState extends State<LoginScreen> {
   String? error;
 
   Future<Position> _getCurrentLocation() async {
-    final serviceEnabled =
-        await Geolocator.isLocationServiceEnabled();
+    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
 
     if (!serviceEnabled) {
       throw Exception(
@@ -34,9 +33,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     if (permission == LocationPermission.denied) {
-      throw Exception(
-        'Location permission is required for login.',
-      );
+      throw Exception('Location permission is required for login.');
     }
 
     if (permission == LocationPermission.deniedForever) {
@@ -46,9 +43,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     return Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-      ),
+      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
     );
   }
 
@@ -88,31 +83,26 @@ class _LoginScreenState extends State<LoginScreen> {
         gpsAccuracy: position.accuracy,
       );
 
-if (result['requiresApproval'] == true) {
-  if (!mounted) return;
+      if (result['requiresApproval'] == true) {
+        if (!mounted) return;
 
-  setState(() {
-    error = result['message']?.toString() ??
-        'Your location is outside the allowed radius. Admin approval is required.';
-  });
+        setState(() {
+          error =
+              result['message']?.toString() ??
+              'Your location is outside the allowed radius. Admin approval is required.';
+        });
 
-  return;
-}
+        return;
+      }
 
       if (!mounted) return;
 
-      Navigator.pushReplacementNamed(
-        context,
-        '/dashboard',
-      );
+      Navigator.pushReplacementNamed(context, '/dashboard');
     } catch (e) {
       if (!mounted) return;
 
       setState(() {
-        error = e.toString().replaceFirst(
-              'Exception: ',
-              '',
-            );
+        error = e.toString().replaceFirst('Exception: ', '');
       });
     } finally {
       if (mounted) {
@@ -139,9 +129,7 @@ if (result['requiresApproval'] == true) {
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxWidth: 420,
-              ),
+              constraints: const BoxConstraints(maxWidth: 420),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
@@ -193,10 +181,7 @@ if (result['requiresApproval'] == true) {
                   const Text(
                     'Sign in to your account',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: Colors.grey, fontSize: 14),
                   ),
 
                   const SizedBox(height: 32),
@@ -225,10 +210,7 @@ if (result['requiresApproval'] == true) {
                     const SizedBox(height: 16),
                     Text(
                       error!,
-                      style: const TextStyle(
-                        color: Colors.red,
-                        fontSize: 14,
-                      ),
+                      style: const TextStyle(color: Colors.red, fontSize: 14),
                     ),
                   ],
 
@@ -242,9 +224,7 @@ if (result['requiresApproval'] == true) {
                           ? const SizedBox(
                               width: 22,
                               height: 22,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                              ),
+                              child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : const Text(
                               'Sign In',

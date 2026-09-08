@@ -57,11 +57,11 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
       // Extract today's attendance
       final checkInTime = todayData?['timeIn'] != null
-          ? DateTime.parse(todayData!['timeIn'].toString())
+          ? DateTime.parse(todayData!['timeIn'].toString()).toLocal()
           : null;
 
       final checkOutTime = todayData?['timeOut'] != null
-          ? DateTime.parse(todayData!['timeOut'].toString())
+          ? DateTime.parse(todayData!['timeOut'].toString()).toLocal()
           : null;
 
       setState(() {
@@ -126,9 +126,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     }
 
     return Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-      ),
+      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
     );
   }
 
@@ -186,9 +184,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Confirm Check Out'),
         content: const Text('Are you sure you want to check out?'),
         actions: [
@@ -221,7 +217,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     });
 
     try {
-      final result = await AttendanceService.checkOut();
+      final result = await AttendanceService.checkOut({});
 
       if (!mounted) return;
 
@@ -250,10 +246,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-      ),
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
   }
 
@@ -324,10 +317,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       shadowColor: Colors.black12,
       title: const Text(
         'Attendance',
-        style: TextStyle(
-          fontWeight: FontWeight.bold,
-          color: Colors.black87,
-        ),
+        style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
       ),
       actions: [
         IconButton(
@@ -383,9 +373,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         children: const [
           SizedBox(
             height: 300,
-            child: Center(
-              child: CircularProgressIndicator(color: _brandGreen),
-            ),
+            child: Center(child: CircularProgressIndicator(color: _brandGreen)),
           ),
         ],
       );
@@ -456,10 +444,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
         ),
         const SizedBox(height: 20),
-        if (error != null) ...[
-          _errorCard(error!),
-          const SizedBox(height: 16),
-        ],
+        if (error != null) ...[_errorCard(error!), const SizedBox(height: 16)],
 
         // TODAY'S ATTENDANCE CARD
         _buildTodayAttendanceCard(),
@@ -653,14 +638,14 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     final Color statusColor = _isCheckedOut
         ? const Color(0xFF2563EB)
         : _isCheckedIn
-            ? const Color(0xFF16A34A)
-            : const Color(0xFFD97706);
+        ? const Color(0xFF16A34A)
+        : const Color(0xFFD97706);
 
     final Color statusBg = _isCheckedOut
         ? const Color(0xFFEAF1FE)
         : _isCheckedIn
-            ? const Color(0xFFE9F9EF)
-            : const Color(0xFFFDF3E3);
+        ? const Color(0xFFE9F9EF)
+        : const Color(0xFFFDF3E3);
 
     return Container(
       width: double.infinity,
@@ -691,8 +676,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
               _isCheckedOut
                   ? Icons.task_alt
                   : _isCheckedIn
-                      ? Icons.check_circle
-                      : Icons.location_on,
+                  ? Icons.check_circle
+                  : Icons.location_on,
               size: 32,
               color: statusColor,
             ),
@@ -702,8 +687,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             _isCheckedOut
                 ? 'Checked out'
                 : _isCheckedIn
-                    ? 'Checked in'
-                    : 'Not checked in today',
+                ? 'Checked in'
+                : 'Not checked in today',
             style: TextStyle(
               fontSize: 19,
               fontWeight: FontWeight.bold,
@@ -885,10 +870,7 @@ class _TimeRow extends StatelessWidget {
               ),
             ),
           ),
-          Text(
-            value,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -956,10 +938,7 @@ class _SummaryCard extends StatelessWidget {
                 ),
                 Text(
                   title,
-                  style: TextStyle(
-                    color: Colors.grey.shade600,
-                    fontSize: 12.5,
-                  ),
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5),
                 ),
               ],
             ),

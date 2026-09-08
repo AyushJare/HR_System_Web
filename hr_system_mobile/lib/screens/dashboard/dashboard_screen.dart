@@ -54,11 +54,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     if (!mounted) return;
 
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      '/',
-      (route) => false,
-    );
+    Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
   }
 
   Widget _buildLogo() {
@@ -77,10 +73,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           child: Text(
             'V',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: _brandGreen,
-            ),
+            style: TextStyle(fontWeight: FontWeight.bold, color: _brandGreen),
           ),
         );
       },
@@ -165,9 +158,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       return Scaffold(
         backgroundColor: _pageBg,
         body: const Center(
-          child: CircularProgressIndicator(
-            color: _brandGreen,
-          ),
+          child: CircularProgressIndicator(color: _brandGreen),
         ),
       );
     }
@@ -196,7 +187,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.error_outline, color: Colors.red.shade400, size: 32),
+                  Icon(
+                    Icons.error_outline,
+                    color: Colors.red.shade400,
+                    size: 32,
+                  ),
                   const SizedBox(height: 12),
                   Text(
                     error!,
@@ -231,7 +226,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         actions: [
           IconButton(
             onPressed: () {},
-            icon: const Icon(Icons.notifications_outlined, color: Colors.black54),
+            icon: const Icon(
+              Icons.notifications_outlined,
+              color: Colors.black54,
+            ),
           ),
           IconButton(
             onPressed: handleLogout,
@@ -276,10 +274,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
               Text(
                 _formattedToday(),
-                style: TextStyle(
-                  color: Colors.grey.shade600,
-                  fontSize: 14,
-                ),
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
               ),
 
               const SizedBox(height: 20),
@@ -418,10 +413,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Navigator.pushNamed(context, '/attendance');
                 },
               ),
+
+              const SizedBox(height: 12),
+
+              _ActionCard(
+                icon: Icons.calendar_month_outlined,
+                title: 'My Attendance Calendar',
+                accentColor: const Color(0xFF7C3AED),
+                backgroundColor: const Color(0xFFF3E8FF),
+                onTap: () {
+                  Navigator.pushNamed(context, '/calendar');
+                },
+              ),
+
               const SizedBox(height: 12),
               _ActionCard(
                 icon: Icons.event_note_outlined,
-                title: 'Apply Leave',
+                title: 'Apply Leave / Raise Query',
                 accentColor: const Color(0xFF2563EB),
                 backgroundColor: const Color(0xFFEAF1FE),
                 onTap: () {
@@ -485,9 +493,7 @@ class _ActionCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: backgroundColor,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: accentColor.withOpacity(0.12),
-            ),
+            border: Border.all(color: accentColor.withOpacity(0.12)),
           ),
           child: Row(
             children: [

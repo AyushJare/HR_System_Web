@@ -15,8 +15,10 @@ export async function GET(request: NextRequest) {
 
         const approvals = await prisma.approval.findMany({
             where: {
-                type: "LEAVE",
                 actorId: session.sub,
+                type: {
+                    in: ["LEAVE", "ATTENDANCE_CORRECTION"],
+                },
             },
             orderBy: {
                 createdAt: "desc",
@@ -25,13 +27,34 @@ export async function GET(request: NextRequest) {
 
         const requests = approvals.map((approval) => {
             const details = approval.details as
-                {
+                | {
                     date?: string;
                     fromDate?: string;
                     toDate?: string;
                     reason?: string | null;
                     leaveTypeId?: string | null;
-                } | null;
+                    timeIn?: string | null;
+                    timeOut?: string | null;
+                    status?: string | null;
+                }
+                | null;
+
+            if (approval.type === "ATTENDANCE_CORRECTION") {
+                return {
+                    id: approval.id,
+                    type: "ATTENDANCE_CORRECTION",
+                    status: approval.status,
+                    date: details?.date ?? null,
+                    fromDate: details?.date ?? null,
+                    toDate: details?.date ?? null,
+                    timeIn: details?.timeIn ?? null,
+                    timeOut: details?.timeOut ?? null,
+                    requestedStatus: details?.status ?? null,
+                    reason: details?.reason ?? null,
+                    createdAt: approval.createdAt,
+                    updatedAt: approval.updatedAt,
+                };
+            }
 
             return {
                 id: approval.id,
@@ -48,14 +71,11 @@ export async function GET(request: NextRequest) {
 
         return NextResponse.json(requests);
     } catch (error) {
-        console.error(
-            "GET /api/approvals/leaves/me error:",
-            error
-        );
+        console.error("GET /api/approvals/leaves/me error:", error);
 
         return NextResponse.json(
             {
-                error: "Failed to load leave requests",
+                error: "Failed to load requests",
                 details:
                     error instanceof Error
                         ? error.message

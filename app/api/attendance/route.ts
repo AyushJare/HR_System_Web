@@ -713,8 +713,7 @@ export async function POST(request: NextRequest) {
           },
 
           data: {
-            checkOutTime: now,
-
+            checkOutTime: body.timestamp ? new Date(body.timestamp) : now,
             status:
               calculatedStatus,
 

@@ -7,6 +7,7 @@ import 'screens/leave/leave_screen.dart';
 import 'screens/profile/profile_screen.dart';
 import 'screens/approvals/approvals_screen.dart';
 import 'screens/audit/audit_log_screen.dart';
+import 'screens/calendar/calendar_screen.dart';
 
 void main() {
   runApp(const HRSystemApp());
@@ -22,9 +23,7 @@ class HRSystemApp extends StatelessWidget {
       title: 'VMC - HR System',
 
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.green,
-        ),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
         useMaterial3: true,
       ),
 
@@ -33,6 +32,7 @@ class HRSystemApp extends StatelessWidget {
       routes: {
         '/dashboard': (context) => const DashboardScreen(),
         '/attendance': (context) => const AttendanceScreen(),
+        '/calendar': (context) => const CalendarScreen(),
         '/leave': (context) => const LeaveScreen(),
         '/profile': (context) => const ProfileScreen(),
         '/approvals': (context) => const ApprovalsScreen(),

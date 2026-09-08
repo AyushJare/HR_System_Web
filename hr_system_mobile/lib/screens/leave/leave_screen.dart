@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import '../../services/leave_service.dart';
 
 class LeaveScreen extends StatefulWidget {
-  const LeaveScreen({super.key});
+  final bool openAttendanceCorrection;
+
+  const LeaveScreen({super.key, this.openAttendanceCorrection = false});
 
   @override
   State<LeaveScreen> createState() => _LeaveScreenState();
@@ -11,11 +13,18 @@ class LeaveScreen extends StatefulWidget {
 
 class _LeaveScreenState extends State<LeaveScreen> {
   final reasonController = TextEditingController();
+  final correctionReasonController = TextEditingController();
 
   String leaveType = 'Casual Leave';
+  String correctionStatus = 'PRESENT';
 
   DateTime? startDate;
   DateTime? endDate;
+  DateTime? correctionDate;
+  TimeOfDay? correctionTimeIn;
+  TimeOfDay? correctionTimeOut;
+
+  bool isAttendanceCorrection = false;
 
   // Backend now returns a LIST of leave balances.
   List<Map<String, dynamic>> balances = [];
@@ -32,12 +41,14 @@ class _LeaveScreenState extends State<LeaveScreen> {
   @override
   void initState() {
     super.initState();
+    isAttendanceCorrection = widget.openAttendanceCorrection;
     loadLeaveData();
   }
 
   @override
   void dispose() {
     reasonController.dispose();
+    correctionReasonController.dispose();
     super.dispose();
   }
 
@@ -66,10 +77,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
       if (!mounted) return;
 
       setState(() {
-        error = e.toString().replaceFirst(
-              'Exception: ',
-              '',
-            );
+        error = e.toString().replaceFirst('Exception: ', '');
         loading = false;
       });
     }
@@ -85,9 +93,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
     final selected = await showDatePicker(
       context: context,
       firstDate: now,
-      lastDate: now.add(
-        const Duration(days: 365),
-      ),
+      lastDate: now.add(const Duration(days: 365)),
       initialDate: startDate ?? now,
     );
 
@@ -96,8 +102,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
     setState(() {
       startDate = selected;
 
-      if (endDate != null &&
-          endDate!.isBefore(selected)) {
+      if (endDate != null && endDate!.isBefore(selected)) {
         endDate = null;
       }
     });
@@ -110,9 +115,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
     final selected = await showDatePicker(
       context: context,
       firstDate: firstDate,
-      lastDate: now.add(
-        const Duration(days: 365),
-      ),
+      lastDate: now.add(const Duration(days: 365)),
       initialDate: endDate ?? firstDate,
     );
 
@@ -122,17 +125,66 @@ class _LeaveScreenState extends State<LeaveScreen> {
       endDate = selected;
     });
   }
-  String? _getSelectedLeaveTypeId() {
-  for (final balance in balances) {
-    final name = balance['name']?.toString().toLowerCase();
 
-    if (name == leaveType.toLowerCase()) {
-      return balance['leaveTypeId']?.toString();
-    }
+  Future<void> selectCorrectionDate() async {
+    final now = DateTime.now();
+
+    final selected = await showDatePicker(
+      context: context,
+      firstDate: now.subtract(const Duration(days: 365)),
+      lastDate: now,
+      initialDate: correctionDate ?? now,
+    );
+
+    if (selected == null || !mounted) return;
+
+    setState(() {
+      correctionDate = selected;
+    });
   }
 
-  return null;
-}
+  Future<void> selectCorrectionTimeIn() async {
+    final selected = await showTimePicker(
+      context: context,
+      initialTime: correctionTimeIn ?? TimeOfDay.now(),
+    );
+
+    if (selected == null || !mounted) return;
+
+    setState(() {
+      correctionTimeIn = selected;
+    });
+  }
+
+  Future<void> selectCorrectionTimeOut() async {
+    final selected = await showTimePicker(
+      context: context,
+      initialTime: correctionTimeOut ?? TimeOfDay.now(),
+    );
+
+    if (selected == null || !mounted) return;
+
+    setState(() {
+      correctionTimeOut = selected;
+    });
+  }
+
+  String _formatTime(TimeOfDay? time) {
+    if (time == null) return 'Select time';
+    return time.format(context);
+  }
+
+  String? _getSelectedLeaveTypeId() {
+    for (final balance in balances) {
+      final name = balance['name']?.toString().toLowerCase();
+
+      if (name == leaveType.toLowerCase()) {
+        return balance['leaveTypeId']?.toString();
+      }
+    }
+
+    return null;
+  }
   // ============================================================
   // SUBMIT LEAVE
   // ============================================================
@@ -151,9 +203,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
     }
 
     if (endDate!.isBefore(startDate!)) {
-      _showError(
-        'End date cannot be before start date.',
-      );
+      _showError('End date cannot be before start date.');
       return;
     }
 
@@ -200,9 +250,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'Leave application submitted successfully.',
-          ),
+          content: Text('Leave application submitted successfully.'),
         ),
       );
 
@@ -214,12 +262,65 @@ class _LeaveScreenState extends State<LeaveScreen> {
         submitting = false;
       });
 
-      _showError(
-        e.toString().replaceFirst(
-              'Exception: ',
-              '',
-            ),
+      _showError(e.toString().replaceFirst('Exception: ', ''));
+    }
+  }
+
+  Future<void> submitAttendanceCorrection() async {
+    FocusScope.of(context).unfocus();
+
+    if (correctionDate == null) {
+      _showError('Please select the attendance date.');
+      return;
+    }
+
+    if (correctionReasonController.text.trim().isEmpty) {
+      _showError('Please enter a reason for the attendance correction.');
+      return;
+    }
+
+    if (submitting) return;
+
+    setState(() {
+      submitting = true;
+    });
+
+    try {
+      await LeaveService.submitAttendanceCorrection(
+        date: correctionDate!,
+        timeIn: correctionTimeIn,
+        timeOut: correctionTimeOut,
+        status: correctionStatus,
+        reason: correctionReasonController.text.trim(),
       );
+
+      if (!mounted) return;
+
+      correctionReasonController.clear();
+
+      setState(() {
+        correctionDate = null;
+        correctionTimeIn = null;
+        correctionTimeOut = null;
+        correctionStatus = 'PRESENT';
+        submitting = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Attendance correction query submitted successfully.'),
+        ),
+      );
+
+      await loadLeaveData();
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        submitting = false;
+      });
+
+      _showError(e.toString().replaceFirst('Exception: ', ''));
     }
   }
 
@@ -229,10 +330,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
 
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-      ),
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
   }
 
@@ -254,17 +352,12 @@ class _LeaveScreenState extends State<LeaveScreen> {
   // FIND BALANCE BY LEAVE TYPE CODE
   // ============================================================
 
-  String _balanceValue(
-    String code,
-    String fallback,
-  ) {
+  String _balanceValue(String code, String fallback) {
     for (final balance in balances) {
-      final balanceCode =
-          balance['code']?.toString().toLowerCase();
+      final balanceCode = balance['code']?.toString().toLowerCase();
 
       if (balanceCode == code.toLowerCase()) {
-        return balance['remaining']?.toString() ??
-            fallback;
+        return balance['remaining']?.toString() ?? fallback;
       }
     }
 
@@ -355,8 +448,8 @@ class _LeaveScreenState extends State<LeaveScreen> {
         child: loading
             ? _loadingView()
             : error != null
-                ? _errorView()
-                : _contentView(),
+            ? _errorView()
+            : _contentView(),
       ),
     );
   }
@@ -371,9 +464,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
       children: const [
         SizedBox(
           height: 350,
-          child: Center(
-            child: CircularProgressIndicator(color: _brandGreen),
-          ),
+          child: Center(child: CircularProgressIndicator(color: _brandGreen)),
         ),
       ],
     );
@@ -435,6 +526,50 @@ class _LeaveScreenState extends State<LeaveScreen> {
   // CONTENT
   // ============================================================
 
+  Widget _requestModeButton({
+    required String label,
+    required IconData icon,
+    required bool selected,
+    required VoidCallback? onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(11),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+          decoration: BoxDecoration(
+            color: selected ? _brandGreen.withOpacity(0.1) : Colors.transparent,
+            borderRadius: BorderRadius.circular(11),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 18,
+                color: selected ? _brandGreen : Colors.grey.shade600,
+              ),
+              const SizedBox(width: 7),
+              Flexible(
+                child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: selected ? FontWeight.bold : FontWeight.w600,
+                    color: selected ? _brandGreen : Colors.grey.shade700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _contentView() {
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
@@ -447,107 +582,55 @@ class _LeaveScreenState extends State<LeaveScreen> {
 
         const SizedBox(height: 30),
 
-        _sectionLabel('APPLY FOR LEAVE'),
+        _sectionLabel(
+          isAttendanceCorrection ? 'RAISE ATTENDANCE QUERY' : 'APPLY FOR LEAVE',
+        ),
         const SizedBox(height: 8),
 
         Text(
-          'Submit a leave request to your administrator.',
-          style: TextStyle(
-            color: Colors.grey.shade600,
-          ),
+          isAttendanceCorrection
+              ? 'Raise a query if your attendance needs to be corrected.'
+              : 'Submit a leave request to your administrator.',
+          style: TextStyle(color: Colors.grey.shade600),
         ),
 
-        const SizedBox(height: 20),
-
-        // ======================================================
-        // FORM CARD
-        // ======================================================
+        const SizedBox(height: 16),
 
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(color: Colors.grey.shade200),
           ),
-          child: Column(
+          child: Row(
             children: [
-              // LEAVE TYPE
-              DropdownButtonFormField<String>(
-                initialValue: leaveType,
-                decoration: _fieldDecoration(label: 'Leave Type'),
-                items: balances
-                    .map(
-                      (balance) => DropdownMenuItem(
-                        value: balance['name']?.toString() ?? '',
-                        child: Text(
-                          balance['name']?.toString() ?? '',
-                        ),
-                      ),
-                    )
-                    .toList(),
-                onChanged: submitting
-                    ? null
-                    : (value) {
-                        if (value == null) return;
-
-                        setState(() {
-                          leaveType = value;
-                        });
-                      },
-              ),
-
-              const SizedBox(height: 16),
-
-              // START DATE
-              InkWell(
-                borderRadius: BorderRadius.circular(12),
-                onTap: submitting ? null : selectStartDate,
-                child: InputDecorator(
-                  decoration: _fieldDecoration(
-                    label: 'Start Date',
-                    suffixIcon: const Icon(
-                      Icons.calendar_today,
-                      color: _brandGreen,
-                      size: 20,
-                    ),
-                  ),
-                  child: Text(
-                    _formatDate(startDate),
-                  ),
+              Expanded(
+                child: _requestModeButton(
+                  label: 'Apply Leave',
+                  icon: Icons.event_note_outlined,
+                  selected: !isAttendanceCorrection,
+                  onTap: submitting
+                      ? null
+                      : () {
+                          setState(() {
+                            isAttendanceCorrection = false;
+                          });
+                        },
                 ),
               ),
-
-              const SizedBox(height: 16),
-
-              // END DATE
-              InkWell(
-                borderRadius: BorderRadius.circular(12),
-                onTap: submitting ? null : selectEndDate,
-                child: InputDecorator(
-                  decoration: _fieldDecoration(
-                    label: 'End Date',
-                    suffixIcon: const Icon(
-                      Icons.calendar_today,
-                      color: _brandGreen,
-                      size: 20,
-                    ),
-                  ),
-                  child: Text(
-                    _formatDate(endDate),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // REASON
-              TextField(
-                controller: reasonController,
-                enabled: !submitting,
-                maxLines: 4,
-                decoration: _fieldDecoration(label: 'Reason').copyWith(
-                  alignLabelWithHint: true,
+              Expanded(
+                child: _requestModeButton(
+                  label: 'Raise Query',
+                  icon: Icons.edit_note_outlined,
+                  selected: isAttendanceCorrection,
+                  onTap: submitting
+                      ? null
+                      : () {
+                          setState(() {
+                            isAttendanceCorrection = true;
+                          });
+                        },
                 ),
               ),
             ],
@@ -557,9 +640,193 @@ class _LeaveScreenState extends State<LeaveScreen> {
         const SizedBox(height: 20),
 
         // ======================================================
+        // FORM CARD
+        // ======================================================
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          child: Column(
+            children: [
+              if (!isAttendanceCorrection) ...[
+                // LEAVE TYPE
+                DropdownButtonFormField<String>(
+                  initialValue: leaveType,
+                  decoration: _fieldDecoration(label: 'Leave Type'),
+                  items: balances
+                      .map(
+                        (balance) => DropdownMenuItem(
+                          value: balance['name']?.toString() ?? '',
+                          child: Text(balance['name']?.toString() ?? ''),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: submitting
+                      ? null
+                      : (value) {
+                          if (value == null) return;
+
+                          setState(() {
+                            leaveType = value;
+                          });
+                        },
+                ),
+
+                const SizedBox(height: 16),
+
+                InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: submitting ? null : selectStartDate,
+                  child: InputDecorator(
+                    decoration: _fieldDecoration(
+                      label: 'Start Date',
+                      suffixIcon: const Icon(
+                        Icons.calendar_today,
+                        color: _brandGreen,
+                        size: 20,
+                      ),
+                    ),
+                    child: Text(_formatDate(startDate)),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: submitting ? null : selectEndDate,
+                  child: InputDecorator(
+                    decoration: _fieldDecoration(
+                      label: 'End Date',
+                      suffixIcon: const Icon(
+                        Icons.calendar_today,
+                        color: _brandGreen,
+                        size: 20,
+                      ),
+                    ),
+                    child: Text(_formatDate(endDate)),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                TextField(
+                  controller: reasonController,
+                  enabled: !submitting,
+                  maxLines: 4,
+                  decoration: _fieldDecoration(
+                    label: 'Reason',
+                  ).copyWith(alignLabelWithHint: true),
+                ),
+              ] else ...[
+                InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: submitting ? null : selectCorrectionDate,
+                  child: InputDecorator(
+                    decoration: _fieldDecoration(
+                      label: 'Attendance Date',
+                      suffixIcon: const Icon(
+                        Icons.calendar_today,
+                        color: _brandGreen,
+                        size: 20,
+                      ),
+                    ),
+                    child: Text(_formatDate(correctionDate)),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                DropdownButtonFormField<String>(
+                  initialValue: correctionStatus,
+                  decoration: _fieldDecoration(label: 'Corrected Status'),
+                  items: const [
+                    DropdownMenuItem(value: 'PRESENT', child: Text('Present')),
+                    DropdownMenuItem(value: 'ABSENT', child: Text('Absent')),
+                    DropdownMenuItem(
+                      value: 'HALF_DAY',
+                      child: Text('Half Day'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'ON_LEAVE',
+                      child: Text('On Leave'),
+                    ),
+                  ],
+                  onChanged: submitting
+                      ? null
+                      : (value) {
+                          if (value == null) return;
+                          setState(() {
+                            correctionStatus = value;
+                          });
+                        },
+                ),
+
+                const SizedBox(height: 16),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: submitting ? null : selectCorrectionTimeIn,
+                        child: InputDecorator(
+                          decoration: _fieldDecoration(
+                            label: 'Time In',
+                            suffixIcon: const Icon(
+                              Icons.access_time,
+                              color: _brandGreen,
+                              size: 20,
+                            ),
+                          ),
+                          child: Text(_formatTime(correctionTimeIn)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: submitting ? null : selectCorrectionTimeOut,
+                        child: InputDecorator(
+                          decoration: _fieldDecoration(
+                            label: 'Time Out',
+                            suffixIcon: const Icon(
+                              Icons.access_time,
+                              color: _brandGreen,
+                              size: 20,
+                            ),
+                          ),
+                          child: Text(_formatTime(correctionTimeOut)),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+
+                TextField(
+                  controller: correctionReasonController,
+                  enabled: !submitting,
+                  maxLines: 4,
+                  decoration: _fieldDecoration(
+                    label: 'Reason for Correction',
+                  ).copyWith(alignLabelWithHint: true),
+                ),
+              ],
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 20),
+
+        // ======================================================
         // SUBMIT
         // ======================================================
-
         SizedBox(
           height: 52,
           child: ElevatedButton(
@@ -570,7 +837,11 @@ class _LeaveScreenState extends State<LeaveScreen> {
                 borderRadius: BorderRadius.circular(14),
               ),
             ),
-            onPressed: submitting ? null : submitLeave,
+            onPressed: submitting
+                ? null
+                : (isAttendanceCorrection
+                      ? submitAttendanceCorrection
+                      : submitLeave),
             child: submitting
                 ? const SizedBox(
                     height: 24,
@@ -580,12 +851,11 @@ class _LeaveScreenState extends State<LeaveScreen> {
                       color: Colors.white,
                     ),
                   )
-                : const Text(
-                    'Submit Leave',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                : Text(
+                    isAttendanceCorrection
+                        ? 'Raise Attendance Query'
+                        : 'Submit Leave',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
           ),
         ),
@@ -595,19 +865,14 @@ class _LeaveScreenState extends State<LeaveScreen> {
         // ======================================================
         // REQUESTS
         // ======================================================
-
-        _sectionLabel('MY LEAVE REQUESTS'),
+        _sectionLabel('MY REQUESTS'),
 
         const SizedBox(height: 14),
 
         if (requests.isEmpty)
           _emptyRequests()
         else
-          ...requests.map(
-            (request) => _LeaveRequestCard(
-              request: request,
-            ),
-          ),
+          ...requests.map((request) => _LeaveRequestCard(request: request)),
       ],
     );
   }
@@ -624,10 +889,8 @@ class _LeaveScreenState extends State<LeaveScreen> {
     int totalRemaining = 0;
 
     for (final balance in balances) {
-      final remaining = int.tryParse(
-            balance['remaining']?.toString() ?? '0',
-          ) ??
-          0;
+      final remaining =
+          int.tryParse(balance['remaining']?.toString() ?? '0') ?? 0;
 
       totalRemaining += remaining;
     }
@@ -718,7 +981,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
           ),
           const SizedBox(height: 14),
           const Text(
-            'No leave requests',
+            'No requests',
             style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.bold,
@@ -729,9 +992,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
           Text(
             'Your submitted leave requests will appear here.',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.grey.shade600,
-            ),
+            style: TextStyle(color: Colors.grey.shade600),
           ),
         ],
       ),
@@ -790,10 +1051,7 @@ class _BalanceCard extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             title,
-            style: TextStyle(
-              color: Colors.grey.shade600,
-              fontSize: 12.5,
-            ),
+            style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5),
           ),
           const SizedBox(height: 4),
           Text(
@@ -817,34 +1075,33 @@ class _BalanceCard extends StatelessWidget {
 class _LeaveRequestCard extends StatelessWidget {
   final Map<String, dynamic> request;
 
-  const _LeaveRequestCard({
-    required this.request,
-  });
+  const _LeaveRequestCard({required this.request});
 
   @override
   Widget build(BuildContext context) {
-    final type =
-        request['type']?.toString() ??
-        request['leaveType']?.toString() ??
-        'Leave';
+    final isCorrection = request['type']?.toString() == 'ATTENDANCE_CORRECTION';
 
-    final status =
-        request['status']?.toString() ??
-        'Pending';
+    final title = isCorrection
+        ? 'Attendance Correction'
+        : (request['leaveType']?.toString() ??
+              request['type']?.toString() ??
+              'Leave');
 
-    final reason =
-        request['reason']?.toString() ??
-        '';
+    final status = request['status']?.toString() ?? 'PENDING';
+    final reason = request['reason']?.toString() ?? '';
 
-    final fromDate =
+    final date =
+        request['date']?.toString() ??
         request['fromDate']?.toString() ??
         request['startDate']?.toString() ??
         '-';
 
     final toDate =
-        request['toDate']?.toString() ??
-        request['endDate']?.toString() ??
-        '-';
+        request['toDate']?.toString() ?? request['endDate']?.toString() ?? date;
+
+    final timeIn = request['timeIn']?.toString();
+    final timeOut = request['timeOut']?.toString();
+    final requestedStatus = request['requestedStatus']?.toString();
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -855,8 +1112,7 @@ class _LeaveRequestCard extends StatelessWidget {
         border: Border.all(color: Colors.grey.shade200),
       ),
       child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
@@ -868,16 +1124,16 @@ class _LeaveRequestCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(11),
                 ),
                 alignment: Alignment.center,
-                child: const Icon(
-                  Icons.event_note,
+                child: Icon(
+                  isCorrection ? Icons.access_time : Icons.event_note,
                   size: 19,
-                  color: Color(0xFF2563EB),
+                  color: const Color(0xFF2563EB),
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  type,
+                  title,
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -885,30 +1141,40 @@ class _LeaveRequestCard extends StatelessWidget {
                   ),
                 ),
               ),
-              _StatusBadge(
-                status: status,
-              ),
+              _StatusBadge(status: status),
             ],
           ),
-
           const Divider(height: 24),
-
-          Text(
-            'From: $fromDate',
-            style: const TextStyle(
-              fontWeight: FontWeight.w500,
+          if (isCorrection) ...[
+            Text(
+              'Date: $date',
+              style: const TextStyle(fontWeight: FontWeight.w500),
             ),
-          ),
-
-          const SizedBox(height: 5),
-
-          Text(
-            'To: $toDate',
-            style: const TextStyle(
-              fontWeight: FontWeight.w500,
+            if (requestedStatus != null && requestedStatus.isNotEmpty) ...[
+              const SizedBox(height: 5),
+              Text(
+                'Requested Status: $requestedStatus',
+                style: const TextStyle(fontWeight: FontWeight.w500),
+              ),
+            ],
+            if (timeIn != null || timeOut != null) ...[
+              const SizedBox(height: 5),
+              Text(
+                'Time: ${timeIn ?? '-'} → ${timeOut ?? '-'}',
+                style: const TextStyle(fontWeight: FontWeight.w500),
+              ),
+            ],
+          ] else ...[
+            Text(
+              'From: $date',
+              style: const TextStyle(fontWeight: FontWeight.w500),
             ),
-          ),
-
+            const SizedBox(height: 5),
+            Text(
+              'To: $toDate',
+              style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
+          ],
           if (reason.isNotEmpty) ...[
             const SizedBox(height: 10),
             Text(
@@ -929,9 +1195,7 @@ class _LeaveRequestCard extends StatelessWidget {
 class _StatusBadge extends StatelessWidget {
   final String status;
 
-  const _StatusBadge({
-    required this.status,
-  });
+  const _StatusBadge({required this.status});
 
   Color _colorFor(String status) {
     final normalized = status.toUpperCase();
@@ -952,10 +1216,7 @@ class _StatusBadge extends StatelessWidget {
     final color = _colorFor(status);
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 6,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         color: color.withOpacity(0.12),

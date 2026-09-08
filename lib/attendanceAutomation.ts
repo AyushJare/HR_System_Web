@@ -6,9 +6,6 @@ import { toDateOnlyUTC } from "@/lib/dateOnly";
 
 const INDIA_TIME_ZONE = "Asia/Kolkata";
 
-const FULL_DAY_MINUTES = 8 * 60;
-const HALF_DAY_MINUTES = 4 * 60;
-
 /**
  * Returns today's date in India as YYYY-MM-DD.
  */
@@ -92,35 +89,16 @@ export function formatWorkedDuration(
 }
 
 /**
- * Calculates attendance status from check-in/check-out.
+ * Returns the attendance status for a completed check-in/check-out.
  *
- * >= 8 hours = PRESENT
- * >= 4 hours and < 8 hours = HALF_DAY
- * < 4 hours = WORKED
+ * Any valid check-in/check-out pair counts as PRESENT, regardless of
+ * the number of hours worked.
  */
 export function calculateAttendanceStatus(
-    timeIn: Date,
-    timeOut: Date
-): "PRESENT" | "HALF_DAY" | "WORKED" {
-    const durationMinutes =
-        (timeOut.getTime() - timeIn.getTime()) /
-        (1000 * 60);
-
-    if (
-        durationMinutes >=
-        FULL_DAY_MINUTES
-    ) {
-        return "PRESENT";
-    }
-
-    if (
-        durationMinutes >=
-        HALF_DAY_MINUTES
-    ) {
-        return "HALF_DAY";
-    }
-
-    return "WORKED";
+    _timeIn: Date,
+    _timeOut: Date
+): "PRESENT" {
+    return "PRESENT";
 }
 
 /**
@@ -293,6 +271,9 @@ export async function finalizeAttendanceForDate(
              * The checkout is stored as 11:59:59.999 PM
              * of the attendance date so the record remains
              * associated with the correct date.
+             *
+             * Because any checked-in employee is PRESENT,
+             * automatic checkout also keeps the record PRESENT.
              */
             if (
                 existing.checkInTime &&

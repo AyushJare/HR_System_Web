@@ -21,10 +21,7 @@ class ApprovalService {
     }
   }
 
-  static String _errorMessage(
-    http.Response response,
-    String fallback,
-  ) {
+  static String _errorMessage(http.Response response, String fallback) {
     final data = _decode(response);
 
     if (data is Map && data['error'] != null) {
@@ -39,9 +36,7 @@ class ApprovalService {
   // --------------------------------------------------
 
   static Future<List<Map<String, dynamic>>> getLoginApprovals() async {
-    return _getApprovals(
-      type: 'LOCATION_BASED_LOGIN',
-    );
+    return _getApprovals(type: 'LOCATION_BASED_LOGIN');
   }
 
   // --------------------------------------------------
@@ -49,9 +44,7 @@ class ApprovalService {
   // --------------------------------------------------
 
   static Future<List<Map<String, dynamic>>> getLeaveApprovals() async {
-    return _getApprovals(
-      type: 'LEAVE',
-    );
+    return _getApprovals(type: 'LEAVE');
   }
 
   // --------------------------------------------------
@@ -59,9 +52,7 @@ class ApprovalService {
   // --------------------------------------------------
 
   static Future<List<Map<String, dynamic>>> getLeaveTypes() async {
-    final data = await ApiService.get(
-      '/api/leave-types',
-    );
+    final data = await ApiService.get('/api/leave-types');
 
     return _listFromResponse(data);
   }
@@ -71,10 +62,8 @@ class ApprovalService {
   // --------------------------------------------------
 
   static Future<List<Map<String, dynamic>>>
-      getAttendanceCorrectionApprovals() async {
-    return _getApprovals(
-      type: 'ATTENDANCE_CORRECTION',
-    );
+  getAttendanceCorrectionApprovals() async {
+    return _getApprovals(type: 'ATTENDANCE_CORRECTION');
   }
 
   // --------------------------------------------------
@@ -96,55 +85,27 @@ class ApprovalService {
   // --------------------------------------------------
 
   static Future<void> approveLogin(String id) async {
-    await _decide(
-      id,
-      'APPROVED',
-      'Failed to approve login',
-    );
+    await _decide(id, 'APPROVED', 'Failed to approve login');
   }
 
   static Future<void> approveLeave(String id) async {
-    await _decide(
-      id,
-      'APPROVED',
-      'Failed to approve leave',
-    );
+    await _decide(id, 'APPROVED', 'Failed to approve leave');
   }
 
   static Future<void> approveAttendanceCorrection(String id) async {
-    await _decide(
-      id,
-      'APPROVED',
-      'Failed to approve attendance correction',
-    );
+    await _decide(id, 'APPROVED', 'Failed to approve attendance correction');
   }
 
   // --------------------------------------------------
   // REJECT
   // --------------------------------------------------
 
-  static Future<void> rejectLogin(
-    String id,
-    String reason,
-  ) async {
-    await _decide(
-      id,
-      'REJECTED',
-      'Failed to reject login',
-      remarks: reason,
-    );
+  static Future<void> rejectLogin(String id, String reason) async {
+    await _decide(id, 'REJECTED', 'Failed to reject login', remarks: reason);
   }
 
-  static Future<void> rejectLeave(
-    String id,
-    String reason,
-  ) async {
-    await _decide(
-      id,
-      'REJECTED',
-      'Failed to reject leave',
-      remarks: reason,
-    );
+  static Future<void> rejectLeave(String id, String reason) async {
+    await _decide(id, 'REJECTED', 'Failed to reject leave', remarks: reason);
   }
 
   static Future<void> rejectAttendanceCorrection(
@@ -169,23 +130,16 @@ class ApprovalService {
     String fallback, {
     String? remarks,
   }) async {
-    final body = <String, dynamic>{
-      'decision': decision,
-    };
+    final body = <String, dynamic>{'decision': decision};
 
     if (remarks != null && remarks.trim().isNotEmpty) {
       body['remarks'] = remarks.trim();
     }
 
     try {
-      await ApiService.put(
-        '/api/approvals/$id',
-        body,
-      );
+      await ApiService.put('/api/approvals/$id', body);
     } catch (e) {
-      throw Exception(
-        e.toString().replaceFirst('Exception: ', ''),
-      );
+      throw Exception(e.toString().replaceFirst('Exception: ', ''));
     }
   }
 
@@ -193,29 +147,21 @@ class ApprovalService {
   // RESPONSE PARSER
   // --------------------------------------------------
 
-  static List<Map<String, dynamic>> _listFromResponse(
-    dynamic data,
-  ) {
+  static List<Map<String, dynamic>> _listFromResponse(dynamic data) {
     if (data is List) {
       return data
           .whereType<Map>()
-          .map(
-            (item) => Map<String, dynamic>.from(item),
-          )
+          .map((item) => Map<String, dynamic>.from(item))
           .toList();
     }
 
     if (data is Map && data['data'] is List) {
       return (data['data'] as List)
           .whereType<Map>()
-          .map(
-            (item) => Map<String, dynamic>.from(item),
-          )
+          .map((item) => Map<String, dynamic>.from(item))
           .toList();
     }
 
-    throw Exception(
-      'Invalid approval data received',
-    );
+    throw Exception('Invalid approval data received');
   }
 }

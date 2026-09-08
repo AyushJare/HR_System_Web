@@ -12,6 +12,12 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
+        // ← ADD THESE 2 LINES:
+        const body = await request.json();
+        console.log('📱 Received body:', body);  // ← ADD THIS LINE
+        const clientTimestamp = body.timestamp ? new Date(body.timestamp) : new Date();
+        console.log('⏰ Using timestamp:', clientTimestamp);  // ← ADD THIS TOO
+
         const serverDateString = getTodayIndiaDateString();
         const serverDate = new Date(`${serverDateString}T00:00:00.000Z`);
 
@@ -94,7 +100,7 @@ export async function POST(request: NextRequest) {
                 employeeId: session.sub,
                 date: serverDate,
                 status: "PRESENT",
-                checkInTime: new Date(),
+                checkInTime: clientTimestamp,
             },
         });
 

@@ -12,9 +12,7 @@ class AttendanceService {
   // ============================================================
   // GET MONTHLY ATTENDANCE SUMMARY
   // ============================================================
-  static Future<Map<String, dynamic>> getAttendanceSummary(
-    String month,
-  ) async {
+  static Future<Map<String, dynamic>> getAttendanceSummary(String month) async {
     final parts = month.split('-');
 
     if (parts.length != 2) {
@@ -31,8 +29,8 @@ class AttendanceService {
       throw Exception('Invalid month');
     }
     print(
-  'SUMMARY URL: $baseUrl/api/attendance/summary?year=$year&month=$monthNumber',
-);
+      'SUMMARY URL: $baseUrl/api/attendance/summary?year=$year&month=$monthNumber',
+    );
 
     final response = await http.get(
       Uri.parse(
@@ -44,8 +42,7 @@ class AttendanceService {
 
     final data = _decode(response);
 
-    if (response.statusCode < 200 ||
-        response.statusCode >= 300) {
+    if (response.statusCode < 200 || response.statusCode >= 300) {
       throw Exception(
         _errorMessage(
           data,
@@ -59,9 +56,7 @@ class AttendanceService {
       return Map<String, dynamic>.from(data);
     }
 
-    throw Exception(
-      'Invalid attendance summary received from server',
-    );
+    throw Exception('Invalid attendance summary received from server');
   }
 
   // ============================================================
@@ -69,18 +64,12 @@ class AttendanceService {
   // ============================================================
   static Future<Map<String, dynamic>> checkIn() async {
     final response = await http.post(
-      Uri.parse('$baseUrl/api/attendance'),
+      Uri.parse('$baseUrl/api/attendance/check-in'),
       headers: _headers,
-      body: jsonEncode({
-        'action': 'LOGIN',
-        'date': _todayDate(),
-      }),
+      body: jsonEncode({'action': 'LOGIN', 'date': _todayDate()}),
     );
 
-    return _handleResponse(
-      response,
-      'Check-in failed',
-    );
+    return _handleResponse(response, 'Check-in failed');
   }
 
   // ============================================================
@@ -99,6 +88,7 @@ class AttendanceService {
           'gpsAccuracy': location['accuracy'],
           'deviceId': 'flutter-web',
           'isMockLocation': false,
+          'timestamp': DateTime.now().toUtc().toIso8601String(), // ← ADD HERE
         }),
       );
 
@@ -129,82 +119,80 @@ class AttendanceService {
         };
       }
     } catch (e) {
-      return {
-        'success': false,
-        'message': 'Network error: ${e.toString()}',
-      };
+      return {'success': false, 'message': 'Network error: ${e.toString()}'};
     }
   }
 
   // ============================================================
   // CHECK OUT
   // ============================================================
-  static Future<Map<String, dynamic>> checkOut() async {
+  static Future<Map<String, dynamic>> checkOut(
+    Map<String, dynamic> location,
+  ) async {
+    // Keep this parameter (not used for old endpoint)
     final response = await http.post(
-      Uri.parse('$baseUrl/api/attendance'),
+      Uri.parse('$baseUrl/api/attendance'), // ✅ OLD ENDPOINT (works!)
       headers: _headers,
       body: jsonEncode({
         'action': 'LOGOUT',
         'date': _todayDate(),
+        'timestamp': DateTime.now().toUtc().toIso8601String(),
       }),
     );
 
-    return _handleResponse(
-      response,
-      'Check-out failed',
-    );
+    return _handleResponse(response, 'Check-out failed');
   }
 
   // ============================================================
   // GET TODAY'S ATTENDANCE
   // ============================================================
   static Future<Map<String, dynamic>?> getTodayAttendance() async {
-  final now = DateTime.now();
+    final now = DateTime.now();
 
-  final today =
-      '${now.year.toString().padLeft(4, '0')}-'
-      '${now.month.toString().padLeft(2, '0')}-'
-      '${now.day.toString().padLeft(2, '0')}';
+    final today =
+        '${now.year.toString().padLeft(4, '0')}-'
+        '${now.month.toString().padLeft(2, '0')}-'
+        '${now.day.toString().padLeft(2, '0')}';
 
-  final response = await http.get(
-    Uri.parse('$baseUrl/api/attendance?date=$today'),
-    headers: _headers,
-  );
-
-  final data = _decode(response);
-
-  if (response.statusCode < 200 || response.statusCode >= 300) {
-    throw Exception(
-      _errorMessage(
-        data,
-        'Failed to load today attendance',
-        response.statusCode,
-      ),
+    final response = await http.get(
+      Uri.parse('$baseUrl/api/attendance?date=$today'),
+      headers: _headers,
     );
+
+    final data = _decode(response);
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception(
+        _errorMessage(
+          data,
+          'Failed to load today attendance',
+          response.statusCode,
+        ),
+      );
+    }
+
+    if (data is! Map) return null;
+
+    final employees = data['employees'];
+
+    if (employees is! List || employees.isEmpty) {
+      return null;
+    }
+
+    final employeeData = employees.first;
+
+    if (employeeData is! Map) {
+      return null;
+    }
+
+    final attendance = employeeData['attendance'];
+
+    if (attendance is! Map) {
+      return null;
+    }
+
+    return Map<String, dynamic>.from(attendance);
   }
-
-  if (data is! Map) return null;
-
-  final employees = data['employees'];
-
-  if (employees is! List || employees.isEmpty) {
-    return null;
-  }
-
-  final employeeData = employees.first;
-
-  if (employeeData is! Map) {
-    return null;
-  }
-
-  final attendance = employeeData['attendance'];
-
-  if (attendance is! Map) {
-    return null;
-  }
-
-  return Map<String, dynamic>.from(attendance);
-}
 
   // ============================================================
   // TODAY'S DATE
@@ -241,24 +229,15 @@ class AttendanceService {
   ) {
     final data = _decode(response);
 
-    if (response.statusCode < 200 ||
-        response.statusCode >= 300) {
-      throw Exception(
-        _errorMessage(
-          data,
-          defaultError,
-          response.statusCode,
-        ),
-      );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception(_errorMessage(data, defaultError, response.statusCode));
     }
 
     if (data is Map) {
       return Map<String, dynamic>.from(data);
     }
 
-    throw Exception(
-      'Invalid response received from server',
-    );
+    throw Exception('Invalid response received from server');
   }
 
   // ============================================================
@@ -272,15 +251,13 @@ class AttendanceService {
     if (data is Map) {
       final error = data['error'];
 
-      if (error != null &&
-          error.toString().trim().isNotEmpty) {
+      if (error != null && error.toString().trim().isNotEmpty) {
         return error.toString();
       }
 
       final message = data['message'];
 
-      if (message != null &&
-          message.toString().trim().isNotEmpty) {
+      if (message != null && message.toString().trim().isNotEmpty) {
         return message.toString();
       }
     }

@@ -2,8 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class AuthService {
-  static const String baseUrl = 'http://localhost:3000';
-
+  static const String baseUrl = 'http://vmcbeta.onfees.com/';
   static String? _accessToken;
   static String? _refreshToken;
 
@@ -11,10 +10,9 @@ class AuthService {
   static String? get refreshToken => _refreshToken;
 
   static Map<String, String> get authHeaders => {
-        'Content-Type': 'application/json',
-        if (_accessToken != null)
-          'Authorization': 'Bearer $_accessToken',
-      };
+    'Content-Type': 'application/json',
+    if (_accessToken != null) 'Authorization': 'Bearer $_accessToken',
+  };
 
   static Future<Map<String, dynamic>> login(
     String email,
@@ -27,9 +25,7 @@ class AuthService {
   }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/api/auth/login'),
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'email': email,
         'password': password,
@@ -47,19 +43,12 @@ class AuthService {
       data = jsonDecode(response.body) as Map<String, dynamic>;
     } catch (_) {}
 
-    if (response.statusCode == 403 &&
-        data['requiresApproval'] == true) {
-      return {
-        ...data,
-        'success': false,
-        'requiresApproval': true,
-      };
+    if (response.statusCode == 403 && data['requiresApproval'] == true) {
+      return {...data, 'success': false, 'requiresApproval': true};
     }
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception(
-        data['error'] ?? data['message'] ?? 'Login failed',
-      );
+      throw Exception(data['error'] ?? data['message'] ?? 'Login failed');
     }
 
     if (data['requiresApproval'] == true) {
@@ -83,12 +72,8 @@ class AuthService {
 
     final response = await http.post(
       Uri.parse('$baseUrl/api/auth/refresh'),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({
-        'refreshToken': _refreshToken,
-      }),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'refreshToken': _refreshToken}),
     );
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
@@ -112,12 +97,8 @@ class AuthService {
       if (_refreshToken != null) {
         await http.post(
           Uri.parse('$baseUrl/api/auth/logout'),
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: jsonEncode({
-            'refreshToken': _refreshToken,
-          }),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'refreshToken': _refreshToken}),
         );
       }
     } finally {

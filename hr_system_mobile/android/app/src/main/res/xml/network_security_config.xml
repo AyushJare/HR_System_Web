@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Allow cleartext traffic for development API server -->
+    <domain-config cleartextTrafficPermitted="true">
+        <!-- Your development server IP -->
+        <domain includeSubdomains="true">192.168.29.220</domain>
+        <!-- Localhost for testing -->
+        <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">127.0.0.1</domain>
+        <!-- Your dev domains -->
+        <domain includeSubdomains="true">dev.vmc-beta.com</domain>
+    </domain-config>
+    
+    <!-- When you go to production, switch to this: -->
+    <!-- <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">api.vmc-beta.com</domain>
+    </domain-config> -->
+</network-security-config>
