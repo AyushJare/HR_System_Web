@@ -91,6 +91,7 @@ export async function GET(
         designationId: true,
         employeeTypeId: true,
         userTypeId: true,
+        officeId: true,
 
         department: {
           select: {
@@ -120,6 +121,16 @@ export async function GET(
             name: true,
             description: true,
             isSystem: true,
+          },
+        },
+
+        office: {
+          select: {
+            id: true,
+            name: true,
+            latitude: true,
+            longitude: true,
+            radiusMeters: true,
           },
         },
 
@@ -174,6 +185,7 @@ export async function PUT(
       designationId,
       employeeTypeId,
       userTypeId,
+      officeId,
       role,
     } = body;
 
@@ -278,6 +290,11 @@ export async function PUT(
             ? userTypeId || null
             : undefined,
 
+        officeId:
+          officeId !== undefined
+            ? officeId || null
+            : undefined,
+
         role:
           role === "ADMIN" || role === "EMPLOYEE"
             ? role
@@ -291,6 +308,16 @@ export async function PUT(
         fullName: true,
         email: true,
         isActive: true,
+
+        office: {
+          select: {
+            id: true,
+            name: true,
+            latitude: true,
+            longitude: true,
+            radiusMeters: true,
+          },
+        },
       },
     });
 

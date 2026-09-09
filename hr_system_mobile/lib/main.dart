@@ -33,7 +33,8 @@ class HRSystemApp extends StatelessWidget {
         '/dashboard': (context) => const DashboardScreen(),
         '/attendance': (context) => const AttendanceScreen(),
         '/calendar': (context) => const CalendarScreen(),
-        '/leave': (context) => const LeaveScreen(),
+        '/leave': (context) =>
+            const LeaveScreen(openAttendanceCorrection: true),
         '/profile': (context) => const ProfileScreen(),
         '/approvals': (context) => const ApprovalsScreen(),
         '/audit': (context) => const AuditLogScreen(),

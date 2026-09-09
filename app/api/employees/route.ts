@@ -61,6 +61,16 @@ export async function GET() {
           },
         },
 
+        office: {
+          select: {
+            id: true,
+            name: true,
+            latitude: true,
+            longitude: true,
+            radiusMeters: true,
+          },
+        },
+
         createdAt: true,
       },
     });
@@ -114,6 +124,7 @@ export async function POST(request: Request) {
       designationId,
       employeeTypeId,
       userTypeId,
+      officeId,
       role,
     } = body;
 
@@ -207,6 +218,7 @@ export async function POST(request: Request) {
         designationId: designationId || null,
         employeeTypeId: employeeTypeId || null,
         userTypeId: userTypeId || null,
+        officeId: officeId || null,
 
         role: role === "ADMIN" ? "ADMIN" : "EMPLOYEE",
 
@@ -220,6 +232,16 @@ export async function POST(request: Request) {
         email: true,
         role: true,
         isActive: true,
+
+        office: {
+          select: {
+            id: true,
+            name: true,
+            latitude: true,
+            longitude: true,
+            radiusMeters: true,
+          },
+        },
       },
     });
 

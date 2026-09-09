@@ -148,6 +148,7 @@ export async function GET(request: NextRequest) {
                 id: true,
                 employeeCode: true,
                 fullName: true,
+                employeeTypeId: true,
             },
         });
 
@@ -174,6 +175,13 @@ export async function GET(request: NextRequest) {
                         gte: monthStart,
                         lt: nextMonthStart,
                     },
+                    employeeTypeAssignments: employee.employeeTypeId
+                        ? {
+                            some: {
+                                employeeTypeId: employee.employeeTypeId,
+                            },
+                        }
+                        : undefined,
                 },
                 select: {
                     id: true,

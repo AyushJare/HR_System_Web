@@ -55,7 +55,9 @@ export const ModelName = {
   Designation: 'Designation',
   EmployeeType: 'EmployeeType',
   Holiday: 'Holiday',
+  HolidayEmployeeType: 'HolidayEmployeeType',
   AttendanceSettings: 'AttendanceSettings',
+  Office: 'Office',
   LeaveType: 'LeaveType',
   UserType: 'UserType',
   Employee: 'Employee',
@@ -126,6 +128,15 @@ export const HolidayScalarFieldEnum = {
 export type HolidayScalarFieldEnum = (typeof HolidayScalarFieldEnum)[keyof typeof HolidayScalarFieldEnum]
 
 
+export const HolidayEmployeeTypeScalarFieldEnum = {
+  id: 'id',
+  holidayId: 'holidayId',
+  employeeTypeId: 'employeeTypeId'
+} as const
+
+export type HolidayEmployeeTypeScalarFieldEnum = (typeof HolidayEmployeeTypeScalarFieldEnum)[keyof typeof HolidayEmployeeTypeScalarFieldEnum]
+
+
 export const AttendanceSettingsScalarFieldEnum = {
   id: 'id',
   weeklyOffDays: 'weeklyOffDays',
@@ -133,6 +144,19 @@ export const AttendanceSettingsScalarFieldEnum = {
 } as const
 
 export type AttendanceSettingsScalarFieldEnum = (typeof AttendanceSettingsScalarFieldEnum)[keyof typeof AttendanceSettingsScalarFieldEnum]
+
+
+export const OfficeScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  latitude: 'latitude',
+  longitude: 'longitude',
+  radiusMeters: 'radiusMeters',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type OfficeScalarFieldEnum = (typeof OfficeScalarFieldEnum)[keyof typeof OfficeScalarFieldEnum]
 
 
 export const LeaveTypeScalarFieldEnum = {
@@ -178,6 +202,7 @@ export const EmployeeScalarFieldEnum = {
   designationId: 'designationId',
   employeeTypeId: 'employeeTypeId',
   userTypeId: 'userTypeId',
+  officeId: 'officeId',
   createdById: 'createdById',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

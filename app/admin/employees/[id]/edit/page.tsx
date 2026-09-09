@@ -39,6 +39,7 @@ interface Employee {
   designationId?: string | null;
   employeeTypeId?: string | null;
   userTypeId?: string | null;
+  officeId?: string | null;
   role: string;
 }
 
@@ -55,6 +56,7 @@ export default function EditEmployeePage() {
   const [departments, setDepartments] = useState<Option[]>([]);
   const [designations, setDesignations] = useState<Option[]>([]);
   const [employeeTypes, setEmployeeTypes] = useState<Option[]>([]);
+  const [offices, setOffices] = useState<Option[]>([]);
   const [userTypes, setUserTypes] = useState<UserTypeOption[]>([]);
 
   const [currentUserType, setCurrentUserType] = useState<string | null>(null);
@@ -69,6 +71,7 @@ export default function EditEmployeePage() {
     designationId: "",
     employeeTypeId: "",
     userTypeId: "",
+    officeId: "",
     role: "EMPLOYEE",
   });
 
@@ -83,6 +86,7 @@ export default function EditEmployeePage() {
     departmentId: "",
     designationId: "",
     employeeTypeId: "",
+    officeId: "",
   });
 
   // Load employee data
@@ -119,6 +123,7 @@ export default function EditEmployeePage() {
           designationId: employee.designationId || "",
           employeeTypeId: employee.employeeTypeId || "",
           userTypeId: employee.userTypeId || "",
+          officeId: employee.officeId || "",
           role: employee.role || "EMPLOYEE",
         });
 
@@ -161,6 +166,11 @@ export default function EditEmployeePage() {
             url: "/api/employee-types",
             setState: setEmployeeTypes,
             name: "Employee Types",
+          },
+          {
+            url: "/api/offices",
+            setState: setOffices,
+            name: "Offices",
           },
         ];
 
@@ -486,6 +496,11 @@ export default function EditEmployeePage() {
               gender:
                 validateGenderField(value),
             }));
+          } else if (name === "officeId") {
+            setErrors((prevErrors) => ({
+              ...prevErrors,
+              officeId: "",
+            }));
           }
         } catch (error) {
           handleApiError(
@@ -548,6 +563,7 @@ export default function EditEmployeePage() {
         departmentId: "",
         designationId: "",
         employeeTypeId: "",
+        officeId: "",
       });
 
       if (
@@ -598,6 +614,9 @@ export default function EditEmployeePage() {
           formData.role === "ADMIN"
             ? null
             : formData.userTypeId,
+
+        officeId:
+          formData.officeId || null,
 
         role:
           formData.role,
@@ -1244,6 +1263,54 @@ export default function EditEmployeePage() {
                 {errors.employeeTypeId}
               </p>
             )}
+          </div>
+
+          {/* OFFICE */}
+          <div>
+            <label className="block text-sm font-semibold text-slate-900 mb-2">
+              Office
+            </label>
+
+            <select
+              name="officeId"
+              value={formData.officeId}
+              onChange={handleChange}
+              disabled={loadingOtherData}
+              className={`w-full rounded-lg border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200 disabled:bg-slate-50 disabled:text-slate-500 ${errors.officeId
+                ? "border-red-500"
+                : "border-slate-300"
+                }`}
+            >
+              <option value="">
+                {loadingOtherData
+                  ? "Loading..."
+                  : "Select office"}
+              </option>
+
+              {!loadingOtherData &&
+                offices &&
+                offices.length > 0 &&
+                offices.map(
+                  (office) => (
+                    <option
+                      key={office.id}
+                      value={office.id}
+                    >
+                      {office.name}
+                    </option>
+                  )
+                )}
+            </select>
+
+            {errors.officeId && (
+              <p className="mt-1 text-sm text-red-600">
+                {errors.officeId}
+              </p>
+            )}
+
+            <p className="mt-2 text-xs text-slate-500">
+              The selected office is used for location-based login verification.
+            </p>
           </div>
         </div>
 

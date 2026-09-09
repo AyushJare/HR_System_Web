@@ -74,6 +74,32 @@ export default function PermissionEditor({
         });
     };
 
+    // -------------------------------------------------------------------------
+    // DEFAULT EMPLOYEE ACCESS
+    //
+    // These permissions are mandatory for every employee:
+    //
+    // Check In:
+    //   view + add
+    //
+    // Attendance Corrections:
+    //   view + add
+    //
+    // They cannot be disabled from the User Type editor.
+    // -------------------------------------------------------------------------
+
+    const isDefaultEmployeePermission = (
+        moduleKey: string,
+        action: string
+    ): boolean => {
+        return (
+            (moduleKey === "Check In" &&
+                (action === "view" || action === "add")) ||
+            (moduleKey === "Attendance Corrections" &&
+                (action === "view" || action === "add"))
+        );
+    };
+
     return (
         <div className={depth > 0 ? "ml-6 mt-2 space-y-3" : "space-y-3"}>
             {modules.map((mod) => {
@@ -90,25 +116,46 @@ export default function PermissionEditor({
                             </span>
 
                             <div className="flex gap-4 flex-wrap">
-                                {mod.actions.map((action) => (
-                                    <label
-                                        key={action}
-                                        className="flex items-center gap-1.5 text-sm text-slate-600"
-                                    >
-                                        <input
-                                            type="checkbox"
-                                            checked={!!node[action]}
-                                            onChange={(e) =>
-                                                updateModule(mod, {
-                                                    [action]: e.target.checked,
-                                                })
-                                            }
-                                            className="rounded border-slate-300"
-                                        />
-                                        {action.charAt(0).toUpperCase() +
-                                            action.slice(1)}
-                                    </label>
-                                ))}
+                                {mod.actions.map((action) => {
+                                    const isDefaultPermission =
+                                        isDefaultEmployeePermission(
+                                            mod.key,
+                                            action
+                                        );
+
+                                    return (
+                                        <label
+                                            key={action}
+                                            className="flex items-center gap-1.5 text-sm text-slate-600"
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={
+                                                    isDefaultPermission
+                                                        ? true
+                                                        : !!node[action]
+                                                }
+                                                disabled={isDefaultPermission}
+                                                onChange={(e) =>
+                                                    updateModule(mod, {
+                                                        [action]:
+                                                            e.target.checked,
+                                                    })
+                                                }
+                                                className="rounded border-slate-300"
+                                            />
+
+                                            {action.charAt(0).toUpperCase() +
+                                                action.slice(1)}
+
+                                            {isDefaultPermission && (
+                                                <span className="text-xs text-slate-400">
+                                                    (Required)
+                                                </span>
+                                            )}
+                                        </label>
+                                    );
+                                })}
                             </div>
                         </div>
 

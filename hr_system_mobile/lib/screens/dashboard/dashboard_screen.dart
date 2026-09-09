@@ -429,7 +429,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const SizedBox(height: 12),
               _ActionCard(
                 icon: Icons.event_note_outlined,
-                title: 'Apply Leave / Raise Query',
+                title: 'Raise Query',
                 accentColor: const Color(0xFF2563EB),
                 backgroundColor: const Color(0xFFEAF1FE),
                 onTap: () {

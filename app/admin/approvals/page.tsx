@@ -46,16 +46,24 @@ export default function ApprovalsPage() {
   const [filter, setFilter] = useState<"ALL" | "PENDING" | "APPROVED" | "REJECTED">("PENDING");
   const [showForm, setShowForm] = useState(false);
 
-  const [formType, setFormType] = useState<"LEAVE" | "ATTENDANCE_CORRECTION">("LEAVE");
+  // Leave request creation disabled.
+  // const [formType, setFormType] = useState<"LEAVE" | "ATTENDANCE_CORRECTION">("LEAVE");
+
+  const [formType, setFormType] =
+    useState<"LEAVE" | "ATTENDANCE_CORRECTION">("ATTENDANCE_CORRECTION");
+
   const [formEmployeeId, setFormEmployeeId] = useState("");
   const [formDate, setFormDate] = useState("");
   const [formReason, setFormReason] = useState("");
   const [formTimeIn, setFormTimeIn] = useState("");
   const [formTimeOut, setFormTimeOut] = useState("");
   const [formStatus, setFormStatus] = useState("PRESENT");
-  const [formLeaveTypeId, setFormLeaveTypeId] = useState("");
-  const [leaveTypes, setLeaveTypes] = useState<{ id: string; name: string; code: string }[]>([]);
-  const [balances, setBalances] = useState<{ leaveTypeId: string; code: string; remaining: number }[]>([]);
+
+  // Leave Types disabled.
+  // const [formLeaveTypeId, setFormLeaveTypeId] = useState("");
+  // const [leaveTypes, setLeaveTypes] = useState<{ id: string; name: string; code: string }[]>([]);
+  // const [balances, setBalances] = useState<{ leaveTypeId: string; code: string; remaining: number }[]>([]);
+
   const [submitting, setSubmitting] = useState(false);
 
   const load = async () => {
@@ -71,11 +79,15 @@ export default function ApprovalsPage() {
 
   useEffect(() => {
     load();
-    fetch("/api/leave-types")
-      .then((r) => r.json())
-      .then(setLeaveTypes);
+
+    // Leave Types loading disabled.
+    // fetch("/api/leave-types")
+    //   .then((r) => r.json())
+    //   .then(setLeaveTypes);
   }, []);
 
+  // Leave balances disabled.
+  /*
   useEffect(() => {
     if (!formEmployeeId) {
       setBalances([]);
@@ -87,8 +99,11 @@ export default function ApprovalsPage() {
       .then((d) => setBalances(Array.isArray(d) ? d : []))
       .catch(() => setBalances([]));
   }, [formEmployeeId]);
+  */
 
-  const filtered = approvals.filter((a) => filter === "ALL" || a.status === filter);
+  const filtered = approvals.filter(
+    (a) => filter === "ALL" || a.status === filter
+  );
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,25 +116,30 @@ export default function ApprovalsPage() {
     setSubmitting(true);
 
     try {
+      /*
       if (formType === "LEAVE" && !formLeaveTypeId) {
         toast.error("Please select a leave type");
         setSubmitting(false);
         return;
       }
+      */
 
       const details =
-        formType === "LEAVE"
-          ? {
+      /*
+      formType === "LEAVE"
+        ? {
             date: formDate,
             reason: formReason,
             leaveTypeId: formLeaveTypeId,
           }
-          : {
-            date: formDate,
-            timeIn: formTimeIn || undefined,
-            timeOut: formTimeOut || undefined,
-            status: formStatus,
-          };
+        :
+      */
+      {
+        date: formDate,
+        timeIn: formTimeIn || undefined,
+        timeOut: formTimeOut || undefined,
+        status: formStatus,
+      };
 
       const res = await fetch("/api/approvals", {
         method: "POST",
@@ -143,10 +163,17 @@ export default function ApprovalsPage() {
       setFormReason("");
       setFormTimeIn("");
       setFormTimeOut("");
-      setFormLeaveTypeId("");
+
+      // Leave Type reset disabled.
+      // setFormLeaveTypeId("");
+
       load();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to create request");
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "Failed to create request"
+      );
     } finally {
       setSubmitting(false);
     }
@@ -169,7 +196,9 @@ export default function ApprovalsPage() {
     }
 
     toast.success(
-      decision === "APPROVED" ? "Request approved" : "Request rejected"
+      decision === "APPROVED"
+        ? "Request approved"
+        : "Request rejected"
     );
 
     load();
@@ -180,9 +209,12 @@ export default function ApprovalsPage() {
       <div className="p-8">
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Approvals</h1>
+            <h1 className="text-3xl font-bold text-slate-900">
+              Approvals
+            </h1>
+
             <p className="text-slate-600 mt-1">
-              Leave requests and attendance corrections requiring sign-off.
+              {/* Leave requests and */} Attendance corrections requiring sign-off.
             </p>
           </div>
 
@@ -216,7 +248,8 @@ export default function ApprovalsPage() {
                   }
                   className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
                 >
-                  <option value="LEAVE">Leave Request</option>
+                  {/* <option value="LEAVE">Leave Request</option> */}
+
                   <option value="ATTENDANCE_CORRECTION">
                     Attendance Correction
                   </option>
@@ -230,7 +263,9 @@ export default function ApprovalsPage() {
 
                 <select
                   value={formEmployeeId}
-                  onChange={(e) => setFormEmployeeId(e.target.value)}
+                  onChange={(e) =>
+                    setFormEmployeeId(e.target.value)
+                  }
                   className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
                 >
                   <option value="">Select employee</option>
@@ -251,11 +286,14 @@ export default function ApprovalsPage() {
                 <input
                   type="date"
                   value={formDate}
-                  onChange={(e) => setFormDate(e.target.value)}
+                  onChange={(e) =>
+                    setFormDate(e.target.value)
+                  }
                   className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
                 />
               </div>
 
+              {/* Leave Request fields disabled.
               {formType === "LEAVE" && (
                 <>
                   <div>
@@ -300,6 +338,7 @@ export default function ApprovalsPage() {
                   </div>
                 </>
               )}
+              */}
 
               {formType === "ATTENDANCE_CORRECTION" && (
                 <>
@@ -310,7 +349,9 @@ export default function ApprovalsPage() {
 
                     <select
                       value={formStatus}
-                      onChange={(e) => setFormStatus(e.target.value)}
+                      onChange={(e) =>
+                        setFormStatus(e.target.value)
+                      }
                       className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
                     >
                       <option value="PRESENT">Present</option>
@@ -328,7 +369,9 @@ export default function ApprovalsPage() {
                     <input
                       type="time"
                       value={formTimeIn}
-                      onChange={(e) => setFormTimeIn(e.target.value)}
+                      onChange={(e) =>
+                        setFormTimeIn(e.target.value)
+                      }
                       className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
                     />
                   </div>
@@ -341,7 +384,9 @@ export default function ApprovalsPage() {
                     <input
                       type="time"
                       value={formTimeOut}
-                      onChange={(e) => setFormTimeOut(e.target.value)}
+                      onChange={(e) =>
+                        setFormTimeOut(e.target.value)
+                      }
                       className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200"
                     />
                   </div>
@@ -354,25 +399,29 @@ export default function ApprovalsPage() {
               disabled={submitting}
               className="bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2.5 px-6 rounded-lg transition-all duration-200 hover:shadow-md disabled:opacity-60"
             >
-              {submitting ? "Submitting..." : "Submit Request"}
+              {submitting
+                ? "Submitting..."
+                : "Submit Request"}
             </button>
           </form>
         )}
 
         <div className="mb-4 flex gap-2">
-          {(["PENDING", "APPROVED", "REJECTED", "ALL"] as const).map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={
-                filter === f
-                  ? "px-3 py-1.5 rounded-md text-sm font-semibold bg-slate-900 text-white"
-                  : "px-3 py-1.5 rounded-md text-sm font-medium bg-white border border-slate-300 text-slate-600"
-              }
-            >
-              {f.charAt(0) + f.slice(1).toLowerCase()}
-            </button>
-          ))}
+          {(["PENDING", "APPROVED", "REJECTED", "ALL"] as const).map(
+            (f) => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={
+                  filter === f
+                    ? "px-3 py-1.5 rounded-md text-sm font-semibold bg-slate-900 text-white"
+                    : "px-3 py-1.5 rounded-md text-sm font-medium bg-white border border-slate-300 text-slate-600"
+                }
+              >
+                {f.charAt(0) + f.slice(1).toLowerCase()}
+              </button>
+            )
+          )}
         </div>
 
         <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
@@ -448,7 +497,9 @@ export default function ApprovalsPage() {
                     {a.type === "LOCATION_BASED_LOGIN" ? (
                       <>
                         {a.details?.date && (
-                          <div>Date: {a.details.date}</div>
+                          <div>
+                            Date: {a.details.date}
+                          </div>
                         )}
 
                         {a.details?.distanceFromOffice != null && (
@@ -460,7 +511,8 @@ export default function ApprovalsPage() {
 
                         {a.details?.allowedRadius != null && (
                           <div>
-                            Allowed Radius: {a.details.allowedRadius} m
+                            Allowed Radius:{" "}
+                            {a.details.allowedRadius} m
                           </div>
                         )}
 
@@ -478,20 +530,24 @@ export default function ApprovalsPage() {
 
                         {a.details?.gpsAccuracy != null && (
                           <div>
-                            GPS Accuracy: {a.details.gpsAccuracy.toFixed(2)} m
+                            GPS Accuracy:{" "}
+                            {a.details.gpsAccuracy.toFixed(2)} m
                           </div>
                         )}
 
                         {a.details?.locationMode && (
                           <div>
-                            Location Mode: {a.details.locationMode}
+                            Location Mode:{" "}
+                            {a.details.locationMode}
                           </div>
                         )}
 
                         {a.details?.approvalRequired != null && (
                           <div>
                             Approval Required:{" "}
-                            {a.details.approvalRequired ? "Yes" : "No"}
+                            {a.details.approvalRequired
+                              ? "Yes"
+                              : "No"}
                           </div>
                         )}
                       </>
@@ -499,15 +555,23 @@ export default function ApprovalsPage() {
                       <>
                         {a.details?.fromDate ? (
                           <>
-                            <div>From: {a.details.fromDate}</div>
-                            <div>To: {a.details.toDate ?? "—"}</div>
+                            <div>
+                              From: {a.details.fromDate}
+                            </div>
+
+                            <div>
+                              To: {a.details.toDate ?? "—"}
+                            </div>
                           </>
                         ) : (
                           a.details?.date && (
-                            <div>Date: {a.details.date}</div>
+                            <div>
+                              Date: {a.details.date}
+                            </div>
                           )
                         )}
 
+                        {/* Leave Type display disabled.
                         {a.details?.leaveTypeId && (
                           <div>
                             Type:{" "}
@@ -516,22 +580,30 @@ export default function ApprovalsPage() {
                             )?.name ?? "—"}
                           </div>
                         )}
+                        */}
 
                         {a.details?.reason && (
-                          <div>Reason: {a.details.reason}</div>
+                          <div>
+                            Reason: {a.details.reason}
+                          </div>
                         )}
 
                         {a.details?.timeIn && (
-                          <div>Time In: {a.details.timeIn}</div>
+                          <div>
+                            Time In: {a.details.timeIn}
+                          </div>
                         )}
 
                         {a.details?.timeOut && (
-                          <div>Time Out: {a.details.timeOut}</div>
+                          <div>
+                            Time Out: {a.details.timeOut}
+                          </div>
                         )}
 
                         {a.details?.status && (
                           <div>
-                            Corrected Status: {a.details.status}
+                            Corrected Status:{" "}
+                            {a.details.status}
                           </div>
                         )}
                       </>
@@ -557,7 +629,10 @@ export default function ApprovalsPage() {
                       <div className="flex gap-2">
                         <button
                           onClick={() =>
-                            handleDecision(a.id, "APPROVED")
+                            handleDecision(
+                              a.id,
+                              "APPROVED"
+                            )
                           }
                           className="text-green-600 hover:text-green-800 text-xs font-medium"
                         >
@@ -566,7 +641,10 @@ export default function ApprovalsPage() {
 
                         <button
                           onClick={() =>
-                            handleDecision(a.id, "REJECTED")
+                            handleDecision(
+                              a.id,
+                              "REJECTED"
+                            )
                           }
                           className="text-red-600 hover:text-red-800 text-xs font-medium"
                         >

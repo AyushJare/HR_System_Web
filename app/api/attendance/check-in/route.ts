@@ -3,7 +3,7 @@ import { getTodayIndiaDateString } from "@/lib/attendanceAutomation";
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getWeeklyOffSettings, isWeeklyOff, checkIfDateIsOff } from "@/lib/attendanceUtils";
+import { getWeeklyOffSettings, isWeeklyOff } from "@/lib/attendanceUtils";
 
 export async function POST(request: NextRequest) {
     try {
@@ -21,16 +21,68 @@ export async function POST(request: NextRequest) {
         const serverDateString = getTodayIndiaDateString();
         const serverDate = new Date(`${serverDateString}T00:00:00.000Z`);
 
+        // Check the logged-in employee's employee type before applying holiday rules.
+        const employee = await prisma.employee.findUnique({
+            where: {
+                id: session.sub,
+            },
+            select: {
+                id: true,
+                isActive: true,
+                employeeTypeId: true,
+            },
+        });
 
-        // ✅ NEW: Check if today is a weekly off day or holiday
-        const dateOffInfo = await checkIfDateIsOff(serverDate);
+        if (!employee) {
+            return NextResponse.json(
+                { error: "Employee not found" },
+                { status: 404 }
+            );
+        }
 
-        if (dateOffInfo.isOff) {
+        if (!employee.isActive) {
+            return NextResponse.json(
+                { error: "Employee is inactive" },
+                { status: 400 }
+            );
+        }
+
+        // Weekly off applies normally.
+        const weeklyOffConfig = await getWeeklyOffSettings();
+        const isDateWeeklyOff = isWeeklyOff(serverDate, weeklyOffConfig);
+
+        // Holiday applies only when it is assigned to this employee's employee type.
+        const applicableHoliday = employee.employeeTypeId
+            ? await prisma.holiday.findFirst({
+                where: {
+                    date: serverDate,
+                    employeeTypeAssignments: {
+                        some: {
+                            employeeTypeId: employee.employeeTypeId,
+                        },
+                    },
+                },
+                select: {
+                    id: true,
+                    name: true,
+                    date: true,
+                },
+            })
+            : null;
+
+        if (isDateWeeklyOff || applicableHoliday) {
+            const reason = applicableHoliday ? "holiday" : "weekly off";
+            const details = applicableHoliday
+                ? applicableHoliday.name
+                : "Today is a weekly off";
+
             return NextResponse.json(
                 {
-                    error: `Cannot check in on ${dateOffInfo.reason?.toLowerCase() || "off"}: ${dateOffInfo.details}`, isOff: true,
-                    offReason: dateOffInfo.reason,
-                    offDetails: dateOffInfo.details,
+                    error: `Cannot check in on ${reason}: ${details}`,
+                    isOff: true,
+                    offReason: applicableHoliday ? "HOLIDAY" : "WEEKLY_OFF",
+                    offDetails: details,
+                    holiday: applicableHoliday,
                 },
                 { status: 422 }
             );
@@ -52,6 +104,7 @@ export async function POST(request: NextRequest) {
                 { status: 422 }
             );
         }
+
         // ==========================================================
         // PROTECT APPROVED LEAVE
         // ==========================================================
@@ -90,10 +143,6 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // ✅ NEW: Load weekly off settings for metadata
-        const weeklyOffConfig = await getWeeklyOffSettings();
-        const isDateWeeklyOff = isWeeklyOff(serverDate, weeklyOffConfig);
-
         // Create check-in
         const attendance = await prisma.attendance.create({
             data: {
@@ -104,7 +153,7 @@ export async function POST(request: NextRequest) {
             },
         });
 
-        // ✅ NEW: Log check-in with weekly off info
+        // Log check-in with weekly off info
         await prisma.auditLog.create({
             data: {
                 employeeId: session.sub,

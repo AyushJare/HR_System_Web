@@ -38,8 +38,10 @@ class LeaveService {
 
   // ============================================================
   // LEAVE BALANCE
+  // DISABLED - KEEPING CODE FOR FUTURE RESTORATION
   // ============================================================
 
+  /*
   static Future<List<Map<String, dynamic>>> getMyBalances() async {
     final response = await http.get(
       Uri.parse('$baseUrl/api/leave-balances'),
@@ -61,11 +63,14 @@ class LeaveService {
 
     throw Exception('Invalid leave balance data received');
   }
+  */
 
   // ============================================================
   // MY LEAVE REQUESTS
+  // DISABLED - KEEPING CODE FOR FUTURE RESTORATION
   // ============================================================
 
+  /*
   static Future<List<Map<String, dynamic>>> getMyRequests() async {
     final response = await http.get(
       Uri.parse('$baseUrl/api/approvals/leaves/me'),
@@ -94,9 +99,11 @@ class LeaveService {
 
     throw Exception('Invalid leave request data received');
   }
+  */
 
   // ============================================================
   // SUBMIT ATTENDANCE CORRECTION QUERY
+  // ACTIVE - REQUIRED FOR "RAISE QUERY"
   // ============================================================
 
   static Future<Map<String, dynamic>> submitAttendanceCorrection({
@@ -108,7 +115,9 @@ class LeaveService {
   }) async {
     String formatTime(TimeOfDay? time) {
       if (time == null) return '';
-      return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+
+      return '${time.hour.toString().padLeft(2, '0')}:'
+          '${time.minute.toString().padLeft(2, '0')}';
     }
 
     final dateString =
@@ -152,8 +161,10 @@ class LeaveService {
 
   // ============================================================
   // SUBMIT LEAVE
+  // DISABLED - KEEPING CODE FOR FUTURE RESTORATION
   // ============================================================
 
+  /*
   static Future<Map<String, dynamic>> submitLeave({
     required String type,
     required String leaveTypeId,
@@ -195,4 +206,5 @@ class LeaveService {
 
     return {};
   }
+  */
 }

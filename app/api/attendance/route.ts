@@ -411,6 +411,7 @@ export async function POST(request: NextRequest) {
             id: true,
             fullName: true,
             isActive: true,
+            employeeTypeId: true,
           },
         });
 
@@ -465,13 +466,40 @@ export async function POST(request: NextRequest) {
           attendanceDate
         );
 
-      if (dateOffInfo.isOff) {
+      const applicableHoliday =
+        employee.employeeTypeId
+          ? await prisma.holiday.findFirst({
+            where: {
+              date: attendanceDate,
+              employeeTypeAssignments: {
+                some: {
+                  employeeTypeId:
+                    employee.employeeTypeId,
+                },
+              },
+            },
+            select: {
+              id: true,
+              name: true,
+              date: true,
+            },
+          })
+          : null;
+
+      const isWeeklyOffDate =
+        dateOffInfo.reason === "WEEKLY_OFF";
+
+      if (isWeeklyOffDate || applicableHoliday) {
         return NextResponse.json(
           {
             error:
               "Attendance cannot be logged on a weekly off or holiday",
 
-            dateOffInfo,
+            dateOffInfo: {
+              ...dateOffInfo,
+              isOff: true,
+              holiday: applicableHoliday,
+            },
           },
           { status: 400 }
         );

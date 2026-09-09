@@ -43,19 +43,23 @@ class ApprovalService {
   // LEAVE APPROVALS
   // --------------------------------------------------
 
-  static Future<List<Map<String, dynamic>>> getLeaveApprovals() async {
-    return _getApprovals(type: 'LEAVE');
-  }
+  // Leave approvals disabled.
+  //
+  // static Future<List<Map<String, dynamic>>> getLeaveApprovals() async {
+  //   return _getApprovals(type: 'LEAVE');
+  // }
 
   // --------------------------------------------------
   // LEAVE TYPES
   // --------------------------------------------------
 
-  static Future<List<Map<String, dynamic>>> getLeaveTypes() async {
-    final data = await ApiService.get('/api/leave-types');
-
-    return _listFromResponse(data);
-  }
+  // Leave types disabled.
+  //
+  // static Future<List<Map<String, dynamic>>> getLeaveTypes() async {
+  //   final data = await ApiService.get('/api/leave-types');
+  //
+  //   return _listFromResponse(data);
+  // }
 
   // --------------------------------------------------
   // ATTENDANCE CORRECTION APPROVALS
@@ -88,9 +92,11 @@ class ApprovalService {
     await _decide(id, 'APPROVED', 'Failed to approve login');
   }
 
-  static Future<void> approveLeave(String id) async {
-    await _decide(id, 'APPROVED', 'Failed to approve leave');
-  }
+  // Leave approval disabled.
+  //
+  // static Future<void> approveLeave(String id) async {
+  //   await _decide(id, 'APPROVED', 'Failed to approve leave');
+  // }
 
   static Future<void> approveAttendanceCorrection(String id) async {
     await _decide(id, 'APPROVED', 'Failed to approve attendance correction');
@@ -104,9 +110,11 @@ class ApprovalService {
     await _decide(id, 'REJECTED', 'Failed to reject login', remarks: reason);
   }
 
-  static Future<void> rejectLeave(String id, String reason) async {
-    await _decide(id, 'REJECTED', 'Failed to reject leave', remarks: reason);
-  }
+  // Leave rejection disabled.
+  //
+  // static Future<void> rejectLeave(String id, String reason) async {
+  //   await _decide(id, 'REJECTED', 'Failed to reject leave', remarks: reason);
+  // }
 
   static Future<void> rejectAttendanceCorrection(
     String id,

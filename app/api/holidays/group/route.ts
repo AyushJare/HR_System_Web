@@ -21,6 +21,7 @@ export async function PUT(request: NextRequest) {
             description,
             startDate,
             endDate,
+            employeeTypeIds,
         } = body;
 
         // ---------------------------------------------------------
@@ -204,6 +205,15 @@ export async function PUT(request: NextRequest) {
                             date: new Date(
                                 `${dates[i]}T00:00:00.000Z`
                             ),
+
+                            employeeTypeAssignments: {
+                                deleteMany: {},
+                                create: Array.isArray(employeeTypeIds)
+                                    ? employeeTypeIds.map((employeeTypeId: string) => ({
+                                        employeeTypeId,
+                                    }))
+                                    : [],
+                            },
                         },
                     });
 
@@ -249,6 +259,14 @@ export async function PUT(request: NextRequest) {
                                 date: new Date(
                                     `${dates[i]}T00:00:00.000Z`
                                 ),
+
+                                employeeTypeAssignments: {
+                                    create: Array.isArray(employeeTypeIds)
+                                        ? employeeTypeIds.map((employeeTypeId: string) => ({
+                                            employeeTypeId,
+                                        }))
+                                        : [],
+                                },
                             },
                         });
 

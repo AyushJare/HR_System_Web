@@ -9,6 +9,17 @@ interface Holiday {
   name: string;
   description: string | null;
   date: string;
+  employeeTypeAssignments?: {
+    employeeType: {
+      id: string;
+      name: string;
+    };
+  }[];
+}
+
+interface EmployeeType {
+  id: string;
+  name: string;
 }
 
 interface UploadError {
@@ -35,14 +46,18 @@ export default function HolidaysTab() {
 
   // Single holiday
   const [newName, setNewName] = useState("");
-  const [newDate, setNewDate] = useState("");
+  const [newStartDate, setNewStartDate] = useState("");
+  const [newEndDate, setNewEndDate] = useState("");
   const [newDescription, setNewDescription] = useState("");
+  const [employeeTypes, setEmployeeTypes] = useState<EmployeeType[]>([]);
+  const [selectedEmployeeTypeIds, setSelectedEmployeeTypeIds] = useState<string[]>([]);
 
   // Individual edit
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
   const [editingDate, setEditingDate] = useState("");
   const [editingDescription, setEditingDescription] = useState("");
+  const [editEmployeeTypeIds, setEditEmployeeTypeIds] = useState<string[]>([]);
 
   // Group edit
   const [editingGroup, setEditingGroup] = useState<Holiday[] | null>(null);
@@ -50,6 +65,7 @@ export default function HolidaysTab() {
   const [groupDescription, setGroupDescription] = useState("");
   const [groupStartDate, setGroupStartDate] = useState("");
   const [groupEndDate, setGroupEndDate] = useState("");
+  const [groupEmployeeTypeIds, setGroupEmployeeTypeIds] = useState<string[]>([]);
 
   // Bulk upload
   const [file, setFile] = useState<File | null>(null);
@@ -85,8 +101,30 @@ export default function HolidaysTab() {
     }
   };
 
+  const loadEmployeeTypes = async () => {
+    try {
+      const res = await fetch("/api/employee-types");
+
+      if (!res.ok) {
+        throw new Error("Failed to load employee types");
+      }
+
+      const data = await res.json();
+
+      if (!Array.isArray(data)) {
+        throw new Error("Invalid employee types response");
+      }
+
+      setEmployeeTypes(data);
+    } catch (error) {
+      console.error("Failed to load employee types:", error);
+      toast.error("Failed to load employee types");
+    }
+  };
+
   useEffect(() => {
     load();
+    loadEmployeeTypes();
   }, []);
 
   // =========================================================
@@ -109,7 +147,6 @@ export default function HolidaysTab() {
     const normalizedName = name.trim().toLowerCase();
 
     return items.some((holiday) => {
-      // Don't compare the record against itself while editing
       if (excludeId && holiday.id === excludeId) {
         return false;
       }
@@ -125,62 +162,65 @@ export default function HolidaysTab() {
   // ADD SINGLE HOLIDAY
   // =========================================================
 
-  const handleAdd = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const trimmedName = newName.trim();
-
-    // Required validation
-    if (!trimmedName || !newDate) {
-      toast.error("Holiday name and date are required");
+  const handleAdd = async () => {
+    if (!newName.trim()) {
+      toast.error("Holiday name is required");
       return;
     }
 
-    // =====================================================
-    // DUPLICATE CHECK
-    // =====================================================
+    if (!newStartDate || !newEndDate) {
+      toast.error("Start Date and End Date are required");
+      return;
+    }
 
-    if (isDuplicateHoliday(trimmedName, newDate)) {
-      toast.error(`${trimmedName} is already added for this date.`);
+    if (newEndDate < newStartDate) {
+      toast.error("End Date cannot be before Start Date");
       return;
     }
 
     try {
-      const res = await fetch("/api/holidays", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: trimmedName,
-          description: newDescription.trim() || null,
-          date: newDate,
-        }),
-      });
+      const start = new Date(`${newStartDate}T00:00:00`);
+      const end = new Date(`${newEndDate}T00:00:00`);
 
-      let data: any = null;
+      for (
+        const current = new Date(start);
+        current <= end;
+        current.setDate(current.getDate() + 1)
+      ) {
+        const date = current.toISOString().slice(0, 10);
 
-      try {
-        data = await res.json();
-      } catch {
-        data = null;
+        const res = await fetch("/api/holidays", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: newName.trim(),
+            description: newDescription.trim() || null,
+            date,
+            employeeTypeIds: selectedEmployeeTypeIds,
+          }),
+        });
+
+        if (!res.ok) {
+          const data = await res.json().catch(() => null);
+          throw new Error(data?.error || "Failed to add holiday");
+        }
       }
 
-      if (!res.ok) {
-        toast.error(data?.error || "Failed to add holiday");
-        return;
-      }
-
-      toast.success("Holiday added");
+      toast.success("Holiday(s) added successfully");
 
       setNewName("");
-      setNewDate("");
+      setNewStartDate("");
+      setNewEndDate("");
       setNewDescription("");
+      setSelectedEmployeeTypeIds([]);
 
-      await load();
+      load();
     } catch (error) {
-      console.error("Add holiday error:", error);
-      toast.error("Failed to add holiday");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to add holiday"
+      );
     }
   };
 
@@ -244,7 +284,6 @@ export default function HolidaysTab() {
       return;
     }
 
-    // Prevent editing into an existing duplicate
     if (isDuplicateHoliday(trimmedName, editingDate, id)) {
       toast.error(`${trimmedName} is already added for this date.`);
       return;
@@ -260,6 +299,7 @@ export default function HolidaysTab() {
           name: trimmedName,
           description: editingDescription.trim() || null,
           date: editingDate,
+          employeeTypeIds: editEmployeeTypeIds,
         }),
       });
 
@@ -283,6 +323,7 @@ export default function HolidaysTab() {
       setEditingName("");
       setEditingDescription("");
       setEditingDate("");
+      setEditEmployeeTypeIds([]);
 
       await load();
     } catch (error) {
@@ -410,6 +451,11 @@ export default function HolidaysTab() {
     setEditingGroup(group);
     setGroupName(group[0].name);
     setGroupDescription(group[0].description || "");
+    setGroupEmployeeTypeIds(
+      group[0].employeeTypeAssignments?.map(
+        (assignment) => assignment.employeeType.id
+      ) ?? []
+    );
     setGroupStartDate(formatDateForInput(group[0].date));
     setGroupEndDate(
       formatDateForInput(group[group.length - 1].date)
@@ -450,6 +496,7 @@ export default function HolidaysTab() {
           description: groupDescription.trim() || null,
           startDate: groupStartDate,
           endDate: groupEndDate,
+          employeeTypeIds: groupEmployeeTypeIds,
         }),
       });
 
@@ -468,6 +515,7 @@ export default function HolidaysTab() {
       setGroupDescription("");
       setGroupStartDate("");
       setGroupEndDate("");
+      setGroupEmployeeTypeIds([]);
 
       await load();
     } catch (error) {
@@ -514,6 +562,7 @@ export default function HolidaysTab() {
           description: editingDescription.trim() || null,
           startDate: groupStartDate,
           endDate: groupEndDate,
+          employeeTypeIds: editEmployeeTypeIds,
         }),
       });
 
@@ -531,8 +580,10 @@ export default function HolidaysTab() {
       setEditingName("");
       setEditingDescription("");
       setEditingDate("");
+      setEditEmployeeTypeIds([]);
       setGroupStartDate("");
       setGroupEndDate("");
+      setEditEmployeeTypeIds([]);
 
       await load();
     } catch (error) {
@@ -689,6 +740,7 @@ export default function HolidaysTab() {
     setGroupDescription("");
     setGroupStartDate("");
     setGroupEndDate("");
+    setGroupEmployeeTypeIds([]);
   };
 
   // =========================================================
@@ -702,6 +754,7 @@ export default function HolidaysTab() {
     setEditingDate("");
     setGroupStartDate("");
     setGroupEndDate("");
+    setEditEmployeeTypeIds([]);
   };
 
   // =========================================================
@@ -842,8 +895,16 @@ export default function HolidaysTab() {
 
         <input
           type="date"
-          value={newDate}
-          onChange={(e) => setNewDate(e.target.value)}
+          value={newStartDate}
+          onChange={(e) => setNewStartDate(e.target.value)}
+          className="rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all duration-200"
+        />
+
+        <input
+          type="date"
+          value={newEndDate}
+          min={newStartDate || undefined}
+          onChange={(e) => setNewEndDate(e.target.value)}
           className="rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all duration-200"
         />
 
@@ -855,6 +916,37 @@ export default function HolidaysTab() {
           placeholder="Description"
           className="max-w-sm flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all duration-200"
         />
+
+        <div className="flex flex-wrap items-center gap-3 rounded-md border border-slate-300 bg-white px-3 py-2">
+          <span className="text-sm font-medium text-slate-700">
+            Employee Types:
+          </span>
+
+          {employeeTypes.map((employeeType) => (
+            <label
+              key={employeeType.id}
+              className="flex items-center gap-1.5 text-sm text-slate-700"
+            >
+              <input
+                type="checkbox"
+                checked={selectedEmployeeTypeIds.includes(
+                  employeeType.id
+                )}
+                onChange={(e) => {
+                  setSelectedEmployeeTypeIds((prev) =>
+                    e.target.checked
+                      ? [...prev, employeeType.id]
+                      : prev.filter(
+                        (id) => id !== employeeType.id
+                      )
+                  );
+                }}
+              />
+
+              {employeeType.name}
+            </label>
+          ))}
+        </div>
 
         <button
           type="submit"
@@ -950,6 +1042,39 @@ export default function HolidaysTab() {
               />
             </div>
 
+            <div>
+              <label className="mb-1 block text-xs font-medium text-slate-600">
+                Employee Types
+              </label>
+
+              <div className="flex flex-wrap gap-3 rounded-md border border-slate-300 bg-white px-3 py-2">
+                {employeeTypes.map((employeeType) => (
+                  <label
+                    key={employeeType.id}
+                    className="flex items-center gap-1.5 text-sm text-slate-700"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={groupEmployeeTypeIds.includes(
+                        employeeType.id
+                      )}
+                      onChange={(e) => {
+                        setGroupEmployeeTypeIds((prev) =>
+                          e.target.checked
+                            ? [...prev, employeeType.id]
+                            : prev.filter(
+                              (id) => id !== employeeType.id
+                            )
+                        );
+                      }}
+                    />
+
+                    {employeeType.name}
+                  </label>
+                ))}
+              </div>
+            </div>
+
             <button
               type="button"
               onClick={handleGroupEdit}
@@ -992,6 +1117,10 @@ export default function HolidaysTab() {
               <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wide text-slate-950">
                 Description
               </th>
+
+              <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wide text-slate-950">
+                Employee Types
+              </th>
             </tr>
           </thead>
 
@@ -999,7 +1128,7 @@ export default function HolidaysTab() {
             {loading && (
               <tr>
                 <td
-                  colSpan={4}
+                  colSpan={5}
                   className="px-4 py-6 text-center text-slate-400"
                 >
                   Loading...
@@ -1010,7 +1139,7 @@ export default function HolidaysTab() {
             {!loading && items.length === 0 && (
               <tr>
                 <td
-                  colSpan={4}
+                  colSpan={5}
                   className="px-4 py-6 text-center text-slate-400"
                 >
                   No holidays yet.
@@ -1065,6 +1194,12 @@ export default function HolidaysTab() {
                             setEditingName(item.name);
                             setEditingDescription(
                               item.description || ""
+                            );
+                            setEditEmployeeTypeIds(
+                              item.employeeTypeAssignments?.map(
+                                (assignment) =>
+                                  assignment.employeeType.id
+                              ) ?? []
                             );
                             setEditingGroup(null);
 
@@ -1178,6 +1313,54 @@ export default function HolidaysTab() {
                     ) : (
                       <span className="truncate">
                         {item.description || "-"}
+                      </span>
+                    )}
+                  </td>
+
+                  {/* EMPLOYEE TYPES */}
+                  <td className="px-4 py-2.5 text-slate-700">
+                    {editingId === item.id ? (
+                      <div className="flex flex-wrap gap-3 rounded-md border border-slate-300 bg-white px-3 py-2">
+                        {employeeTypes.map((employeeType) => (
+                          <label
+                            key={employeeType.id}
+                            className="flex items-center gap-1.5 text-sm text-slate-700"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={editEmployeeTypeIds.includes(
+                                employeeType.id
+                              )}
+                              onChange={(e) => {
+                                setEditEmployeeTypeIds((prev) =>
+                                  e.target.checked
+                                    ? [
+                                      ...prev,
+                                      employeeType.id,
+                                    ]
+                                    : prev.filter(
+                                      (id) =>
+                                        id !==
+                                        employeeType.id
+                                    )
+                                );
+                              }}
+                            />
+
+                            {employeeType.name}
+                          </label>
+                        ))}
+                      </div>
+                    ) : (
+                      <span>
+                        {item.employeeTypeAssignments?.length
+                          ? item.employeeTypeAssignments
+                            .map(
+                              (assignment) =>
+                                assignment.employeeType.name
+                            )
+                            .join(", ")
+                          : "-"}
                       </span>
                     )}
                   </td>

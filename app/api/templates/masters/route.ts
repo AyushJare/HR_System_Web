@@ -307,87 +307,87 @@ export async function GET() {
         freezeHeader(holidays);
 
         // =========================================================
-        // SHEET 5: LEAVE TYPES
+        // SHEET 5: LEAVE TYPES - DISABLED
         // =========================================================
 
-        const leaveTypes = workbook.addWorksheet("Leave Types");
+        // const leaveTypes = workbook.addWorksheet("Leave Types");
 
-        leaveTypes.columns = [
-            {
-                header: "Leave Name",
-                key: "name",
-                width: 30,
-            },
-            {
-                header: "Code",
-                key: "code",
-                width: 15,
-            },
-            {
-                header: "Default Annual Quota",
-                key: "defaultAnnualQuota",
-                width: 25,
-            },
-        ];
+        // leaveTypes.columns = [
+        //     {
+        //         header: "Leave Name",
+        //         key: "name",
+        //         width: 30,
+        //     },
+        //     {
+        //         header: "Code",
+        //         key: "code",
+        //         width: 15,
+        //     },
+        //     {
+        //         header: "Default Annual Quota",
+        //         key: "defaultAnnualQuota",
+        //         width: 25,
+        //     },
+        // ];
 
-        styleHeader(leaveTypes);
+        // styleHeader(leaveTypes);
 
-        leaveTypes.addRow({
-            name: "Casual Leave",
-            code: "CL",
-            defaultAnnualQuota: 12,
-        });
+        // leaveTypes.addRow({
+        //     name: "Casual Leave",
+        //     code: "CL",
+        //     defaultAnnualQuota: 12,
+        // });
 
-        leaveTypes.addRow({
-            name: "Sick Leave",
-            code: "SL",
-            defaultAnnualQuota: 12,
-        });
+        // leaveTypes.addRow({
+        //     name: "Sick Leave",
+        //     code: "SL",
+        //     defaultAnnualQuota: 12,
+        // });
 
-        leaveTypes.getCell("A2").font = {
-            italic: true,
-            color: { argb: "FF999999" },
-        };
+        // leaveTypes.getCell("A2").font = {
+        //     italic: true,
+        //     color: { argb: "FF999999" },
+        // };
 
-        leaveTypes.getCell("A2").note =
-            "Sample row. Delete or replace this row before uploading.";
+        // leaveTypes.getCell("A2").note =
+        //     "Sample row. Delete or replace this row before uploading.";
 
-        for (let row = 2; row <= 1000; row++) {
-            leaveTypes.getCell(`A${row}`).dataValidation = {
-                type: "textLength",
-                operator: "greaterThan",
-                formulae: [0],
-                allowBlank: true,
-                showErrorMessage: true,
-                errorStyle: "stop",
-                errorTitle: "Leave Name Required",
-                error: "Please enter a leave name.",
-            };
+        // for (let row = 2; row <= 1000; row++) {
+        //     leaveTypes.getCell(`A${row}`).dataValidation = {
+        //         type: "textLength",
+        //         operator: "greaterThan",
+        //         formulae: [0],
+        //         allowBlank: true,
+        //         showErrorMessage: true,
+        //         errorStyle: "stop",
+        //         errorTitle: "Leave Name Required",
+        //         error: "Please enter a leave name.",
+        //     };
 
-            leaveTypes.getCell(`B${row}`).dataValidation = {
-                type: "textLength",
-                operator: "greaterThan",
-                formulae: [0],
-                allowBlank: true,
-                showErrorMessage: true,
-                errorStyle: "stop",
-                errorTitle: "Leave Code Required",
-                error: "Please enter a leave code.",
-            };
+        //     leaveTypes.getCell(`B${row}`).dataValidation = {
+        //         type: "textLength",
+        //         operator: "greaterThan",
+        //         formulae: [0],
+        //         allowBlank: true,
+        //         showErrorMessage: true,
+        //         errorStyle: "stop",
+        //         errorTitle: "Leave Code Required",
+        //         error: "Please enter a leave code.",
+        //     };
 
-            leaveTypes.getCell(`C${row}`).dataValidation = {
-                type: "whole",
-                operator: "greaterThanOrEqual",
-                formulae: [0],
-                allowBlank: true,
-                showErrorMessage: true,
-                errorStyle: "stop",
-                errorTitle: "Invalid Annual Quota",
-                error: "Annual quota must be 0 or greater.",
-            };
-        }
+        //     leaveTypes.getCell(`C${row}`).dataValidation = {
+        //         type: "whole",
+        //         operator: "greaterThanOrEqual",
+        //         formulae: [0],
+        //         allowBlank: true,
+        //         showErrorMessage: true,
+        //         errorStyle: "stop",
+        //         errorTitle: "Invalid Annual Quota",
+        //         error: "Annual quota must be 0 or greater.",
+        //     };
+        // }
 
-        freezeHeader(leaveTypes);
+        // freezeHeader(leaveTypes);
 
         // =========================================================
         // SHEET 6: WEEKLY OFF
@@ -527,10 +527,10 @@ export async function GET() {
             "9. Holiday End Date cannot be earlier than Start Date."
         );
 
-        addInstruction(
-            14,
-            "10. Leave Type Code should be unique."
-        );
+        // addInstruction(
+        //     14,
+        //     "10. Leave Type Code should be unique."
+        // );
 
         addInstruction(
             15,

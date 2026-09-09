@@ -48,6 +48,7 @@ interface FormData {
   designationId: string;
   employeeTypeId: string;
   userTypeId: string;
+  officeId: string;
   role: string;
 }
 
@@ -63,6 +64,7 @@ interface FormErrors {
   departmentId: string;
   designationId: string;
   employeeTypeId: string;
+  officeId: string;
 }
 
 // ============================================================
@@ -80,6 +82,7 @@ const initialFormData: FormData = {
   designationId: "",
   employeeTypeId: "",
   userTypeId: "",
+  officeId: "",
   role: "EMPLOYEE",
 };
 
@@ -95,6 +98,7 @@ const initialErrors: FormErrors = {
   departmentId: "",
   designationId: "",
   employeeTypeId: "",
+  officeId: "",
 };
 
 // ============================================================
@@ -112,6 +116,7 @@ export default function AddEmployeePage() {
   const [designations, setDesignations] = useState<Option[]>([]);
   const [employeeTypes, setEmployeeTypes] = useState<Option[]>([]);
   const [userTypes, setUserTypes] = useState<UserTypeOption[]>([]);
+  const [offices, setOffices] = useState<Option[]>([]);
 
   const [formData, setFormData] =
     useState<FormData>(initialFormData);
@@ -157,6 +162,11 @@ export default function AddEmployeePage() {
               url: "/api/employee-types",
               name: "Employee Types",
               setState: setEmployeeTypes,
+            },
+            {
+              url: "/api/offices",
+              name: "Offices",
+              setState: setOffices,
             },
           ];
 
@@ -279,6 +289,45 @@ export default function AddEmployeePage() {
     loadOtherData();
     loadUserTypes();
   }, []);
+
+  // ============================================================
+  // SET DEFAULT EMPLOYEE USER TYPE
+  //
+  // Automatically select Employee (Default) for normal employees.
+  // This keeps the User Type required while avoiding manual
+  // selection for the standard employee account.
+  // ============================================================
+
+  useEffect(() => {
+    if (
+      formData.role !== "EMPLOYEE" ||
+      formData.userTypeId ||
+      loadingUserTypes ||
+      userTypes.length === 0
+    ) {
+      return;
+    }
+
+    const defaultEmployeeUserType =
+      userTypes.find(
+        (userType) =>
+          userType.name === "Employee (Default)"
+      );
+
+    if (!defaultEmployeeUserType) {
+      return;
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      userTypeId: defaultEmployeeUserType.id,
+    }));
+  }, [
+    userTypes,
+    loadingUserTypes,
+    formData.role,
+    formData.userTypeId,
+  ]);
 
   // ============================================================
   // VALIDATION
@@ -623,6 +672,10 @@ export default function AddEmployeePage() {
           next.employeeTypeId = "";
           break;
 
+        case "officeId":
+          next.officeId = "";
+          break;
+
         default:
           break;
       }
@@ -770,6 +823,7 @@ export default function AddEmployeePage() {
       departmentId: "",
       designationId: "",
       employeeTypeId: "",
+      officeId: "",
     };
 
     setErrors(newErrors);
@@ -850,6 +904,10 @@ export default function AddEmployeePage() {
               formData.role === "ADMIN"
                 ? null
                 : formData.userTypeId,
+
+            officeId:
+              formData.officeId ||
+              null,
 
             role:
               formData.role,
@@ -1442,6 +1500,56 @@ export default function AddEmployeePage() {
                 The selected User Type determines which modules this employee can access.
               </p>
             )}
+          </div>
+
+          {/* ================================================== */}
+          {/* OFFICE */}
+          {/* ================================================== */}
+
+          <div className="col-span-2">
+            <label className="block text-sm font-semibold text-slate-900 mb-2">
+              Office
+            </label>
+
+            <select
+              name="officeId"
+              value={formData.officeId}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              disabled={loadingOtherData}
+              className={`w-full rounded-lg border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200 disabled:bg-slate-50 disabled:text-slate-500 ${errors.officeId
+                ? "border-red-500"
+                : "border-slate-300"
+                }`}
+            >
+              <option value="">
+                {loadingOtherData
+                  ? "Loading..."
+                  : "Select office"}
+              </option>
+
+              {!loadingOtherData &&
+                offices.map(
+                  (office) => (
+                    <option
+                      key={office.id}
+                      value={office.id}
+                    >
+                      {office.name}
+                    </option>
+                  )
+                )}
+            </select>
+
+            {errors.officeId && (
+              <p className="mt-1 text-sm text-red-600">
+                {errors.officeId}
+              </p>
+            )}
+
+            <p className="mt-2 text-xs text-slate-500">
+              Assign the employee to an office for location-based login verification.
+            </p>
           </div>
 
           {/* ================================================== */}

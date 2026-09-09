@@ -43,6 +43,17 @@ async function main() {
     "Institute Setup": { view: true, add: true, edit: true, delete: true },
   };
 
+  // ==================== DEFAULT EMPLOYEE PERMISSIONS ====================
+
+  const employeeDefaultPermissions = {
+    Dashboard: { view: true },
+    Attendance: {
+      view: true,
+      "Check In": { view: true, add: true },
+      "Attendance Corrections": { view: true, add: true },
+    },
+  };
+
   try {
     // Create UserTypes
     const adminUserType = await prisma.userType.upsert({
@@ -55,7 +66,26 @@ async function main() {
         isSystem: true,
       },
     });
+
     console.log("✅ Created Admin UserType");
+
+    // Create default Employee UserType
+    const employeeDefaultUserType = await prisma.userType.upsert({
+      where: { name: "Employee (Default)" },
+      update: {
+        description: "Default employee access with attendance and attendance correction query permissions",
+        permissions: employeeDefaultPermissions,
+        isSystem: true,
+      },
+      create: {
+        name: "Employee (Default)",
+        description: "Default employee access with attendance and attendance correction query permissions",
+        permissions: employeeDefaultPermissions,
+        isSystem: true,
+      },
+    });
+
+    console.log("✅ Created Employee (Default) UserType");
 
     // ==================== CREATE ADMIN EMPLOYEE ====================
 

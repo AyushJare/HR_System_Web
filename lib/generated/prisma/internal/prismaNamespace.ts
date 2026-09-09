@@ -401,7 +401,9 @@ export const ModelName = {
   Designation: 'Designation',
   EmployeeType: 'EmployeeType',
   Holiday: 'Holiday',
+  HolidayEmployeeType: 'HolidayEmployeeType',
   AttendanceSettings: 'AttendanceSettings',
+  Office: 'Office',
   LeaveType: 'LeaveType',
   UserType: 'UserType',
   Employee: 'Employee',
@@ -425,7 +427,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "department" | "designation" | "employeeType" | "holiday" | "attendanceSettings" | "leaveType" | "userType" | "employee" | "attendance" | "approval" | "leaveBalance" | "auditLog" | "session"
+    modelProps: "department" | "designation" | "employeeType" | "holiday" | "holidayEmployeeType" | "attendanceSettings" | "office" | "leaveType" | "userType" | "employee" | "attendance" | "approval" | "leaveBalance" | "auditLog" | "session"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -725,6 +727,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    HolidayEmployeeType: {
+      payload: Prisma.$HolidayEmployeeTypePayload<ExtArgs>
+      fields: Prisma.HolidayEmployeeTypeFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.HolidayEmployeeTypeFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HolidayEmployeeTypePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.HolidayEmployeeTypeFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HolidayEmployeeTypePayload>
+        }
+        findFirst: {
+          args: Prisma.HolidayEmployeeTypeFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HolidayEmployeeTypePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.HolidayEmployeeTypeFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HolidayEmployeeTypePayload>
+        }
+        findMany: {
+          args: Prisma.HolidayEmployeeTypeFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HolidayEmployeeTypePayload>[]
+        }
+        create: {
+          args: Prisma.HolidayEmployeeTypeCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HolidayEmployeeTypePayload>
+        }
+        createMany: {
+          args: Prisma.HolidayEmployeeTypeCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.HolidayEmployeeTypeCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HolidayEmployeeTypePayload>[]
+        }
+        delete: {
+          args: Prisma.HolidayEmployeeTypeDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HolidayEmployeeTypePayload>
+        }
+        update: {
+          args: Prisma.HolidayEmployeeTypeUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HolidayEmployeeTypePayload>
+        }
+        deleteMany: {
+          args: Prisma.HolidayEmployeeTypeDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.HolidayEmployeeTypeUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.HolidayEmployeeTypeUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HolidayEmployeeTypePayload>[]
+        }
+        upsert: {
+          args: Prisma.HolidayEmployeeTypeUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HolidayEmployeeTypePayload>
+        }
+        aggregate: {
+          args: Prisma.HolidayEmployeeTypeAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateHolidayEmployeeType>
+        }
+        groupBy: {
+          args: Prisma.HolidayEmployeeTypeGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.HolidayEmployeeTypeGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.HolidayEmployeeTypeCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.HolidayEmployeeTypeCountAggregateOutputType> | number
+        }
+      }
+    }
     AttendanceSettings: {
       payload: Prisma.$AttendanceSettingsPayload<ExtArgs>
       fields: Prisma.AttendanceSettingsFieldRefs
@@ -796,6 +872,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.AttendanceSettingsCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.AttendanceSettingsCountAggregateOutputType> | number
+        }
+      }
+    }
+    Office: {
+      payload: Prisma.$OfficePayload<ExtArgs>
+      fields: Prisma.OfficeFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.OfficeFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OfficePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.OfficeFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OfficePayload>
+        }
+        findFirst: {
+          args: Prisma.OfficeFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OfficePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.OfficeFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OfficePayload>
+        }
+        findMany: {
+          args: Prisma.OfficeFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OfficePayload>[]
+        }
+        create: {
+          args: Prisma.OfficeCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OfficePayload>
+        }
+        createMany: {
+          args: Prisma.OfficeCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.OfficeCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OfficePayload>[]
+        }
+        delete: {
+          args: Prisma.OfficeDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OfficePayload>
+        }
+        update: {
+          args: Prisma.OfficeUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OfficePayload>
+        }
+        deleteMany: {
+          args: Prisma.OfficeDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.OfficeUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.OfficeUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OfficePayload>[]
+        }
+        upsert: {
+          args: Prisma.OfficeUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OfficePayload>
+        }
+        aggregate: {
+          args: Prisma.OfficeAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateOffice>
+        }
+        groupBy: {
+          args: Prisma.OfficeGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.OfficeGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.OfficeCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.OfficeCountAggregateOutputType> | number
         }
       }
     }
@@ -1474,6 +1624,15 @@ export const HolidayScalarFieldEnum = {
 export type HolidayScalarFieldEnum = (typeof HolidayScalarFieldEnum)[keyof typeof HolidayScalarFieldEnum]
 
 
+export const HolidayEmployeeTypeScalarFieldEnum = {
+  id: 'id',
+  holidayId: 'holidayId',
+  employeeTypeId: 'employeeTypeId'
+} as const
+
+export type HolidayEmployeeTypeScalarFieldEnum = (typeof HolidayEmployeeTypeScalarFieldEnum)[keyof typeof HolidayEmployeeTypeScalarFieldEnum]
+
+
 export const AttendanceSettingsScalarFieldEnum = {
   id: 'id',
   weeklyOffDays: 'weeklyOffDays',
@@ -1481,6 +1640,19 @@ export const AttendanceSettingsScalarFieldEnum = {
 } as const
 
 export type AttendanceSettingsScalarFieldEnum = (typeof AttendanceSettingsScalarFieldEnum)[keyof typeof AttendanceSettingsScalarFieldEnum]
+
+
+export const OfficeScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  latitude: 'latitude',
+  longitude: 'longitude',
+  radiusMeters: 'radiusMeters',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type OfficeScalarFieldEnum = (typeof OfficeScalarFieldEnum)[keyof typeof OfficeScalarFieldEnum]
 
 
 export const LeaveTypeScalarFieldEnum = {
@@ -1526,6 +1698,7 @@ export const EmployeeScalarFieldEnum = {
   designationId: 'designationId',
   employeeTypeId: 'employeeTypeId',
   userTypeId: 'userTypeId',
+  officeId: 'officeId',
   createdById: 'createdById',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -1721,6 +1894,20 @@ export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$Prisma
 
 
 /**
+ * Reference to a field of type 'Float'
+ */
+export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
+    
+
+
+/**
+ * Reference to a field of type 'Float[]'
+ */
+export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
+    
+
+
+/**
  * Reference to a field of type 'Boolean'
  */
 export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
@@ -1752,20 +1939,6 @@ export type EnumUserRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaM
  * Reference to a field of type 'UserRole[]'
  */
 export type ListEnumUserRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UserRole[]'>
-    
-
-
-/**
- * Reference to a field of type 'Float'
- */
-export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
-    
-
-
-/**
- * Reference to a field of type 'Float[]'
- */
-export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
     
 
 
@@ -1937,7 +2110,9 @@ export type GlobalOmitConfig = {
   designation?: Prisma.DesignationOmit
   employeeType?: Prisma.EmployeeTypeOmit
   holiday?: Prisma.HolidayOmit
+  holidayEmployeeType?: Prisma.HolidayEmployeeTypeOmit
   attendanceSettings?: Prisma.AttendanceSettingsOmit
+  office?: Prisma.OfficeOmit
   leaveType?: Prisma.LeaveTypeOmit
   userType?: Prisma.UserTypeOmit
   employee?: Prisma.EmployeeOmit

@@ -508,8 +508,8 @@ export default function AttendancePage() {
                   isProcessing
                     ? "..."
                     : !hasLoggedIn
-                      ? "Log In"
-                      : "Log Out";
+                      ? "Clock-In"
+                      : "Clock-Out";
 
                 const employeeButtonDisabled =
                   isProcessing ||

@@ -27,6 +27,35 @@ export interface UserPermissions {
 type PermissionData = UserPermissions | UserPermissions[] | Record<string, any>;
 
 // -----------------------------------------------------------------------------
+// DEFAULT EMPLOYEE PERMISSIONS
+//
+// Every employee automatically has these basic permissions.
+//
+// These are intentionally limited to:
+//   - Check In: view + add
+//   - Attendance Corrections: view + add
+//
+// This allows every employee to clock in/out and raise an attendance
+// correction query without giving them administrative attendance access.
+//
+// Additional permissions can still be granted through User Types.
+// -----------------------------------------------------------------------------
+
+const DEFAULT_EMPLOYEE_PERMISSIONS: Record<
+    string,
+    Partial<Record<PermissionAction, boolean>>
+> = {
+    "Check In": {
+        view: true,
+        add: true,
+    },
+    "Attendance Corrections": {
+        view: true,
+        add: true,
+    },
+};
+
+// -----------------------------------------------------------------------------
 // PATH RESOLUTION
 //
 // Given a module leaf name ("Departments"), returns the full path in
@@ -121,9 +150,10 @@ const ACTION_MAP: Record<PermissionAction, keyof UserPermissions> = {
 // hasPermission
 //
 // Resolution rules:
-//   1. Flatten the permission tree.
-//   2. If the requested module itself grants the action -> allow.
-//   3. Otherwise, walk up its canonical ancestor chain in PERMISSION_MODULES.
+//   1. Default employee permissions are always available.
+//   2. Flatten the permission tree.
+//   3. If the requested module itself grants the action -> allow.
+//   4. Otherwise, walk up its canonical ancestor chain in PERMISSION_MODULES.
 //      If any ancestor grants the same action -> allow.
 //
 // This is what makes "Masters.view = true" grant view access to Departments,
@@ -137,10 +167,23 @@ export function hasPermission(
     modulePath: string[],
     action: PermissionAction
 ): boolean {
-    if (!permissions) return false;
-
     const moduleName = modulePath[modulePath.length - 1];
     if (!moduleName) return false;
+
+    // -------------------------------------------------------------------------
+    // DEFAULT EMPLOYEE ACCESS
+    //
+    // These permissions are intentionally checked before User Type permissions
+    // so they cannot accidentally be removed by changing a User Type.
+    // -------------------------------------------------------------------------
+
+    const defaultPermission = DEFAULT_EMPLOYEE_PERMISSIONS[moduleName];
+
+    if (defaultPermission?.[action] === true) {
+        return true;
+    }
+
+    if (!permissions) return false;
 
     const list = normalizePermissions(permissions);
     const key = ACTION_MAP[action];
@@ -195,7 +238,10 @@ export async function getUserPermissions(employeeId: string) {
             },
         });
         if (!employee) return {};
-        return employee.userType?.permissions ?? {};
+
+        const userTypePermissions = employee.userType?.permissions ?? {};
+
+        return userTypePermissions;
     } catch (error) {
         console.error("Error fetching user permissions:", error);
         return {};
@@ -227,10 +273,11 @@ export async function checkPermission(
 
         if (employee.role === "ADMIN") return true;
 
-        if (!employee.userType?.permissions) return false;
-
+        // Default employee permissions are handled inside hasPermission(),
+        // so an employee does not need to have a User Type permission entry
+        // for Check In or Attendance Corrections.
         return hasPermission(
-            employee.userType.permissions as unknown as PermissionData,
+            employee.userType?.permissions as unknown as PermissionData,
             [moduleName],
             action
         );
@@ -248,7 +295,7 @@ export function getAllModules() {
         { name: "Employee", actions: ["view", "add", "edit", "delete", "import", "export"] },
         { name: "Attendance", actions: ["view", "add", "edit", "delete", "import", "export"] },
         { name: "Masters", actions: ["view", "add", "edit", "delete", "import", "export"] },
-        { name: "Leaves", actions: ["view", "add", "edit", "delete", "import", "export"] },
+        // { name: "Leaves", actions: ["view", "add", "edit", "delete", "import", "export"] },
         { name: "Approvals", actions: ["view", "add", "edit", "delete"] },
     ];
 }

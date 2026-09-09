@@ -9,7 +9,6 @@ export async function GET(request: NextRequest) {
       "Approvals",
       "view",
       request
-
     );
     if (!auth.ok) {
       return NextResponse.json(
@@ -45,43 +44,48 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    // ============================================================
+    // LEAVE APPROVAL ENRICHMENT DISABLED
+    // ============================================================
+
     // Enrich leave approvals with the actual leave type name.
     // Existing approvals may only contain leaveTypeId, so resolve it
     // here instead of requiring old approval records to be recreated.
-    const enrichedApprovals = await Promise.all(
-      approvals.map(async (approval) => {
-        if (approval.type !== "LEAVE") {
-          return approval;
-        }
+    //
+    // const enrichedApprovals = await Promise.all(
+    //   approvals.map(async (approval) => {
+    //     if (approval.type !== "LEAVE") {
+    //       return approval;
+    //     }
+    //
+    //     const details = approval.details as
+    //       | { leaveTypeId?: string | null; leaveTypeName?: string | null }
+    //       | null;
+    //
+    //     if (!details?.leaveTypeId || details.leaveTypeName) {
+    //       return approval;
+    //     }
+    //
+    //     const leaveType = await prisma.leaveType.findUnique({
+    //       where: { id: details.leaveTypeId },
+    //       select: { name: true },
+    //     });
+    //
+    //     if (!leaveType) {
+    //       return approval;
+    //     }
+    //
+    //     return {
+    //       ...approval,
+    //       details: {
+    //         ...(details ?? {}),
+    //         leaveTypeName: leaveType.name,
+    //       },
+    //     };
+    //   })
+    // );
 
-        const details = approval.details as
-          | { leaveTypeId?: string | null; leaveTypeName?: string | null }
-          | null;
-
-        if (!details?.leaveTypeId || details.leaveTypeName) {
-          return approval;
-        }
-
-        const leaveType = await prisma.leaveType.findUnique({
-          where: { id: details.leaveTypeId },
-          select: { name: true },
-        });
-
-        if (!leaveType) {
-          return approval;
-        }
-
-        return {
-          ...approval,
-          details: {
-            ...(details ?? {}),
-            leaveTypeName: leaveType.name,
-          },
-        };
-      })
-    );
-
-    return NextResponse.json(enrichedApprovals);
+    return NextResponse.json(approvals);
   } catch (error) {
     console.error("GET /api/approvals error:", error);
 
@@ -119,7 +123,7 @@ export async function POST(request: NextRequest) {
 
     // Supported approval request types
     if (
-      type !== "LEAVE" &&
+      // type !== "LEAVE" &&
       type !== "ATTENDANCE_CORRECTION" &&
       type !== "LOCATION_BASED_LOGIN"
     ) {
@@ -132,99 +136,102 @@ export async function POST(request: NextRequest) {
     // Use provided actorId, otherwise current authenticated user
     const approvalActorId = actorId || auth.session.sub;
 
+    // ============================================================
+    // LEAVE APPROVAL VALIDATION DISABLED
+    // ============================================================
+
     // Prevent leave requests if attendance has already been completed
-    if (type === "LEAVE") {
-      const leaveDate = details?.date;
-
-      if (!leaveDate) {
-        return NextResponse.json(
-          { error: "Leave date is required" },
-          { status: 400 }
-        );
-      }
-
-      const attendanceDate = new Date(
-        `${leaveDate}T00:00:00.000Z`
-      );
-
-      /*
-       * Prevent leave requests on weekly offs and holidays.
-       */
-      const dateOffInfo =
-        await checkIfDateIsOff(attendanceDate);
-
-      if (dateOffInfo.isOff) {
-        return NextResponse.json(
-          {
-            error:
-              dateOffInfo.reason === "HOLIDAY"
-                ? "Leave cannot be applied on a holiday."
-                : "Leave cannot be applied on a weekly off.",
-          },
-          { status: 409 }
-        );
-      }
-
-      const attendance = await prisma.attendance.findUnique({
-        where: {
-          employeeId_date: {
-            employeeId: approvalActorId,
-            date: attendanceDate,
-          },
-        },
-        select: {
-          id: true,
-          status: true,
-          checkInTime: true,
-          checkOutTime: true,
-          deletedAt: true,
-        },
-      });
-
-      if (
-        attendance &&
-        !attendance.deletedAt &&
-        attendance.checkInTime &&
-        attendance.status !== "ABSENT"
-      ) {
-        return NextResponse.json(
-          {
-            error:
-              "Leave request cannot be submitted because attendance has already been recorded for this date.",
-          },
-          { status: 409 }
-        );
-      }
-
-      // Prevent multiple active leave applications for the same day
-      const existingLeave = await prisma.approval.findFirst({
-        where: {
-          type: "LEAVE",
-          actorId: approvalActorId,
-          status: {
-            in: ["PENDING", "APPROVED"],
-          },
-          details: {
-            path: ["date"],
-            equals: leaveDate,
-          },
-        },
-        select: {
-          id: true,
-          status: true,
-        },
-      });
-
-      if (existingLeave) {
-        return NextResponse.json(
-          {
-            error:
-              "A leave application already exists for this employee on this date.",
-          },
-          { status: 409 }
-        );
-      }
-    }
+    //
+    // if (type === "LEAVE") {
+    //   const leaveDate = details?.date;
+    //
+    //   if (!leaveDate) {
+    //     return NextResponse.json(
+    //       { error: "Leave date is required" },
+    //       { status: 400 }
+    //     );
+    //   }
+    //
+    //   const attendanceDate = new Date(
+    //     `${leaveDate}T00:00:00.000Z`
+    //   );
+    //
+    //   // Prevent leave requests on weekly offs and holidays.
+    //   const dateOffInfo =
+    //     await checkIfDateIsOff(attendanceDate);
+    //
+    //   if (dateOffInfo.isOff) {
+    //     return NextResponse.json(
+    //       {
+    //         error:
+    //           dateOffInfo.reason === "HOLIDAY"
+    //             ? "Leave cannot be applied on a holiday."
+    //             : "Leave cannot be applied on a weekly off.",
+    //       },
+    //       { status: 409 }
+    //     );
+    //   }
+    //
+    //   const attendance = await prisma.attendance.findUnique({
+    //     where: {
+    //       employeeId_date: {
+    //         employeeId: approvalActorId,
+    //         date: attendanceDate,
+    //       },
+    //     },
+    //     select: {
+    //       id: true,
+    //       status: true,
+    //       checkInTime: true,
+    //       checkOutTime: true,
+    //       deletedAt: true,
+    //     },
+    //   });
+    //
+    //   if (
+    //     attendance &&
+    //     !attendance.deletedAt &&
+    //     attendance.checkInTime &&
+    //     attendance.status !== "ABSENT"
+    //   ) {
+    //     return NextResponse.json(
+    //       {
+    //         error:
+    //           "Leave request cannot be submitted because attendance has already been recorded for this date.",
+    //       },
+    //       { status: 409 }
+    //     );
+    //   }
+    //
+    //   // Prevent multiple active leave applications for the same day
+    //   const existingLeave = await prisma.approval.findFirst({
+    //     where: {
+    //       type: "LEAVE",
+    //       actorId: approvalActorId,
+    //       status: {
+    //         in: ["PENDING", "APPROVED"],
+    //       },
+    //       details: {
+    //         path: ["date"],
+    //         equals: leaveDate,
+    //       },
+    //     },
+    //     select: {
+    //       id: true,
+    //       status: true,
+    //     },
+    //   });
+    //
+    //   if (existingLeave) {
+    //     return NextResponse.json(
+    //       {
+    //         error:
+    //           "A leave application already exists for this employee on this date.",
+    //       },
+    //       { status: 409 }
+    //     );
+    //   }
+    // }
 
     const approval = await prisma.approval.create({
       data: {

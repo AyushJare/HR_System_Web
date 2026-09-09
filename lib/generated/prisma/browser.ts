@@ -38,10 +38,20 @@ export type EmployeeType = Prisma.EmployeeTypeModel
  */
 export type Holiday = Prisma.HolidayModel
 /**
+ * Model HolidayEmployeeType
+ * 
+ */
+export type HolidayEmployeeType = Prisma.HolidayEmployeeTypeModel
+/**
  * Model AttendanceSettings
  * 
  */
 export type AttendanceSettings = Prisma.AttendanceSettingsModel
+/**
+ * Model Office
+ * 
+ */
+export type Office = Prisma.OfficeModel
 /**
  * Model LeaveType
  * 

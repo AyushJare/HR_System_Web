@@ -217,6 +217,7 @@ export type EmployeeTypeWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"EmployeeType"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"EmployeeType"> | Date | string
   employees?: Prisma.EmployeeListRelationFilter
+  holidayAssignments?: Prisma.HolidayEmployeeTypeListRelationFilter
 }
 
 export type EmployeeTypeOrderByWithRelationInput = {
@@ -226,6 +227,7 @@ export type EmployeeTypeOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   employees?: Prisma.EmployeeOrderByRelationAggregateInput
+  holidayAssignments?: Prisma.HolidayEmployeeTypeOrderByRelationAggregateInput
 }
 
 export type EmployeeTypeWhereUniqueInput = Prisma.AtLeast<{
@@ -238,6 +240,7 @@ export type EmployeeTypeWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"EmployeeType"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"EmployeeType"> | Date | string
   employees?: Prisma.EmployeeListRelationFilter
+  holidayAssignments?: Prisma.HolidayEmployeeTypeListRelationFilter
 }, "id" | "name">
 
 export type EmployeeTypeOrderByWithAggregationInput = {
@@ -271,6 +274,7 @@ export type EmployeeTypeCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   employees?: Prisma.EmployeeCreateNestedManyWithoutEmployeeTypeInput
+  holidayAssignments?: Prisma.HolidayEmployeeTypeCreateNestedManyWithoutEmployeeTypeInput
 }
 
 export type EmployeeTypeUncheckedCreateInput = {
@@ -280,6 +284,7 @@ export type EmployeeTypeUncheckedCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   employees?: Prisma.EmployeeUncheckedCreateNestedManyWithoutEmployeeTypeInput
+  holidayAssignments?: Prisma.HolidayEmployeeTypeUncheckedCreateNestedManyWithoutEmployeeTypeInput
 }
 
 export type EmployeeTypeUpdateInput = {
@@ -289,6 +294,7 @@ export type EmployeeTypeUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   employees?: Prisma.EmployeeUpdateManyWithoutEmployeeTypeNestedInput
+  holidayAssignments?: Prisma.HolidayEmployeeTypeUpdateManyWithoutEmployeeTypeNestedInput
 }
 
 export type EmployeeTypeUncheckedUpdateInput = {
@@ -298,6 +304,7 @@ export type EmployeeTypeUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   employees?: Prisma.EmployeeUncheckedUpdateManyWithoutEmployeeTypeNestedInput
+  holidayAssignments?: Prisma.HolidayEmployeeTypeUncheckedUpdateManyWithoutEmployeeTypeNestedInput
 }
 
 export type EmployeeTypeCreateManyInput = {
@@ -356,6 +363,11 @@ export type EmployeeTypeSumOrderByAggregateInput = {
   noticePeriod?: Prisma.SortOrder
 }
 
+export type EmployeeTypeScalarRelationFilter = {
+  is?: Prisma.EmployeeTypeWhereInput
+  isNot?: Prisma.EmployeeTypeWhereInput
+}
+
 export type EmployeeTypeNullableScalarRelationFilter = {
   is?: Prisma.EmployeeTypeWhereInput | null
   isNot?: Prisma.EmployeeTypeWhereInput | null
@@ -367,6 +379,20 @@ export type IntFieldUpdateOperationsInput = {
   decrement?: number
   multiply?: number
   divide?: number
+}
+
+export type EmployeeTypeCreateNestedOneWithoutHolidayAssignmentsInput = {
+  create?: Prisma.XOR<Prisma.EmployeeTypeCreateWithoutHolidayAssignmentsInput, Prisma.EmployeeTypeUncheckedCreateWithoutHolidayAssignmentsInput>
+  connectOrCreate?: Prisma.EmployeeTypeCreateOrConnectWithoutHolidayAssignmentsInput
+  connect?: Prisma.EmployeeTypeWhereUniqueInput
+}
+
+export type EmployeeTypeUpdateOneRequiredWithoutHolidayAssignmentsNestedInput = {
+  create?: Prisma.XOR<Prisma.EmployeeTypeCreateWithoutHolidayAssignmentsInput, Prisma.EmployeeTypeUncheckedCreateWithoutHolidayAssignmentsInput>
+  connectOrCreate?: Prisma.EmployeeTypeCreateOrConnectWithoutHolidayAssignmentsInput
+  upsert?: Prisma.EmployeeTypeUpsertWithoutHolidayAssignmentsInput
+  connect?: Prisma.EmployeeTypeWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.EmployeeTypeUpdateToOneWithWhereWithoutHolidayAssignmentsInput, Prisma.EmployeeTypeUpdateWithoutHolidayAssignmentsInput>, Prisma.EmployeeTypeUncheckedUpdateWithoutHolidayAssignmentsInput>
 }
 
 export type EmployeeTypeCreateNestedOneWithoutEmployeesInput = {
@@ -385,12 +411,65 @@ export type EmployeeTypeUpdateOneWithoutEmployeesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.EmployeeTypeUpdateToOneWithWhereWithoutEmployeesInput, Prisma.EmployeeTypeUpdateWithoutEmployeesInput>, Prisma.EmployeeTypeUncheckedUpdateWithoutEmployeesInput>
 }
 
+export type EmployeeTypeCreateWithoutHolidayAssignmentsInput = {
+  id?: string
+  name: string
+  noticePeriod?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  employees?: Prisma.EmployeeCreateNestedManyWithoutEmployeeTypeInput
+}
+
+export type EmployeeTypeUncheckedCreateWithoutHolidayAssignmentsInput = {
+  id?: string
+  name: string
+  noticePeriod?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  employees?: Prisma.EmployeeUncheckedCreateNestedManyWithoutEmployeeTypeInput
+}
+
+export type EmployeeTypeCreateOrConnectWithoutHolidayAssignmentsInput = {
+  where: Prisma.EmployeeTypeWhereUniqueInput
+  create: Prisma.XOR<Prisma.EmployeeTypeCreateWithoutHolidayAssignmentsInput, Prisma.EmployeeTypeUncheckedCreateWithoutHolidayAssignmentsInput>
+}
+
+export type EmployeeTypeUpsertWithoutHolidayAssignmentsInput = {
+  update: Prisma.XOR<Prisma.EmployeeTypeUpdateWithoutHolidayAssignmentsInput, Prisma.EmployeeTypeUncheckedUpdateWithoutHolidayAssignmentsInput>
+  create: Prisma.XOR<Prisma.EmployeeTypeCreateWithoutHolidayAssignmentsInput, Prisma.EmployeeTypeUncheckedCreateWithoutHolidayAssignmentsInput>
+  where?: Prisma.EmployeeTypeWhereInput
+}
+
+export type EmployeeTypeUpdateToOneWithWhereWithoutHolidayAssignmentsInput = {
+  where?: Prisma.EmployeeTypeWhereInput
+  data: Prisma.XOR<Prisma.EmployeeTypeUpdateWithoutHolidayAssignmentsInput, Prisma.EmployeeTypeUncheckedUpdateWithoutHolidayAssignmentsInput>
+}
+
+export type EmployeeTypeUpdateWithoutHolidayAssignmentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  noticePeriod?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  employees?: Prisma.EmployeeUpdateManyWithoutEmployeeTypeNestedInput
+}
+
+export type EmployeeTypeUncheckedUpdateWithoutHolidayAssignmentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  noticePeriod?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  employees?: Prisma.EmployeeUncheckedUpdateManyWithoutEmployeeTypeNestedInput
+}
+
 export type EmployeeTypeCreateWithoutEmployeesInput = {
   id?: string
   name: string
   noticePeriod?: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  holidayAssignments?: Prisma.HolidayEmployeeTypeCreateNestedManyWithoutEmployeeTypeInput
 }
 
 export type EmployeeTypeUncheckedCreateWithoutEmployeesInput = {
@@ -399,6 +478,7 @@ export type EmployeeTypeUncheckedCreateWithoutEmployeesInput = {
   noticePeriod?: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  holidayAssignments?: Prisma.HolidayEmployeeTypeUncheckedCreateNestedManyWithoutEmployeeTypeInput
 }
 
 export type EmployeeTypeCreateOrConnectWithoutEmployeesInput = {
@@ -423,6 +503,7 @@ export type EmployeeTypeUpdateWithoutEmployeesInput = {
   noticePeriod?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  holidayAssignments?: Prisma.HolidayEmployeeTypeUpdateManyWithoutEmployeeTypeNestedInput
 }
 
 export type EmployeeTypeUncheckedUpdateWithoutEmployeesInput = {
@@ -431,6 +512,7 @@ export type EmployeeTypeUncheckedUpdateWithoutEmployeesInput = {
   noticePeriod?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  holidayAssignments?: Prisma.HolidayEmployeeTypeUncheckedUpdateManyWithoutEmployeeTypeNestedInput
 }
 
 
@@ -440,10 +522,12 @@ export type EmployeeTypeUncheckedUpdateWithoutEmployeesInput = {
 
 export type EmployeeTypeCountOutputType = {
   employees: number
+  holidayAssignments: number
 }
 
 export type EmployeeTypeCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   employees?: boolean | EmployeeTypeCountOutputTypeCountEmployeesArgs
+  holidayAssignments?: boolean | EmployeeTypeCountOutputTypeCountHolidayAssignmentsArgs
 }
 
 /**
@@ -463,6 +547,13 @@ export type EmployeeTypeCountOutputTypeCountEmployeesArgs<ExtArgs extends runtim
   where?: Prisma.EmployeeWhereInput
 }
 
+/**
+ * EmployeeTypeCountOutputType without action
+ */
+export type EmployeeTypeCountOutputTypeCountHolidayAssignmentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.HolidayEmployeeTypeWhereInput
+}
+
 
 export type EmployeeTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -471,6 +562,7 @@ export type EmployeeTypeSelect<ExtArgs extends runtime.Types.Extensions.Internal
   createdAt?: boolean
   updatedAt?: boolean
   employees?: boolean | Prisma.EmployeeType$employeesArgs<ExtArgs>
+  holidayAssignments?: boolean | Prisma.EmployeeType$holidayAssignmentsArgs<ExtArgs>
   _count?: boolean | Prisma.EmployeeTypeCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["employeeType"]>
 
@@ -501,6 +593,7 @@ export type EmployeeTypeSelectScalar = {
 export type EmployeeTypeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "noticePeriod" | "createdAt" | "updatedAt", ExtArgs["result"]["employeeType"]>
 export type EmployeeTypeInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   employees?: boolean | Prisma.EmployeeType$employeesArgs<ExtArgs>
+  holidayAssignments?: boolean | Prisma.EmployeeType$holidayAssignmentsArgs<ExtArgs>
   _count?: boolean | Prisma.EmployeeTypeCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type EmployeeTypeIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -510,6 +603,7 @@ export type $EmployeeTypePayload<ExtArgs extends runtime.Types.Extensions.Intern
   name: "EmployeeType"
   objects: {
     employees: Prisma.$EmployeePayload<ExtArgs>[]
+    holidayAssignments: Prisma.$HolidayEmployeeTypePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -912,6 +1006,7 @@ readonly fields: EmployeeTypeFieldRefs;
 export interface Prisma__EmployeeTypeClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   employees<T extends Prisma.EmployeeType$employeesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.EmployeeType$employeesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EmployeePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  holidayAssignments<T extends Prisma.EmployeeType$holidayAssignmentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.EmployeeType$holidayAssignmentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$HolidayEmployeeTypePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1360,6 +1455,30 @@ export type EmployeeType$employeesArgs<ExtArgs extends runtime.Types.Extensions.
   take?: number
   skip?: number
   distinct?: Prisma.EmployeeScalarFieldEnum | Prisma.EmployeeScalarFieldEnum[]
+}
+
+/**
+ * EmployeeType.holidayAssignments
+ */
+export type EmployeeType$holidayAssignmentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the HolidayEmployeeType
+   */
+  select?: Prisma.HolidayEmployeeTypeSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the HolidayEmployeeType
+   */
+  omit?: Prisma.HolidayEmployeeTypeOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.HolidayEmployeeTypeInclude<ExtArgs> | null
+  where?: Prisma.HolidayEmployeeTypeWhereInput
+  orderBy?: Prisma.HolidayEmployeeTypeOrderByWithRelationInput | Prisma.HolidayEmployeeTypeOrderByWithRelationInput[]
+  cursor?: Prisma.HolidayEmployeeTypeWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.HolidayEmployeeTypeScalarFieldEnum | Prisma.HolidayEmployeeTypeScalarFieldEnum[]
 }
 
 /**

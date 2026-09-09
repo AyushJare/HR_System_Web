@@ -198,7 +198,7 @@ export async function POST(
             "Designations",
             "Employee Types",
             "Holidays",
-            "Leave Types",
+            // "Leave Types",
             "Weekly Off",
         ];
 
@@ -231,7 +231,7 @@ export async function POST(
             designations: emptyResult(),
             employeeTypes: emptyResult(),
             holidays: emptyResult(),
-            leaveTypes: emptyResult(),
+            // leaveTypes: emptyResult(),
             weeklyOff: emptyResult(),
         };
 
@@ -262,12 +262,12 @@ export async function POST(
             endDate: Date;
         }[] = [];
 
-        const leaveTypeData: {
-            row: number;
-            name: string;
-            code: string;
-            defaultAnnualQuota: number;
-        }[] = [];
+        // const leaveTypeData: {
+        //     row: number;
+        //     name: string;
+        //     code: string;
+        //     defaultAnnualQuota: number;
+        // }[] = [];
 
         const weeklyOffData: {
             row: number;
@@ -707,175 +707,175 @@ export async function POST(
         }
 
         // =========================================================
-        // 5. LEAVE TYPES
+        // 5. LEAVE TYPES - DISABLED
         // =========================================================
 
-        const leaveTypesSheet =
-            workbook.getWorksheet(
-                "Leave Types"
-            )!;
+        // const leaveTypesSheet =
+        //     workbook.getWorksheet(
+        //         "Leave Types"
+        //     )!;
 
-        const leaveTypeHeaders = [
-            getCellString(
-                leaveTypesSheet.getRow(1),
-                1
-            ),
-            getCellString(
-                leaveTypesSheet.getRow(1),
-                2
-            ),
-            getCellString(
-                leaveTypesSheet.getRow(1),
-                3
-            ),
-        ];
+        // const leaveTypeHeaders = [
+        //     getCellString(
+        //         leaveTypesSheet.getRow(1),
+        //         1
+        //     ),
+        //     getCellString(
+        //         leaveTypesSheet.getRow(1),
+        //         2
+        //     ),
+        //     getCellString(
+        //         leaveTypesSheet.getRow(1),
+        //         3
+        //     ),
+        // ];
 
-        if (
-            leaveTypeHeaders[0] !==
-            "Leave Name" ||
-            leaveTypeHeaders[1] !== "Code" ||
-            leaveTypeHeaders[2] !==
-            "Default Annual Quota"
-        ) {
-            errors.push({
-                sheet: "Leave Types",
-                row: 1,
-                field: "Header",
-                message:
-                    "Invalid Leave Types headers.",
-            });
-        } else {
-            const batchNames =
-                new Set<string>();
+        // if (
+        //     leaveTypeHeaders[0] !==
+        //     "Leave Name" ||
+        //     leaveTypeHeaders[1] !== "Code" ||
+        //     leaveTypeHeaders[2] !==
+        //     "Default Annual Quota"
+        // ) {
+        //     errors.push({
+        //         sheet: "Leave Types",
+        //         row: 1,
+        //         field: "Header",
+        //         message:
+        //             "Invalid Leave Types headers.",
+        //     });
+        // } else {
+        //     const batchNames =
+        //         new Set<string>();
 
-            const batchCodes =
-                new Set<string>();
+        //     const batchCodes =
+        //         new Set<string>();
 
-            for (
-                let rowNumber = 2;
-                rowNumber <=
-                leaveTypesSheet.rowCount;
-                rowNumber++
-            ) {
-                const row =
-                    leaveTypesSheet.getRow(
-                        rowNumber
-                    );
+        //     for (
+        //         let rowNumber = 2;
+        //         rowNumber <=
+        //         leaveTypesSheet.rowCount;
+        //         rowNumber++
+        //     ) {
+        //         const row =
+        //             leaveTypesSheet.getRow(
+        //                 rowNumber
+        //             );
 
-                if (isEmptyRow(row)) {
-                    continue;
-                }
+        //         if (isEmptyRow(row)) {
+        //             continue;
+        //         }
 
-                const name =
-                    getCellString(row, 1);
+        //         const name =
+        //             getCellString(row, 1);
 
-                const code =
-                    getCellString(row, 2);
+        //         const code =
+        //             getCellString(row, 2);
 
-                const quota =
-                    Number(
-                        row.getCell(3).value
-                    );
+        //         const quota =
+        //             Number(
+        //                 row.getCell(3).value
+        //             );
 
-                if (!name) {
-                    errors.push({
-                        sheet: "Leave Types",
-                        row: rowNumber,
-                        field:
-                            "Leave Name",
-                        message:
-                            "Leave name is required.",
-                    });
+        //         if (!name) {
+        //             errors.push({
+        //                 sheet: "Leave Types",
+        //                 row: rowNumber,
+        //                 field:
+        //                     "Leave Name",
+        //                 message:
+        //                     "Leave name is required.",
+        //             });
 
-                    continue;
-                }
+        //             continue;
+        //         }
 
-                if (!code) {
-                    errors.push({
-                        sheet: "Leave Types",
-                        row: rowNumber,
-                        field: "Code",
-                        message:
-                            "Leave code is required.",
-                    });
+        //         if (!code) {
+        //             errors.push({
+        //                 sheet: "Leave Types",
+        //                 row: rowNumber,
+        //                 field: "Code",
+        //                 message:
+        //                     "Leave code is required.",
+        //             });
 
-                    continue;
-                }
+        //             continue;
+        //         }
 
-                if (
-                    !Number.isInteger(
-                        quota
-                    ) ||
-                    quota < 0
-                ) {
-                    errors.push({
-                        sheet: "Leave Types",
-                        row: rowNumber,
-                        field:
-                            "Default Annual Quota",
-                        message:
-                            "Annual quota must be a whole number greater than or equal to 0.",
-                    });
+        //         if (
+        //             !Number.isInteger(
+        //                 quota
+        //             ) ||
+        //             quota < 0
+        //         ) {
+        //             errors.push({
+        //                 sheet: "Leave Types",
+        //                 row: rowNumber,
+        //                 field:
+        //                     "Default Annual Quota",
+        //                 message:
+        //                     "Annual quota must be a whole number greater than or equal to 0.",
+        //             });
 
-                    continue;
-                }
+        //             continue;
+        //         }
 
-                const normalizedName =
-                    name.toLowerCase();
+        //         const normalizedName =
+        //             name.toLowerCase();
 
-                const normalizedCode =
-                    code.toLowerCase();
+        //         const normalizedCode =
+        //             code.toLowerCase();
 
-                if (
-                    batchNames.has(
-                        normalizedName
-                    )
-                ) {
-                    errors.push({
-                        sheet: "Leave Types",
-                        row: rowNumber,
-                        field:
-                            "Leave Name",
-                        message:
-                            "Duplicate leave name in this upload.",
-                    });
+        //         if (
+        //             batchNames.has(
+        //                 normalizedName
+        //             )
+        //         ) {
+        //             errors.push({
+        //                 sheet: "Leave Types",
+        //                 row: rowNumber,
+        //                 field:
+        //                     "Leave Name",
+        //                 message:
+        //                     "Duplicate leave name in this upload.",
+        //             });
 
-                    continue;
-                }
+        //             continue;
+        //         }
 
-                if (
-                    batchCodes.has(
-                        normalizedCode
-                    )
-                ) {
-                    errors.push({
-                        sheet: "Leave Types",
-                        row: rowNumber,
-                        field: "Code",
-                        message:
-                            "Duplicate leave code in this upload.",
-                    });
+        //         if (
+        //             batchCodes.has(
+        //                 normalizedCode
+        //             )
+        //         ) {
+        //             errors.push({
+        //                 sheet: "Leave Types",
+        //                 row: rowNumber,
+        //                 field: "Code",
+        //                 message:
+        //                     "Duplicate leave code in this upload.",
+        //             });
 
-                    continue;
-                }
+        //             continue;
+        //         }
 
-                batchNames.add(
-                    normalizedName
-                );
+        //         batchNames.add(
+        //             normalizedName
+        //         );
 
-                batchCodes.add(
-                    normalizedCode
-                );
+        //         batchCodes.add(
+        //             normalizedCode
+        //         );
 
-                leaveTypeData.push({
-                    row: rowNumber,
-                    name,
-                    code,
-                    defaultAnnualQuota:
-                        quota,
-                });
-            }
-        }
+        //         leaveTypeData.push({
+        //             row: rowNumber,
+        //             name,
+        //             code,
+        //             defaultAnnualQuota:
+        //                 quota,
+        //         });
+        //     }
+        // }
 
         // =========================================================
         // 6. WEEKLY OFF
@@ -1310,156 +1310,156 @@ export async function POST(
                 }
 
                 // -------------------------------------------------
-                // LEAVE TYPES
+                // LEAVE TYPES - DISABLED
                 // -------------------------------------------------
 
-                for (
-                    const item of leaveTypeData
-                ) {
-                    const existingByName =
-                        await tx.leaveType.findFirst(
-                            {
-                                where: {
-                                    name: {
-                                        equals:
-                                            item.name,
-                                        mode: "insensitive",
-                                    },
-                                },
-                            }
-                        );
+                // for (
+                //     const item of leaveTypeData
+                // ) {
+                //     const existingByName =
+                //         await tx.leaveType.findFirst(
+                //             {
+                //                 where: {
+                //                     name: {
+                //                         equals:
+                //                             item.name,
+                //                         mode: "insensitive",
+                //                     },
+                //                 },
+                //             }
+                //         );
 
-                    const existingByCode =
-                        await tx.leaveType.findFirst(
-                            {
-                                where: {
-                                    code: {
-                                        equals:
-                                            item.code,
-                                        mode: "insensitive",
-                                    },
-                                },
-                            }
-                        );
+                //     const existingByCode =
+                //         await tx.leaveType.findFirst(
+                //             {
+                //                 where: {
+                //                     code: {
+                //                         equals:
+                //                             item.code,
+                //                         mode: "insensitive",
+                //                     },
+                //                 },
+                //             }
+                //         );
 
-                    if (
-                        existingByName &&
-                        existingByCode
-                    ) {
-                        if (
-                            existingByName.id ===
-                            existingByCode.id &&
-                            (existingByName.defaultAnnualQuota !==
-                                item.defaultAnnualQuota ||
-                                existingByName.code !==
-                                item.code)
-                        ) {
-                            await tx.leaveType.update(
-                                {
-                                    where: {
-                                        id:
-                                            existingByName.id,
-                                    },
-                                    data: {
-                                        code:
-                                            item.code,
-                                        defaultAnnualQuota:
-                                            item.defaultAnnualQuota,
-                                    },
-                                }
-                            );
+                //     if (
+                //         existingByName &&
+                //         existingByCode
+                //     ) {
+                //         if (
+                //             existingByName.id ===
+                //             existingByCode.id &&
+                //             (existingByName.defaultAnnualQuota !==
+                //                 item.defaultAnnualQuota ||
+                //                 existingByName.code !==
+                //                 item.code)
+                //         ) {
+                //             await tx.leaveType.update(
+                //                 {
+                //                     where: {
+                //                         id:
+                //                             existingByName.id,
+                //                     },
+                //                     data: {
+                //                         code:
+                //                             item.code,
+                //                         defaultAnnualQuota:
+                //                             item.defaultAnnualQuota,
+                //                     },
+                //                 }
+                //             );
 
-                            results.leaveTypes.updated++;
-                        } else {
-                            results.leaveTypes.skipped++;
-                        }
+                //             results.leaveTypes.updated++;
+                //         } else {
+                //             results.leaveTypes.skipped++;
+                //         }
 
-                        continue;
-                    }
+                //         continue;
+                //     }
 
-                    if (
-                        existingByName &&
-                        !existingByCode
-                    ) {
-                        await tx.leaveType.update(
-                            {
-                                where: {
-                                    id:
-                                        existingByName.id,
-                                },
-                                data: {
-                                    code:
-                                        item.code,
-                                    defaultAnnualQuota:
-                                        item.defaultAnnualQuota,
-                                },
-                            }
-                        );
+                //     if (
+                //         existingByName &&
+                //         !existingByCode
+                //     ) {
+                //         await tx.leaveType.update(
+                //             {
+                //                 where: {
+                //                     id:
+                //                         existingByName.id,
+                //                 },
+                //                 data: {
+                //                     code:
+                //                         item.code,
+                //                     defaultAnnualQuota:
+                //                         item.defaultAnnualQuota,
+                //                 },
+                //             }
+                //         );
 
-                        results.leaveTypes.updated++;
-                        continue;
-                    }
+                //         results.leaveTypes.updated++;
+                //         continue;
+                //     }
 
-                    if (
-                        existingByCode &&
-                        !existingByName
-                    ) {
-                        errors.push({
-                            sheet:
-                                "Leave Types",
-                            row: item.row,
-                            field: "Code",
-                            message:
-                                `Leave code "${item.code}" already belongs to another leave type.`,
-                        });
+                //     if (
+                //         existingByCode &&
+                //         !existingByName
+                //     ) {
+                //         errors.push({
+                //             sheet:
+                //                 "Leave Types",
+                //             row: item.row,
+                //             field: "Code",
+                //             message:
+                //                 `Leave code "${item.code}" already belongs to another leave type.`,
+                //         });
 
-                        continue;
-                    }
+                //         continue;
+                //     }
 
-                    const created =
-                        await tx.leaveType.create(
-                            {
-                                data: {
-                                    name:
-                                        item.name,
-                                    code:
-                                        item.code,
-                                    defaultAnnualQuota:
-                                        item.defaultAnnualQuota,
-                                },
-                            }
-                        );
+                //     const created =
+                //         await tx.leaveType.create(
+                //             {
+                //                 data: {
+                //                     name:
+                //                         item.name,
+                //                     code:
+                //                         item.code,
+                //                     defaultAnnualQuota:
+                //                         item.defaultAnnualQuota,
+                //                 },
+                //             }
+                //         );
 
-                    await tx.auditLog.create({
-                        data: {
-                            employeeId:
-                                auth.session
-                                    .sub,
+                //     await tx.auditLog.create({
+                //         data: {
+                //             employeeId:
+                //                 auth.session
+                //                     .sub,
 
-                            action:
-                                "LEAVE_TYPE_CREATED",
+                //             action:
+                //                 "LEAVE_TYPE_CREATED",
 
-                            entity:
-                                "LeaveType",
+                //             entity:
+                //                 "LeaveType",
 
-                            entityId:
-                                created.id,
+                //             entityId:
+                //                 created.id,
 
-                            metadata: {
-                                source:
-                                    "MASTER_BULK_UPLOAD",
-                                name:
-                                    item.name,
-                                code:
-                                    item.code,
-                                defaultAnnualQuota:
-                                    item.defaultAnnualQuota,
-                            },
-                        },
-                    });
+                //             metadata: {
+                //                 source:
+                //                     "MASTER_BULK_UPLOAD",
+                //                 name:
+                //                     item.name,
+                //                 code:
+                //                     item.code,
+                //                 defaultAnnualQuota:
+                //                     item.defaultAnnualQuota,
+                //             },
+                //         },
+                //     });
 
-                    results.leaveTypes.created++;
-                }
+                //     results.leaveTypes.created++;
+                // }
 
                 // -------------------------------------------------
                 // WEEKLY OFF
@@ -1589,7 +1589,7 @@ export async function POST(
             results.designations.created +
             results.employeeTypes.created +
             results.holidays.created +
-            results.leaveTypes.created +
+            // results.leaveTypes.created +
             results.weeklyOff.created;
 
         const totalUpdated =
@@ -1597,7 +1597,7 @@ export async function POST(
             results.designations.updated +
             results.employeeTypes.updated +
             results.holidays.updated +
-            results.leaveTypes.updated +
+            // results.leaveTypes.updated +
             results.weeklyOff.updated;
 
         const totalSkipped =
@@ -1605,7 +1605,7 @@ export async function POST(
             results.designations.skipped +
             results.employeeTypes.skipped +
             results.holidays.skipped +
-            results.leaveTypes.skipped +
+            // results.leaveTypes.skipped +
             results.weeklyOff.skipped;
 
         return NextResponse.json({

@@ -63,7 +63,9 @@ export const PERMISSION_MODULES: ModuleConfig[] = [
                     { key: "Holiday Template", label: "Holiday Template", actions: ["view"] },
                 ],
             },
-            { key: "Leave Types", label: "Leave Types", actions: ["view", "add", "edit", "delete"] },
+
+            // { key: "Leave Types", label: "Leave Types", actions: ["view", "add", "edit", "delete"] },
+
             { key: "Weekly Off", label: "Weekly Off", actions: ["view", "edit"] },
             { key: "Masters Bulk Upload", label: "Masters Bulk Upload", actions: ["view", "import"] },
             { key: "Masters Template", label: "Masters Template", actions: ["view"] },
@@ -75,7 +77,8 @@ export const PERMISSION_MODULES: ModuleConfig[] = [
         label: "Approvals",
         actions: ["view", "add", "edit", "delete"],
         children: [
-            { key: "Leave Approvals", label: "Leave Approvals", actions: ["view", "add", "edit"] },
+            // { key: "Leave Approvals", label: "Leave Approvals", actions: ["view", "add", "edit"] },
+
             { key: "Attendance Correction Approvals", label: "Attendance Correction Approvals", actions: ["view", "add", "edit"] },
             { key: "Approve Requests", label: "Approve Requests", actions: ["edit"] },
             { key: "Reject Requests", label: "Reject Requests", actions: ["edit"] },

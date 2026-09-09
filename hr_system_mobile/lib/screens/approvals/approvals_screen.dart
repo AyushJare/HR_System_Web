@@ -13,9 +13,9 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
   late final TabController tabController;
 
   List<Map<String, dynamic>> loginApprovals = [];
-  List<Map<String, dynamic>> leaveApprovals = [];
+  // List<Map<String, dynamic>> leaveApprovals = [];
   List<Map<String, dynamic>> attendanceApprovals = [];
-  List<Map<String, dynamic>> leaveTypes = [];
+  // List<Map<String, dynamic>> leaveTypes = [];
 
   bool loading = true;
   String? error;
@@ -27,10 +27,9 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
   void initState() {
     super.initState();
 
-    tabController = TabController(
-      length: 3,
-      vsync: this,
-    );
+    // Leave approvals have been disabled.
+    // Only Login and Attendance Correction approvals are active.
+    tabController = TabController(length: 2, vsync: this);
 
     loadApprovals();
   }
@@ -50,11 +49,10 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
     }
 
     try {
-      final loginData =
-          await ApprovalService.getLoginApprovals();
+      final loginData = await ApprovalService.getLoginApprovals();
 
-      final leaveData =
-          await ApprovalService.getLeaveApprovals();
+      // Leave approvals disabled.
+      // final leaveData = await ApprovalService.getLeaveApprovals();
 
       final attendanceData =
           await ApprovalService.getAttendanceCorrectionApprovals();
@@ -63,7 +61,10 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
 
       setState(() {
         loginApprovals = loginData;
-        leaveApprovals = leaveData;
+
+        // Leave approvals disabled.
+        // leaveApprovals = leaveData;
+
         attendanceApprovals = attendanceData;
         loading = false;
       });
@@ -71,10 +72,7 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
       if (!mounted) return;
 
       setState(() {
-        error = e.toString().replaceFirst(
-              'Exception: ',
-              '',
-            );
+        error = e.toString().replaceFirst('Exception: ', '');
         loading = false;
       });
     }
@@ -94,9 +92,12 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
     try {
       if (type == 'LOGIN') {
         await ApprovalService.approveLogin(id);
-      } else if (type == 'LEAVE') {
-        await ApprovalService.approveLeave(id);
-      } else {
+      }
+      // Leave approvals disabled.
+      // else if (type == 'LEAVE') {
+      //   await ApprovalService.approveLeave(id);
+      // }
+      else {
         await ApprovalService.approveAttendanceCorrection(id);
       }
 
@@ -106,12 +107,7 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
 
       await loadApprovals();
     } catch (e) {
-      _showMessage(
-        e.toString().replaceFirst(
-              'Exception: ',
-              '',
-            ),
-      );
+      _showMessage(e.toString().replaceFirst('Exception: ', ''));
     }
   }
 
@@ -133,13 +129,13 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
     try {
       if (type == 'LOGIN') {
         await ApprovalService.rejectLogin(id, reason);
-      } else if (type == 'LEAVE') {
-        await ApprovalService.rejectLeave(id, reason);
-      } else {
-        await ApprovalService.rejectAttendanceCorrection(
-          id,
-          reason,
-        );
+      }
+      // Leave approvals disabled.
+      // else if (type == 'LEAVE') {
+      //   await ApprovalService.rejectLeave(id, reason);
+      // }
+      else {
+        await ApprovalService.rejectAttendanceCorrection(id, reason);
       }
 
       if (!mounted) return;
@@ -148,12 +144,7 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
 
       await loadApprovals();
     } catch (e) {
-      _showMessage(
-        e.toString().replaceFirst(
-              'Exception: ',
-              '',
-            ),
-      );
+      _showMessage(e.toString().replaceFirst('Exception: ', ''));
     }
   }
 
@@ -223,11 +214,9 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
   void _showMessage(String message) {
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-      ),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -257,35 +246,31 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
           indicatorColor: _brandGreen,
           indicatorWeight: 3,
           tabs: const [
-            Tab(
-              text: 'Login',
-              icon: Icon(Icons.location_on_outlined),
-            ),
-            Tab(
-              text: 'Leaves',
-              icon: Icon(Icons.event_note),
-            ),
-            Tab(
-              text: 'Attendance',
-              icon: Icon(Icons.access_time),
-            ),
+            Tab(text: 'Login', icon: Icon(Icons.location_on_outlined)),
+
+            // Leave approvals disabled.
+            // Tab(
+            //   text: 'Leaves',
+            //   icon: Icon(Icons.event_note),
+            // ),
+            Tab(text: 'Attendance', icon: Icon(Icons.access_time)),
           ],
         ),
       ),
       body: loading
-          ? const Center(
-              child: CircularProgressIndicator(color: _brandGreen),
-            )
+          ? const Center(child: CircularProgressIndicator(color: _brandGreen))
           : error != null
-              ? _buildError()
-              : TabBarView(
-                  controller: tabController,
-                  children: [
-                    _buildLoginApprovals(),
-                    _buildLeaveApprovals(),
-                    _buildAttendanceApprovals(),
-                  ],
-                ),
+          ? _buildError()
+          : TabBarView(
+              controller: tabController,
+              children: [
+                _buildLoginApprovals(),
+
+                // Leave approvals disabled.
+                // _buildLeaveApprovals(),
+                _buildAttendanceApprovals(),
+              ],
+            ),
     );
   }
 
@@ -355,25 +340,25 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
     );
   }
 
-  Widget _buildLeaveApprovals() {
-    if (leaveApprovals.isEmpty) {
-      return _emptyView('No pending leave approvals');
-    }
-
-    return _approvalList(
-      leaveApprovals,
-      'LEAVE',
-      Icons.event_note_outlined,
-      const Color(0xFF9333EA),
-      const Color(0xFFF3E9FD),
-    );
-  }
+  // Leave approvals disabled.
+  //
+  // Widget _buildLeaveApprovals() {
+  //   if (leaveApprovals.isEmpty) {
+  //     return _emptyView('No pending leave approvals');
+  //   }
+  //
+  //   return _approvalList(
+  //     leaveApprovals,
+  //     'LEAVE',
+  //     Icons.event_note_outlined,
+  //     const Color(0xFF9333EA),
+  //     const Color(0xFFF3E9FD),
+  //   );
+  // }
 
   Widget _buildAttendanceApprovals() {
     if (attendanceApprovals.isEmpty) {
-      return _emptyView(
-        'No pending attendance corrections',
-      );
+      return _emptyView('No pending attendance corrections');
     }
 
     return _approvalList(
@@ -404,26 +389,14 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
 
           return _ApprovalCard(
             title: _employeeName(approval),
-            requestType: _requestType(
-              approval,
-              type,
-            ),
-            details: _detailsForApproval(
-              approval,
-              type,
-            ),
+            requestType: _requestType(approval, type),
+            details: _detailsForApproval(approval, type),
             status: _status(approval),
             icon: icon,
             accentColor: accentColor,
             backgroundColor: backgroundColor,
-            onApprove: () => approveApproval(
-              approval,
-              type,
-            ),
-            onReject: () => rejectApproval(
-              approval,
-              type,
-            ),
+            onApprove: () => approveApproval(approval, type),
+            onReject: () => rejectApproval(approval, type),
           );
         },
       ),
@@ -497,10 +470,7 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
         'Employee';
   }
 
-  String _requestType(
-    Map<String, dynamic> item,
-    String fallbackType,
-  ) {
+  String _requestType(Map<String, dynamic> item, String fallbackType) {
     final type = item['type']?.toString();
 
     if (type == 'LOCATION_BASED_LOGIN') {
@@ -511,9 +481,10 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
       return 'Attendance Correction';
     }
 
-    if (type == 'LEAVE') {
-      return 'Leave';
-    }
+    // Leave request type disabled.
+    // if (type == 'LEAVE') {
+    //   return 'Leave';
+    // }
 
     if (fallbackType == 'LOGIN') {
       return 'Location Login';
@@ -523,7 +494,10 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
       return 'Attendance Correction';
     }
 
-    return 'Leave';
+    // Leave fallback disabled.
+    // return 'Leave';
+
+    return 'Attendance Correction';
   }
 
   String _status(Map<String, dynamic> item) {
@@ -543,120 +517,63 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
     final result = <MapEntry<String, String>>[];
 
     if (type == 'LOGIN') {
-      _addDetail(
-        result,
-        'Date',
-        details['date'],
-      );
+      _addDetail(result, 'Date', details['date']);
 
-      _addDetail(
-        result,
-        'Latitude',
-        details['latitude'],
-      );
+      _addDetail(result, 'Latitude', details['latitude']);
 
-      _addDetail(
-        result,
-        'Longitude',
-        details['longitude'],
-      );
+      _addDetail(result, 'Longitude', details['longitude']);
 
-      _addDetail(
-        result,
-        'GPS Accuracy',
-        details['gpsAccuracy'],
-      );
+      _addDetail(result, 'GPS Accuracy', details['gpsAccuracy']);
 
-      _addDetail(
-        result,
-        'Distance from Office',
-        details['distanceFromOffice'],
-      );
+      _addDetail(result, 'Distance from Office', details['distanceFromOffice']);
 
-      _addDetail(
-        result,
-        'Allowed Radius',
-        details['allowedRadius'],
-      );
+      _addDetail(result, 'Allowed Radius', details['allowedRadius']);
 
-      _addDetail(
-        result,
-        'Location Mode',
-        details['locationMode'],
-      );
+      _addDetail(result, 'Location Mode', details['locationMode']);
 
-      _addDetail(
-        result,
-        'Approval Required',
-        details['approvalRequired'],
-      );
-    } else if (type == 'LEAVE') {
-      _addDetail(
-        result,
-        'Leave Type',
-        details['leaveTypeName'] ??
-            details['leaveType'] ??
-            details['leaveTypeId'],
-      );
-
-      _addDetail(
-        result,
-        'From Date',
-        details['fromDate'] ??
-            details['date'],
-      );
-
-      _addDetail(
-        result,
-        'To Date',
-        details['toDate'] ??
-            details['date'],
-      );
-
-      _addDetail(
-        result,
-        'Reason',
-        details['reason'],
-      );
-
-      _addDetail(
-        result,
-        'Leave Type ID',
-        details['leaveTypeId'],
-      );
-    } else {
-      _addDetail(
-        result,
-        'Date',
-        details['date'],
-      );
+      _addDetail(result, 'Approval Required', details['approvalRequired']);
+    }
+    // Leave approval details disabled.
+    //
+    // else if (type == 'LEAVE') {
+    //   _addDetail(
+    //     result,
+    //     'Leave Type',
+    //     details['leaveTypeName'] ??
+    //         details['leaveType'] ??
+    //         details['leaveTypeId'],
+    //   );
+    //
+    //   _addDetail(result, 'From Date', details['fromDate'] ?? details['date']);
+    //
+    //   _addDetail(result, 'To Date', details['toDate'] ?? details['date']);
+    //
+    //   _addDetail(result, 'Reason', details['reason']);
+    //
+    //   _addDetail(result, 'Leave Type ID', details['leaveTypeId']);
+    // }
+    else {
+      _addDetail(result, 'Date', details['date']);
 
       _addDetail(
         result,
         'Time In',
-        details['timeIn'] ??
-            details['checkInTime'],
+        details['timeIn'] ?? details['checkInTime'],
       );
 
       _addDetail(
         result,
         'Time Out',
-        details['timeOut'] ??
-            details['checkOutTime'],
+        details['timeOut'] ?? details['checkOutTime'],
       );
 
       _addDetail(
         result,
         'Status',
-        details['status'] ??
-            details['attendanceStatus'],
+        details['status'] ?? details['attendanceStatus'],
       );
 
-      _addDetail(
-        result,
-        'Reason',
-        details['reason'],
-      );
+      _addDetail(result, 'Reason', details['reason']);
     }
 
     return result;
@@ -673,9 +590,7 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
 
     if (text.isEmpty) return;
 
-    list.add(
-      MapEntry(label, text),
-    );
+    list.add(MapEntry(label, text));
   }
 }
 
@@ -705,9 +620,7 @@ class _ApprovalCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(
-        bottom: 12,
-      ),
+      margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -718,8 +631,7 @@ class _ApprovalCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
                 width: 42,
@@ -734,8 +646,7 @@ class _ApprovalCard extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       title,
@@ -757,9 +668,7 @@ class _ApprovalCard extends StatelessWidget {
                   ],
                 ),
               ),
-              _StatusChip(
-                status: status,
-              ),
+              _StatusChip(status: status),
             ],
           ),
           if (details.isNotEmpty) ...[
@@ -774,12 +683,9 @@ class _ApprovalCard extends StatelessWidget {
                 children: details
                     .map(
                       (detail) => Padding(
-                        padding: const EdgeInsets.only(
-                          bottom: 8,
-                        ),
+                        padding: const EdgeInsets.only(bottom: 8),
                         child: Row(
-                          crossAxisAlignment:
-                              CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             SizedBox(
                               width: 125,
@@ -850,9 +756,7 @@ class _ApprovalCard extends StatelessWidget {
 class _StatusChip extends StatelessWidget {
   final String status;
 
-  const _StatusChip({
-    required this.status,
-  });
+  const _StatusChip({required this.status});
 
   Color _colorFor(String status) {
     final normalized = status.toUpperCase();
@@ -873,15 +777,10 @@ class _StatusChip extends StatelessWidget {
     final color = _colorFor(status);
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 5,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        color: color.withValues(
-          alpha: 0.12,
-        ),
+        color: color.withValues(alpha: 0.12),
       ),
       child: Text(
         status,

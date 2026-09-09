@@ -44,11 +44,14 @@ export async function POST(request: NextRequest) {
     }
 
     // ---------------------------------------------------------
-    // GET EMPLOYEE + USER TYPE
+    // GET EMPLOYEE + USER TYPE + ASSIGNED OFFICE
     // ---------------------------------------------------------
     const employee = await prisma.employee.findUnique({
       where: { email: email.toLowerCase().trim() },
-      include: { userType: true },
+      include: {
+        userType: true,
+        office: true,
+      },
     });
 
     if (!employee || !employee.isActive) {
@@ -121,6 +124,10 @@ export async function POST(request: NextRequest) {
     console.log("LOCATION CHECK");
     console.log("Employee:", employee.fullName);
     console.log("UserType:", employee.userType?.locationMode);
+    console.log("Assigned Office:", employee.office?.name);
+    console.log("Office Latitude:", employee.office?.latitude);
+    console.log("Office Longitude:", employee.office?.longitude);
+    console.log("Office Radius:", employee.office?.radiusMeters);
     console.log("Latitude:", lat);
     console.log("Longitude:", lon);
     console.log("Accuracy:", accuracy);
@@ -137,12 +144,37 @@ export async function POST(request: NextRequest) {
     let locationCheckMessage = "";
 
     // ---------------------------------------------------------
+    // SELECT OFFICE FOR LOCATION CHECK
+    // ---------------------------------------------------------
+    // Restricted employees use their assigned office.
+    // The old New York location remains as the fallback for
+    // existing users who do not yet have an assigned office.
+    const locationOffice = employee.office
+      ? {
+        latitude: employee.office.latitude,
+        longitude: employee.office.longitude,
+        name: employee.office.name,
+        radiusMeters: employee.office.radiusMeters,
+      }
+      : OFFICE_LOCATION;
+
+    const allowedRadius = employee.office?.radiusMeters ?? LOCATION_RADIUS_METERS;
+
+    // ---------------------------------------------------------
     // CALCULATE DISTANCE WHEN LOCATION EXISTS
     // ---------------------------------------------------------
     if (hasValidCoordinates) {
-      const locationResult = isWithinOfficeRadius(lat!, lon!);
+      const locationResult = isWithinOfficeRadius(
+        lat!,
+        lon!,
+        locationOffice
+      );
+
       distanceFromOffice = locationResult.distance;
+
+      console.log("Office used for check:", locationOffice.name);
       console.log("Distance from office:", distanceFromOffice, "meters");
+      console.log("Allowed radius:", allowedRadius, "meters");
       console.log("Within radius:", locationResult.isWithin);
     }
 
@@ -171,6 +203,11 @@ export async function POST(request: NextRequest) {
               ipAddress: realIp,
               isMockLocation: isMock,
               distanceFromOffice: null,
+              officeId: employee.office?.id ?? null,
+              officeName: locationOffice.name,
+              officeLatitude: locationOffice.latitude,
+              officeLongitude: locationOffice.longitude,
+              allowedRadius,
               locationMode: employee.userType?.locationMode,
               loginAllowed: false,
               requiresApproval: false,
@@ -178,7 +215,9 @@ export async function POST(request: NextRequest) {
             },
           },
         });
+
         await logLoginAttempt(email, false, employee.id, "Location required");
+
         return NextResponse.json(
           { error: "Location permission is required for login." },
           { status: 403 }
@@ -204,8 +243,11 @@ export async function POST(request: NextRequest) {
               ipAddress: realIp,
               isMockLocation: true,
               distanceFromOffice,
-              officeLatitude: OFFICE_LOCATION.latitude,
-              officeLongitude: OFFICE_LOCATION.longitude,
+              officeId: employee.office?.id ?? null,
+              officeName: locationOffice.name,
+              officeLatitude: locationOffice.latitude,
+              officeLongitude: locationOffice.longitude,
+              allowedRadius,
               locationMode: employee.userType?.locationMode,
               loginAllowed: false,
               requiresApproval: false,
@@ -213,12 +255,14 @@ export async function POST(request: NextRequest) {
             },
           },
         });
+
         await logLoginAttempt(
           email,
           false,
           employee.id,
           "Mock location detected"
         );
+
         return NextResponse.json(
           { error: "Mock location detected. Login denied." },
           { status: 403 }
@@ -226,9 +270,14 @@ export async function POST(request: NextRequest) {
       }
 
       // -----------------------------------------------------
-      // WITHIN / OUTSIDE 100 METERS
+      // WITHIN / OUTSIDE ASSIGNED OFFICE RADIUS
       // -----------------------------------------------------
-      const locationResult = isWithinOfficeRadius(lat!, lon!);
+      const locationResult = isWithinOfficeRadius(
+        lat!,
+        lon!,
+        locationOffice
+      );
+
       distanceFromOffice = locationResult.distance;
 
       if (!locationResult.isWithin) {
@@ -257,7 +306,7 @@ export async function POST(request: NextRequest) {
           console.log("STICKY APPROVAL used, login allowed");
 
           locationCheckMessage =
-            `Location approved by admin. You are ${distanceFromOffice}m from the office. ` +
+            `Location approved by admin. You are ${distanceFromOffice}m from ${locationOffice.name}. ` +
             `Grace window: ${GRACE_WINDOW_MINUTES} min.`;
 
           await prisma.auditLog.create({
@@ -276,11 +325,17 @@ export async function POST(request: NextRequest) {
                 approvalId: stickyApproval.id,
                 approvedAt: stickyApproval.updatedAt.toISOString(),
                 graceWindowMinutes: GRACE_WINDOW_MINUTES,
+                officeId: employee.office?.id ?? null,
+                officeName: locationOffice.name,
+                officeLatitude: locationOffice.latitude,
+                officeLongitude: locationOffice.longitude,
+                allowedRadius,
                 loginAllowed: true,
                 timestamp: new Date().toISOString(),
               },
             },
           });
+
           // Flow falls through to the normal successful-login path.
         } else {
           // No recent approval → block and create new pending request
@@ -288,8 +343,8 @@ export async function POST(request: NextRequest) {
           allowLogin = false;
 
           locationCheckMessage =
-            `You are ${distanceFromOffice}m from the office. ` +
-            `The allowed radius is ${LOCATION_RADIUS_METERS}m. ` +
+            `You are ${distanceFromOffice}m from ${locationOffice.name}. ` +
+            `The allowed radius is ${allowedRadius}m. ` +
             `Manager approval is required.`;
 
           // Avoid stacking duplicate PENDING rows for the same employee
@@ -316,9 +371,11 @@ export async function POST(request: NextRequest) {
                   ipAddress: realIp,
                   isMockLocation: false,
                   distanceFromOffice,
-                  allowedRadius: LOCATION_RADIUS_METERS,
-                  officeLatitude: OFFICE_LOCATION.latitude,
-                  officeLongitude: OFFICE_LOCATION.longitude,
+                  allowedRadius,
+                  officeId: employee.office?.id ?? null,
+                  officeName: locationOffice.name,
+                  officeLatitude: locationOffice.latitude,
+                  officeLongitude: locationOffice.longitude,
                   locationMode: employee.userType?.locationMode,
                   timestamp: new Date().toISOString(),
                 },
@@ -343,9 +400,11 @@ export async function POST(request: NextRequest) {
                 ipAddress: realIp,
                 isMockLocation: false,
                 distanceFromOffice,
-                allowedRadius: LOCATION_RADIUS_METERS,
-                officeLatitude: OFFICE_LOCATION.latitude,
-                officeLongitude: OFFICE_LOCATION.longitude,
+                allowedRadius,
+                officeId: employee.office?.id ?? null,
+                officeName: locationOffice.name,
+                officeLatitude: locationOffice.latitude,
+                officeLongitude: locationOffice.longitude,
                 locationMode: employee.userType?.locationMode,
                 loginAllowed: false,
                 requiresApproval: true,
@@ -356,9 +415,11 @@ export async function POST(request: NextRequest) {
         }
       } else {
         // ---------------------------------------------------
-        // WITHIN 100 METERS
+        // WITHIN ASSIGNED OFFICE RADIUS
         // ---------------------------------------------------
-        locationCheckMessage = `Location verified. You are ${distanceFromOffice}m from the office.`;
+        locationCheckMessage =
+          `Location verified. You are ${distanceFromOffice}m from ${locationOffice.name}.`;
+
         console.log("WITHIN OFFICE RADIUS");
       }
     }
@@ -367,8 +428,10 @@ export async function POST(request: NextRequest) {
     // ---------------------------------------------------------
     else if (employee.userType?.locationMode === "UNRESTRICTED") {
       console.log("UNRESTRICTED mode detected");
+
       if (hasValidCoordinates) {
-        locationCheckMessage = `Location recorded. You are ${distanceFromOffice}m from the office.`;
+        locationCheckMessage =
+          `Location recorded. You are ${distanceFromOffice}m from ${locationOffice.name}.`;
       } else {
         locationCheckMessage = "Login allowed. Location was not available.";
       }
@@ -378,6 +441,7 @@ export async function POST(request: NextRequest) {
     // ---------------------------------------------------------
     else {
       console.log("No valid UserType/locationMode found");
+
       locationCheckMessage =
         "Login allowed. No location restriction configured.";
     }
@@ -394,7 +458,7 @@ export async function POST(request: NextRequest) {
           message: locationCheckMessage,
           requiresApproval: true,
           distance: distanceFromOffice,
-          allowedRadius: LOCATION_RADIUS_METERS,
+          allowedRadius,
         },
         { status: 403 }
       );
@@ -481,9 +545,11 @@ export async function POST(request: NextRequest) {
           ipAddress: realIp,
           isMockLocation: isMock,
           distanceFromOffice,
-          allowedRadius: LOCATION_RADIUS_METERS,
-          officeLatitude: OFFICE_LOCATION.latitude,
-          officeLongitude: OFFICE_LOCATION.longitude,
+          allowedRadius,
+          officeId: employee.office?.id ?? null,
+          officeName: locationOffice.name,
+          officeLatitude: locationOffice.latitude,
+          officeLongitude: locationOffice.longitude,
           locationMode: employee.userType?.locationMode ?? null,
           requiresApproval: false,
           loginAllowed: true,
@@ -543,6 +609,11 @@ export async function POST(request: NextRequest) {
         gpsAccuracy: hasValidAccuracy ? accuracy : null,
         distanceFromOffice,
         locationMode: employee.userType?.locationMode ?? null,
+        officeId: employee.office?.id ?? null,
+        officeName: locationOffice.name,
+        officeLatitude: locationOffice.latitude,
+        officeLongitude: locationOffice.longitude,
+        allowedRadius,
       },
     });
 

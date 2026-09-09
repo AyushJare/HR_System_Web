@@ -23,7 +23,7 @@ export async function GET() {
             designations,
             employeeTypes,
             holidays,
-            leaveTypes,
+            // leaveTypes,
             attendanceSettings,
         ] = await Promise.all([
             prisma.department.findMany({
@@ -42,9 +42,9 @@ export async function GET() {
                 orderBy: { date: "asc" },
             }),
 
-            prisma.leaveType.findMany({
-                orderBy: { name: "asc" },
-            }),
+            // prisma.leaveType.findMany({
+            //     orderBy: { name: "asc" },
+            // }),
 
             prisma.attendanceSettings.findFirst(),
         ]);
@@ -200,41 +200,41 @@ export async function GET() {
             { state: "frozen", ySplit: 1 },
         ];
         // =========================================================
-        // LEAVE TYPES
+        // LEAVE TYPES - DISABLED
         // =========================================================
 
-        const leaveTypeSheet =
-            workbook.addWorksheet("Leave Types");
+        // const leaveTypeSheet =
+        //     workbook.addWorksheet("Leave Types");
 
-        leaveTypeSheet.columns = [
-            {
-                header: "Leave Name",
-                key: "name",
-                width: 30,
-            },
-            {
-                header: "Code",
-                key: "code",
-                width: 15,
-            },
-            {
-                header: "Default Annual Quota",
-                key: "defaultAnnualQuota",
-                width: 25,
-            },
-        ];
+        // leaveTypeSheet.columns = [
+        //     {
+        //         header: "Leave Name",
+        //         key: "name",
+        //         width: 30,
+        //     },
+        //     {
+        //         header: "Code",
+        //         key: "code",
+        //         width: 15,
+        //     },
+        //     {
+        //         header: "Default Annual Quota",
+        //         key: "defaultAnnualQuota",
+        //         width: 25,
+        //     },
+        // ];
 
-        for (const leaveType of leaveTypes) {
-            leaveTypeSheet.addRow({
-                name: leaveType.name,
-                code: leaveType.code,
-                defaultAnnualQuota:
-                    leaveType.defaultAnnualQuota,
-            });
-        }
+        // for (const leaveType of leaveTypes) {
+        //     leaveTypeSheet.addRow({
+        //         name: leaveType.name,
+        //         code: leaveType.code,
+        //         defaultAnnualQuota:
+        //             leaveType.defaultAnnualQuota,
+        //     });
+        // }
 
-        styleHeader(leaveTypeSheet);
-        leaveTypeSheet.views = [{ state: "frozen", ySplit: 1 }];
+        // styleHeader(leaveTypeSheet);
+        // leaveTypeSheet.views = [{ state: "frozen", ySplit: 1 }];
 
         // =========================================================
         // WEEKLY OFF

@@ -24,6 +24,7 @@ export async function PUT(
   const name = body.name?.trim();
   const date = body.date;
   const description = body.description;
+  const employeeTypeIds = body.employeeTypeIds;
 
   if (!name || !date) {
     return NextResponse.json(
@@ -42,6 +43,15 @@ export async function PUT(
             ? description.trim()
             : null,
         date: new Date(date),
+
+        employeeTypeAssignments: {
+          deleteMany: {},
+          create: Array.isArray(employeeTypeIds)
+            ? employeeTypeIds.map((employeeTypeId: string) => ({
+              employeeTypeId,
+            }))
+            : [],
+        },
       },
     });
 

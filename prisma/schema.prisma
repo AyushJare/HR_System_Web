@@ -62,6 +62,7 @@ model EmployeeType {
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   employees    Employee[]
+  holidayAssignments HolidayEmployeeType[]
 
   @@map("employee_types")
 }
@@ -73,9 +74,22 @@ model Holiday {
   date        DateTime @db.Date
   createdAt   DateTime @default(now())
   updatedAt   DateTime @default(now()) @updatedAt
+  employeeTypeAssignments HolidayEmployeeType[]
 
   @@unique([name, date])
   @@map("holidays")
+}
+
+model HolidayEmployeeType {
+  id             String       @id @default(cuid())
+  holidayId      String
+  employeeTypeId String
+
+  holiday        Holiday      @relation(fields: [holidayId], references: [id], onDelete: Cascade)
+  employeeType   EmployeeType @relation(fields: [employeeTypeId], references: [id], onDelete: Cascade)
+
+  @@unique([holidayId, employeeTypeId])
+  @@map("holiday_employee_types")
 }
 
 model AttendanceSettings {
@@ -84,6 +98,19 @@ model AttendanceSettings {
   updatedAt     DateTime @updatedAt
 
   @@map("attendance_settings")
+}
+model Office {
+  id           String     @id @default(cuid())
+  name         String     @unique
+  latitude     Float
+  longitude    Float
+  radiusMeters Int        @default(100)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  employees    Employee[]
+
+  @@map("offices")
 }
 
 model LeaveType {
@@ -143,6 +170,9 @@ model Employee {
 
   userTypeId       String?
   userType         UserType?     @relation(fields: [userTypeId], references: [id])
+
+  officeId         String?
+  office            Office?       @relation(fields: [officeId], references: [id])
 
   createdById      String?
   createdBy        Employee?     @relation("EmployeeCreatedBy", fields: [createdById], references: [id])

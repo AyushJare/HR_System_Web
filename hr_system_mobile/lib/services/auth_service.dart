@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class AuthService {
-  static const String baseUrl = 'http://vmcbeta.onfees.com/';
+  static const String baseUrl = 'http://localhost:3000';
   static String? _accessToken;
   static String? _refreshToken;
 
@@ -60,6 +60,42 @@ class AuthService {
 
     if (_accessToken == null || _refreshToken == null) {
       throw Exception('Authentication tokens were not received');
+    }
+
+    return data;
+  }
+
+  // ============================================================
+  // FORGOT PASSWORD
+  // ============================================================
+
+  static Future<Map<String, dynamic>> forgotPassword({
+    required String firstName,
+    required String employeeCode,
+    required String mobile,
+    required String newPassword,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/auth/forgot-password'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'firstName': firstName,
+        'employeeCode': employeeCode,
+        'mobile': mobile,
+        'newPassword': newPassword,
+      }),
+    );
+
+    Map<String, dynamic> data = {};
+
+    try {
+      data = jsonDecode(response.body) as Map<String, dynamic>;
+    } catch (_) {}
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception(
+        data['error'] ?? data['message'] ?? 'Failed to reset password',
+      );
     }
 
     return data;

@@ -1,190 +1,232 @@
-import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/auth";
-import { checkIfDateIsOff } from "@/lib/attendanceUtils";
+// import { NextRequest, NextResponse } from "next/server";
+// import { prisma } from "@/lib/prisma";
+// import { getSession } from "@/lib/auth";
+// import { checkIfDateIsOff } from "@/lib/attendanceUtils";
 
-export async function POST(request: NextRequest) {
-    try {
-        const session = await getSession(request);
+// export async function POST(request: NextRequest) {
+//     try {
+//         const session = await getSession(request);
 
-        if (!session) {
-            return NextResponse.json(
-                { error: "Unauthorized" },
-                { status: 401 },
-            );
-        }
+//         if (!session) {
+//             return NextResponse.json(
+//                 { error: "Unauthorized" },
+//                 { status: 401 },
+//             );
+//         }
 
-        const body = await request.json();
+//         const body = await request.json();
+//         const employee = await prisma.employee.findUnique({
+//             where: {
+//                 id: session.sub,
+//             },
+//             select: {
+//                 employeeTypeId: true,
+//             },
+//         });
 
-        const {
-            type,
-            fromDate,
-            toDate,
-            reason,
-            leaveTypeId,
-        } = body ?? {};
+//         if (!employee) {
+//             return NextResponse.json(
+//                 { error: "Employee not found" },
+//                 { status: 404 },
+//             );
+//         }
 
-        if (
-            !type ||
-            !fromDate ||
-            !toDate ||
-            !leaveTypeId
-        ) {
-            return NextResponse.json(
-                {
-                    error:
-                        "type, fromDate, toDate and leaveTypeId are required",
-                },
-                { status: 400 },
-            );
-        }
+//         const {
+//             type,
+//             fromDate,
+//             toDate,
+//             reason,
+//             leaveTypeId,
+//         } = body ?? {};
 
-        const start = new Date(`${fromDate}T00:00:00.000Z`);
-        const end = new Date(`${toDate}T00:00:00.000Z`);
+//         if (
+//             !type ||
+//             !fromDate ||
+//             !toDate ||
+//             !leaveTypeId
+//         ) {
+//             return NextResponse.json(
+//                 {
+//                     error:
+//                         "type, fromDate, toDate and leaveTypeId are required",
+//                 },
+//                 { status: 400 },
+//             );
+//         }
 
-        if (
-            Number.isNaN(start.getTime()) ||
-            Number.isNaN(end.getTime())
-        ) {
-            return NextResponse.json(
-                { error: "Invalid leave dates" },
-                { status: 400 },
-            );
-        }
+//         const start = new Date(`${fromDate}T00:00:00.000Z`);
+//         const end = new Date(`${toDate}T00:00:00.000Z`);
 
-        if (start > end) {
-            return NextResponse.json(
-                {
-                    error:
-                        "Start date cannot be after end date",
-                },
-                { status: 400 },
-            );
-        }
+//         if (
+//             Number.isNaN(start.getTime()) ||
+//             Number.isNaN(end.getTime())
+//         ) {
+//             return NextResponse.json(
+//                 { error: "Invalid leave dates" },
+//                 { status: 400 },
+//             );
+//         }
 
-        // Validate every date in the requested range.
-        for (
-            let current = new Date(start);
-            current <= end;
-            current.setUTCDate(current.getUTCDate() + 1)
-        ) {
-            const dateString =
-                current.toISOString().split("T")[0];
+//         if (start > end) {
+//             return NextResponse.json(
+//                 {
+//                     error:
+//                         "Start date cannot be after end date",
+//                 },
+//                 { status: 400 },
+//             );
+//         }
 
-            const leaveDate = new Date(
-                `${dateString}T00:00:00.000Z`,
-            );
+//         // Validate every date in the requested range.
+//         for (
+//             let current = new Date(start);
+//             current <= end;
+//             current.setUTCDate(current.getUTCDate() + 1)
+//         ) {
+//             const dateString =
+//                 current.toISOString().split("T")[0];
 
-            const dateOffInfo =
-                await checkIfDateIsOff(leaveDate);
+//             const leaveDate = new Date(
+//                 `${dateString}T00:00:00.000Z`,
+//             );
 
-            if (dateOffInfo.isOff) {
-                return NextResponse.json(
-                    {
-                        error: `Leave cannot be applied for ${dateString} because it is a ${dateOffInfo.reason}.`,
-                    },
-                    { status: 409 },
-                );
-            }
+//             const dateOffInfo =
+//                 await checkIfDateIsOff(leaveDate);
 
-            const attendance =
-                await prisma.attendance.findUnique({
-                    where: {
-                        employeeId_date: {
-                            employeeId: session.sub,
-                            date: leaveDate,
-                        },
-                    },
-                });
+//             const applicableHoliday =
+//                 employee.employeeTypeId
+//                     ? await prisma.holiday.findFirst({
+//                         where: {
+//                             date: leaveDate,
+//                             employeeTypeAssignments: {
+//                                 some: {
+//                                     employeeTypeId:
+//                                         employee.employeeTypeId,
+//                                 },
+//                             },
+//                         },
+//                         select: {
+//                             id: true,
+//                             name: true,
+//                             date: true,
+//                         },
+//                     })
+//                     : null;
 
-            if (
-                attendance?.checkInTime ||
-                attendance?.checkOutTime
-            ) {
-                return NextResponse.json(
-                    {
-                        error: `Leave cannot be applied for ${dateString} because attendance already exists.`,
-                    },
-                    { status: 409 },
-                );
-            }
+//             const isWeeklyOff =
+//                 dateOffInfo.reason === "WEEKLY_OFF";
 
-            const existing =
-                await prisma.approval.findFirst({
-                    where: {
-                        type: "LEAVE",
-                        actorId: session.sub,
-                        status: {
-                            in: ["PENDING", "APPROVED"],
-                        },
-                        details: {
-                            path: ["date"],
-                            equals: dateString,
-                        },
-                    },
-                });
+//             if (isWeeklyOff || applicableHoliday) {
+//                 const reason = isWeeklyOff
+//                     ? "WEEKLY_OFF"
+//                     : "HOLIDAY";
 
-            if (existing) {
-                return NextResponse.json(
-                    {
-                        error: `Leave has already been applied for ${dateString}.`,
-                    },
-                    { status: 409 },
-                );
-            }
-        }
+//                 return NextResponse.json(
+//                     {
+//                         error: `Leave cannot be applied for ${dateString} because it is a ${reason}.`,
+//                     },
+//                     { status: 409 },
+//                 );
+//             }
 
-        // Create ONE approval for the entire date range.
-        const approval = await prisma.approval.create({
-            data: {
-                type: "LEAVE",
-                actorId: session.sub,
-                refId: null,
-                status: "PENDING",
-                details: {
-                    fromDate,
-                    toDate,
-                    reason: reason ?? null,
-                    leaveTypeId,
-                },
-            },
-        });
+//             const attendance =
+//                 await prisma.attendance.findUnique({
+//                     where: {
+//                         employeeId_date: {
+//                             employeeId: session.sub,
+//                             date: leaveDate,
+//                         },
+//                     },
+//                 });
 
-        await prisma.auditLog.create({
-            data: {
-                employeeId: session.sub,
-                action: "LEAVE_REQUESTED",
-                entity: "Approval",
-                entityId: approval.id,
-                metadata: {
-                    fromDate,
-                    toDate,
-                    reason: reason ?? null,
-                    leaveTypeId,
-                },
-            },
-        });
+//             if (
+//                 attendance?.checkInTime ||
+//                 attendance?.checkOutTime
+//             ) {
+//                 return NextResponse.json(
+//                     {
+//                         error: `Leave cannot be applied for ${dateString} because attendance already exists.`,
+//                     },
+//                     { status: 409 },
+//                 );
+//             }
 
-        return NextResponse.json(
-            {
-                success: true,
-                message:
-                    "Leave request submitted successfully",
-                request: approval,
-            },
-            { status: 201 },
-        );
-    } catch (error) {
-        console.error(
-            "Leave submission error:",
-            error,
-        );
+//             const existing =
+//                 await prisma.approval.findFirst({
+//                     where: {
+//                         type: "LEAVE",
+//                         actorId: session.sub,
+//                         status: {
+//                             in: ["PENDING", "APPROVED"],
+//                         },
+//                         details: {
+//                             path: ["date"],
+//                             equals: dateString,
+//                         },
+//                     },
+//                 });
 
-        return NextResponse.json(
-            {
-                error: "Failed to submit leave request",
-            },
-            { status: 500 },
-        );
-    }
-}
+//             if (existing) {
+//                 return NextResponse.json(
+//                     {
+//                         error: `Leave has already been applied for ${dateString}.`,
+//                     },
+//                     { status: 409 },
+//                 );
+//             }
+//         }
+
+//         // Create ONE approval for the entire date range.
+//         const approval = await prisma.approval.create({
+//             data: {
+//                 type: "LEAVE",
+//                 actorId: session.sub,
+//                 refId: null,
+//                 status: "PENDING",
+//                 details: {
+//                     fromDate,
+//                     toDate,
+//                     reason: reason ?? null,
+//                     leaveTypeId,
+//                 },
+//             },
+//         });
+
+//         await prisma.auditLog.create({
+//             data: {
+//                 employeeId: session.sub,
+//                 action: "LEAVE_REQUESTED",
+//                 entity: "Approval",
+//                 entityId: approval.id,
+//                 metadata: {
+//                     fromDate,
+//                     toDate,
+//                     reason: reason ?? null,
+//                     leaveTypeId,
+//                 },
+//             },
+//         });
+
+//         return NextResponse.json(
+//             {
+//                 success: true,
+//                 message:
+//                     "Leave request submitted successfully",
+//                 request: approval,
+//             },
+//             { status: 201 },
+//         );
+//     } catch (error) {
+//         console.error(
+//             "Leave submission error:",
+//             error,
+//         );
+
+//         return NextResponse.json(
+//             {
+//                 error: "Failed to submit leave request",
+//             },
+//             { status: 500 },
+//         );
+//     }
+// }

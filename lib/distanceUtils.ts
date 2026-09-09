@@ -31,30 +31,44 @@ function toRad(degrees: number): number {
 }
 
 // Office location
+// Kept as the fallback location so existing location checks
+// continue to work until the login flow uses the employee's
+// assigned office from the database.
 export const OFFICE_LOCATION = {
     latitude: 40.7128,
     longitude: -74.0060,
     name: "New York Office",
+    radiusMeters: 100,
 };
 
 export const LOCATION_RADIUS_METERS = 100;
 
+export type OfficeLocation = {
+    latitude: number;
+    longitude: number;
+    name?: string;
+    radiusMeters?: number;
+};
+
 export function isWithinOfficeRadius(
     userLat: number,
-    userLon: number
+    userLon: number,
+    office: OfficeLocation = OFFICE_LOCATION
 ): {
     isWithin: boolean;
     distance: number;
 } {
     const distance = haversineDistance(
-        OFFICE_LOCATION.latitude,
-        OFFICE_LOCATION.longitude,
+        office.latitude,
+        office.longitude,
         userLat,
         userLon
     );
 
+    const radius = office.radiusMeters ?? LOCATION_RADIUS_METERS;
+
     return {
-        isWithin: distance <= LOCATION_RADIUS_METERS,
+        isWithin: distance <= radius,
         distance: Math.round(distance * 100) / 100,
     };
 }

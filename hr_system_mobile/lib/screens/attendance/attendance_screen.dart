@@ -705,13 +705,13 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             )
           else if (!_isCheckedOut)
             Text(
-              'You are checked in. Check out when you finish for today.',
+              'You are checked in. Clock out when you finish for today.',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.grey.shade700),
             )
           else
             Text(
-              'Your check-in and check-out have been recorded.',
+              'Your Clock-in and Clock-out have been recorded.',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.grey.shade700),
             ),
@@ -721,7 +721,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             const SizedBox(height: 18),
             _TimeRow(
               icon: Icons.login,
-              label: 'Check-in Time',
+              label: 'Clock-In Time',
               value: _formatTime(_checkInTime),
             ),
           ],
@@ -739,7 +739,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             const SizedBox(height: 10),
             _TimeRow(
               icon: Icons.logout,
-              label: 'Check-out Time',
+              label: 'Clock-Out Time',
               value: _formatTime(_checkOutTime),
             ),
             const SizedBox(height: 10),
@@ -769,7 +769,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                         ),
                       )
                     : const Icon(Icons.login),
-                label: Text(actionLoading ? 'Getting location...' : 'Check In'),
+                label: Text(actionLoading ? 'Getting location...' : 'Clock-In'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _brandGreen,
                   foregroundColor: Colors.white,
@@ -795,7 +795,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                         ),
                       )
                     : const Icon(Icons.logout),
-                label: Text(actionLoading ? 'Processing...' : 'Check Out'),
+                label: Text(actionLoading ? 'Processing...' : 'Clock-Out'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFDC2626),
                   foregroundColor: Colors.white,

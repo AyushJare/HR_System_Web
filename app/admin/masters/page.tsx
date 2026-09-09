@@ -5,7 +5,7 @@ import DepartmentsTab from "./DepartmentsTab";
 import DesignationsTab from "./DesignationsTab";
 import EmployeeTypesTab from "./EmployeeTypesTab";
 import HolidaysTab from "./HolidaysTab";
-import LeaveTypesTab from "./LeaveTypesTab";
+// import LeaveTypesTab from "./LeaveTypesTab";
 import WeeklyOffTab from "./WeeklyOffTab";
 import PermissionGate from "../PermissionGate";
 import { usePermission } from "@/lib/hooks/userPermission";
@@ -15,7 +15,7 @@ const tabs = [
   { key: "designations", label: "Designations" },
   { key: "employeeTypes", label: "Employee Types" },
   { key: "holidays", label: "Holidays" },
-  { key: "leaveTypes", label: "Leave Types" },
+  // { key: "leaveTypes", label: "Leave Types" },
   { key: "weeklyOff", label: "Weekly Off" },
 ] as const;
 
@@ -154,7 +154,7 @@ export default function MastersPage() {
         {active === "designations" && <DesignationsTab />}
         {active === "employeeTypes" && <EmployeeTypesTab />}
         {active === "holidays" && <HolidaysTab />}
-        {active === "leaveTypes" && <LeaveTypesTab />}
+        {/* {active === "leaveTypes" && <LeaveTypesTab />} */}
         {active === "weeklyOff" && <WeeklyOffTab />}
 
         {showBulkUpload && (
@@ -336,6 +336,7 @@ export default function MastersPage() {
                       {uploadResult.details.holidays.skipped}
                     </div>
 
+                    {/* 
                     <div>
                       Leave Types — Created:{" "}
                       {uploadResult.details.leaveTypes.created},
@@ -344,6 +345,7 @@ export default function MastersPage() {
                       Skipped:{" "}
                       {uploadResult.details.leaveTypes.skipped}
                     </div>
+                    */}
 
                     <div>
                       Weekly Off — Created:{" "}
