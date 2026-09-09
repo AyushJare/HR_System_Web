@@ -256,47 +256,112 @@ export default function AttendancePage() {
     setSavingId(employeeId);
 
     try {
-      const res = await fetch("/api/attendance", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          employeeId,
-          date,
-          action,
-        }),
-      });
+      let res: Response;
+
+      if (action === "LOGIN") {
+        if (!navigator.geolocation) {
+          throw new Error(
+            "Geolocation is not supported by this browser."
+          );
+        }
+
+        toast.loading("Getting your location...", {
+          id: "attendance-location",
+        });
+
+        const position = await new Promise<GeolocationPosition>(
+          (resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(
+              resolve,
+              reject,
+              {
+                enableHighAccuracy: true,
+                timeout: 15000,
+                maximumAge: 0,
+              }
+            );
+          }
+        );
+
+        toast.dismiss("attendance-location");
+
+        res = await fetch("/api/attendance/check-in", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            gpsAccuracy: position.coords.accuracy,
+            deviceId: "web-browser",
+            isMockLocation: false,
+            timestamp: new Date().toISOString(),
+          }),
+        });
+      } else {
+        res = await fetch("/api/attendance", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            employeeId,
+            date,
+            action: "LOGOUT",
+          }),
+        });
+      }
 
       const data = await res.json();
 
       if (!res.ok) {
         throw new Error(
           data?.error ||
-          `Failed to ${action === "LOGIN" ? "log in" : "log out"
+          data?.message ||
+          `Failed to ${action === "LOGIN" ? "clock in" : "clock out"
           }`
         );
       }
 
       if (action === "LOGIN") {
-        toast.success("Logged in successfully");
+        toast.success("Clocked in successfully");
       } else {
-        toast.success("Logged out successfully");
+        toast.success("Clocked out successfully");
       }
 
       await load(date);
     } catch (error) {
+      toast.dismiss("attendance-location");
+
       console.error(
         `Attendance ${action.toLowerCase()} error:`,
         error
       );
 
-      toast.error(
+      let message =
         error instanceof Error
           ? error.message
-          : `Failed to ${action === "LOGIN" ? "log in" : "log out"
-          }`
-      );
+          : `Failed to ${action === "LOGIN" ? "clock in" : "clock out"
+          }`;
+
+      if (
+        action === "LOGIN" &&
+        error instanceof GeolocationPositionError
+      ) {
+        if (error.code === error.PERMISSION_DENIED) {
+          message =
+            "Location permission was denied. Please allow location access to clock in.";
+        } else if (error.code === error.POSITION_UNAVAILABLE) {
+          message =
+            "Unable to determine your location. Please try again.";
+        } else if (error.code === error.TIMEOUT) {
+          message =
+            "Location request timed out. Please try again.";
+        }
+      }
+
+      toast.error(message);
     } finally {
       setSavingId(null);
     }

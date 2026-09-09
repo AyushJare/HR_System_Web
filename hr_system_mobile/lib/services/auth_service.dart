@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class AuthService {
-  static const String baseUrl = 'https://vmcbeta.onfees.com';
+  static const String baseUrl = 'http://localhost:3000';
   static String? _accessToken;
   static String? _refreshToken;
 
@@ -16,25 +16,12 @@ class AuthService {
 
   static Future<Map<String, dynamic>> login(
     String email,
-    String password, {
-    double? latitude,
-    double? longitude,
-    double? gpsAccuracy,
-    String? deviceId,
-    bool isMockLocation = false,
-  }) async {
+    String password,
+  ) async {
     final response = await http.post(
       Uri.parse('$baseUrl/api/auth/login'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'email': email,
-        'password': password,
-        if (latitude != null) 'latitude': latitude,
-        if (longitude != null) 'longitude': longitude,
-        if (gpsAccuracy != null) 'gpsAccuracy': gpsAccuracy,
-        if (deviceId != null) 'deviceId': deviceId,
-        'isMockLocation': isMockLocation,
-      }),
+      body: jsonEncode({'email': email, 'password': password}),
     );
 
     Map<String, dynamic> data = {};

@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
-
 import '../../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -33,36 +31,6 @@ class _LoginScreenState extends State<LoginScreen> {
   String? forgotError;
   String? forgotSuccess;
 
-  Future<Position> _getCurrentLocation() async {
-    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-
-    if (!serviceEnabled) {
-      throw Exception(
-        'Location services are disabled. Please enable GPS and try again.',
-      );
-    }
-
-    var permission = await Geolocator.checkPermission();
-
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-    }
-
-    if (permission == LocationPermission.denied) {
-      throw Exception('Location permission is required for login.');
-    }
-
-    if (permission == LocationPermission.deniedForever) {
-      throw Exception(
-        'Location permission is permanently denied. Please enable it from device settings.',
-      );
-    }
-
-    return Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
-    );
-  }
-
   Future<void> handleLogin() async {
     FocusScope.of(context).unfocus();
 
@@ -89,27 +57,7 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      final position = await _getCurrentLocation();
-
-      final result = await AuthService.login(
-        email,
-        password,
-        latitude: position.latitude,
-        longitude: position.longitude,
-        gpsAccuracy: position.accuracy,
-      );
-
-      if (result['requiresApproval'] == true) {
-        if (!mounted) return;
-
-        setState(() {
-          error =
-              result['message']?.toString() ??
-              'Your location is outside the allowed radius. Admin approval is required.';
-        });
-
-        return;
-      }
+      final result = await AuthService.login(email, password);
 
       if (!mounted) return;
 
