@@ -1309,8 +1309,7 @@ export default function EditEmployeePage() {
             )}
 
             <p className="mt-2 text-xs text-slate-500">
-              The selected office is used for location-based login verification.
-            </p>
+              The selected office is used for location-based clock-in verification.            </p>
           </div>
         </div>
 

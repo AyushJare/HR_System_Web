@@ -18,6 +18,9 @@ interface AuditLogEntry {
 }
 
 const actionColors: Record<string, string> = {
+  ATTENDANCE_CLOCK_IN_OUTSIDE_RADIUS:
+    "bg-red-50 text-red-700 border-red-200",
+
   EMPLOYEE_CREATED:
     "bg-emerald-50 text-emerald-700 border-emerald-200",
 
@@ -47,6 +50,10 @@ const actionColors: Record<string, string> = {
 };
 
 function formatAction(action: string) {
+  if (action === "ATTENDANCE_CLOCK_IN_OUTSIDE_RADIUS") {
+    return "Attempt Login";
+  }
+
   return action
     .split("_")
     .map(
@@ -274,6 +281,11 @@ export default function AuditLogPage() {
                     ? Number(metadata.longitude)
                     : null;
 
+                const locationName = getString(
+                  metadata,
+                  "locationName"
+                );
+
                 const gpsAccuracy =
                   metadata?.gpsAccuracy !== undefined
                     ? Number(metadata.gpsAccuracy)
@@ -336,7 +348,9 @@ export default function AuditLogPage() {
                 );
 
                 const isLocationLogin =
-                  log.action === "LOGIN_WITH_LOCATION";
+                  log.action === "LOGIN_WITH_LOCATION" ||
+                  log.action === "ATTENDANCE_LOGGED_IN" ||
+                  log.action === "ATTENDANCE_CLOCK_IN_OUTSIDE_RADIUS";
 
                 const isAttendanceLogin =
                   log.action === "ATTENDANCE_LOGGED_IN";
@@ -486,16 +500,23 @@ export default function AuditLogPage() {
                         LOCATION
                         ================================================= */}
                     <td className="px-6 py-3 text-sm">
-                      {isLocationLogin &&
-                        latitude !== null &&
-                        longitude !== null &&
-                        !Number.isNaN(latitude) &&
-                        !Number.isNaN(longitude) ? (
+                      {isLocationLogin ? (
                         <div className="text-xs space-y-1 whitespace-nowrap">
-                          <p>
-                            📍 {latitude.toFixed(4)},{" "}
-                            {longitude.toFixed(4)}
-                          </p>
+                          {locationName ? (
+                            <p className="font-medium text-slate-700">
+                              📍 {locationName}
+                            </p>
+                          ) : (
+                            latitude !== null &&
+                            longitude !== null &&
+                            !Number.isNaN(latitude) &&
+                            !Number.isNaN(longitude) && (
+                              <p className="font-mono text-slate-400">
+                                📍 {latitude.toFixed(4)},{" "}
+                                {longitude.toFixed(4)}
+                              </p>
+                            )
+                          )}
 
                           {gpsAccuracy !== null &&
                             !Number.isNaN(gpsAccuracy) && (
@@ -520,12 +541,20 @@ export default function AuditLogPage() {
                                 {" from office"}
                               </p>
                             )}
+
+                          {!locationName &&
+                            (latitude === null ||
+                              longitude === null ||
+                              Number.isNaN(latitude) ||
+                              Number.isNaN(longitude)) && (
+                              <p className="text-slate-400">
+                                No location
+                              </p>
+                            )}
                         </div>
                       ) : (
                         <span className="text-slate-400">
-                          {isLocationLogin
-                            ? "No location"
-                            : "—"}
+                          —
                         </span>
                       )}
                     </td>

@@ -35,9 +35,67 @@ interface UploadResult {
   error?: string;
 }
 
+function EmployeeTypeDropdown({
+  employeeTypes,
+  selectedIds,
+  setSelectedIds,
+}: {
+  employeeTypes: EmployeeType[];
+  selectedIds: string[];
+  setSelectedIds: React.Dispatch<React.SetStateAction<string[]>>;
+}) {
+  const selectedNames = employeeTypes
+    .filter((employeeType) => selectedIds.includes(employeeType.id))
+    .map((employeeType) => employeeType.name);
+
+  return (
+    <details className="relative">
+      <summary className="flex min-w-56 cursor-pointer list-none items-center justify-between rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700">
+        <span className="truncate">
+          {selectedNames.length > 0
+            ? selectedNames.join(", ")
+            : "Select Employee Types"}
+        </span>
+
+        <span className="ml-2 text-slate-400">▼</span>
+      </summary>
+
+      <div className="absolute z-30 mt-1 max-h-60 min-w-56 overflow-y-auto rounded-md border border-slate-300 bg-white p-2 shadow-lg">
+        {employeeTypes.length === 0 ? (
+          <div className="px-2 py-2 text-sm text-slate-400">
+            No employee types available
+          </div>
+        ) : (
+          employeeTypes.map((employeeType) => (
+            <label
+              key={employeeType.id}
+              className="flex cursor-pointer items-center gap-2 rounded px-2 py-2 text-sm text-slate-700 hover:bg-slate-50"
+            >
+              <input
+                type="checkbox"
+                checked={selectedIds.includes(employeeType.id)}
+                onChange={(e) => {
+                  setSelectedIds((prev) =>
+                    e.target.checked
+                      ? [...prev, employeeType.id]
+                      : prev.filter((id) => id !== employeeType.id)
+                  );
+                }}
+              />
+
+              {employeeType.name}
+            </label>
+          ))
+        )}
+      </div>
+    </details>
+  );
+}
+
 export default function HolidaysTab() {
   const [items, setItems] = useState<Holiday[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const {
     hasPermission: canExportHolidays,
@@ -50,14 +108,16 @@ export default function HolidaysTab() {
   const [newEndDate, setNewEndDate] = useState("");
   const [newDescription, setNewDescription] = useState("");
   const [employeeTypes, setEmployeeTypes] = useState<EmployeeType[]>([]);
-  const [selectedEmployeeTypeIds, setSelectedEmployeeTypeIds] = useState<string[]>([]);
+  const [selectedEmployeeTypeIds, setSelectedEmployeeTypeIds] =
+    useState<string[]>([]);
 
   // Individual edit
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
   const [editingDate, setEditingDate] = useState("");
   const [editingDescription, setEditingDescription] = useState("");
-  const [editEmployeeTypeIds, setEditEmployeeTypeIds] = useState<string[]>([]);
+  const [editEmployeeTypeIds, setEditEmployeeTypeIds] =
+    useState<string[]>([]);
 
   // Group edit
   const [editingGroup, setEditingGroup] = useState<Holiday[] | null>(null);
@@ -65,12 +125,14 @@ export default function HolidaysTab() {
   const [groupDescription, setGroupDescription] = useState("");
   const [groupStartDate, setGroupStartDate] = useState("");
   const [groupEndDate, setGroupEndDate] = useState("");
-  const [groupEmployeeTypeIds, setGroupEmployeeTypeIds] = useState<string[]>([]);
+  const [groupEmployeeTypeIds, setGroupEmployeeTypeIds] =
+    useState<string[]>([]);
 
   // Bulk upload
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [uploadResult, setUploadResult] = useState<UploadResult | null>(null);
+  const [uploadResult, setUploadResult] =
+    useState<UploadResult | null>(null);
 
   // =========================================================
   // LOAD HOLIDAYS
@@ -132,7 +194,11 @@ export default function HolidaysTab() {
   // =========================================================
 
   const formatDateForInput = (date: string) => {
-    return new Date(date).toISOString().split("T")[0];
+    if (!date) return "";
+
+    return date.includes("T")
+      ? date.split("T")[0]
+      : date.slice(0, 10);
   };
 
   // =========================================================
@@ -179,13 +245,22 @@ export default function HolidaysTab() {
     }
 
     try {
-      const start = new Date(`${newStartDate}T00:00:00`);
-      const end = new Date(`${newEndDate}T00:00:00`);
+      /*
+       * IMPORTANT:
+       * Use UTC dates and UTC increments.
+       * This prevents IST timezone conversion from changing
+       * the selected calendar date.
+       *
+       * Example:
+       * 14 Sep -> 30 Sep creates exactly 17 days.
+       */
+      const start = new Date(`${newStartDate}T00:00:00Z`);
+      const end = new Date(`${newEndDate}T00:00:00Z`);
 
       for (
         const current = new Date(start);
-        current <= end;
-        current.setDate(current.getDate() + 1)
+        current.getTime() <= end.getTime();
+        current.setUTCDate(current.getUTCDate() + 1)
       ) {
         const date = current.toISOString().slice(0, 10);
 
@@ -204,7 +279,10 @@ export default function HolidaysTab() {
 
         if (!res.ok) {
           const data = await res.json().catch(() => null);
-          throw new Error(data?.error || "Failed to add holiday");
+
+          throw new Error(
+            data?.error || "Failed to add holiday"
+          );
         }
       }
 
@@ -216,10 +294,12 @@ export default function HolidaysTab() {
       setNewDescription("");
       setSelectedEmployeeTypeIds([]);
 
-      load();
+      await load();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to add holiday"
+        error instanceof Error
+          ? error.message
+          : "Failed to add holiday"
       );
     }
   };
@@ -337,11 +417,13 @@ export default function HolidaysTab() {
   // =========================================================
 
   const getDateDifference = (first: string, second: string) => {
-    const firstDate = new Date(first);
-    const secondDate = new Date(second);
+    const firstDate = new Date(
+      `${first.slice(0, 10)}T00:00:00Z`
+    );
 
-    firstDate.setHours(0, 0, 0, 0);
-    secondDate.setHours(0, 0, 0, 0);
+    const secondDate = new Date(
+      `${second.slice(0, 10)}T00:00:00Z`
+    );
 
     return Math.round(
       (secondDate.getTime() - firstDate.getTime()) /
@@ -360,9 +442,10 @@ export default function HolidaysTab() {
           holiday.name.trim().toLowerCase() ===
           item.name.trim().toLowerCase()
       )
-      .sort(
-        (a, b) =>
-          new Date(a.date).getTime() - new Date(b.date).getTime()
+      .sort((a, b) =>
+        formatDateForInput(a.date).localeCompare(
+          formatDateForInput(b.date)
+        )
       );
 
     if (sameName.length === 0) {
@@ -409,6 +492,11 @@ export default function HolidaysTab() {
     return group.length > 0 && group[0].id === item.id;
   };
 
+  // =========================================================
+  // FORMAT DATE RANGE - ULTRA SIMPLE (NO TIMEZONE LOGIC)
+  // =========================================================
+  // Just take start date, take end date, display them. That's it!
+
   const formatDateRange = (item: Holiday): string => {
     const group = getHolidayGroup(item);
 
@@ -416,16 +504,23 @@ export default function HolidaysTab() {
       return "";
     }
 
-    const startDate = new Date(group[0].date);
-    const endDate = new Date(group[group.length - 1].date);
+    // Get first and last date strings (already in YYYY-MM-DD format)
+    const firstDateStr = formatDateForInput(group[0].date);
+    const lastDateStr = formatDateForInput(group[group.length - 1].date);
 
-    if (group.length === 1) {
-      return startDate.toLocaleDateString(undefined, {
+    // If same date, return single date format
+    if (firstDateStr === lastDateStr) {
+      const date = new Date(firstDateStr + "T00:00:00Z");
+      return date.toLocaleDateString(undefined, {
         month: "short",
         day: "numeric",
         year: "numeric",
       });
     }
+
+    // Multiple dates - format start and end
+    const startDate = new Date(firstDateStr + "T00:00:00Z");
+    const endDate = new Date(lastDateStr + "T00:00:00Z");
 
     const startStr = startDate.toLocaleDateString(undefined, {
       month: "short",
@@ -451,14 +546,21 @@ export default function HolidaysTab() {
     setEditingGroup(group);
     setGroupName(group[0].name);
     setGroupDescription(group[0].description || "");
+
     setGroupEmployeeTypeIds(
       group[0].employeeTypeAssignments?.map(
         (assignment) => assignment.employeeType.id
       ) ?? []
     );
-    setGroupStartDate(formatDateForInput(group[0].date));
+
+    setGroupStartDate(
+      formatDateForInput(group[0].date)
+    );
+
     setGroupEndDate(
-      formatDateForInput(group[group.length - 1].date)
+      formatDateForInput(
+        group[group.length - 1].date
+      )
     );
 
     setEditingId(null);
@@ -534,19 +636,29 @@ export default function HolidaysTab() {
   // =========================================================
 
   const handleGroupEditSave = async (firstHolidayId: string) => {
-    const holiday = items.find((h) => h.id === firstHolidayId);
+    const holiday = items.find(
+      (h) => h.id === firstHolidayId
+    );
 
     if (!holiday) return;
 
     const group = getHolidayGroup(holiday);
 
-    if (!editingName.trim() || !groupStartDate || !groupEndDate) {
-      toast.error("Holiday name and dates are required");
+    if (
+      !editingName.trim() ||
+      !groupStartDate ||
+      !groupEndDate
+    ) {
+      toast.error(
+        "Holiday name and dates are required"
+      );
       return;
     }
 
     if (groupStartDate > groupEndDate) {
-      toast.error("Start date cannot be after end date");
+      toast.error(
+        "Start date cannot be after end date"
+      );
       return;
     }
 
@@ -559,7 +671,8 @@ export default function HolidaysTab() {
         body: JSON.stringify({
           ids: group.map((h) => h.id),
           name: editingName.trim(),
-          description: editingDescription.trim() || null,
+          description:
+            editingDescription.trim() || null,
           startDate: groupStartDate,
           endDate: groupEndDate,
           employeeTypeIds: editEmployeeTypeIds,
@@ -583,11 +696,13 @@ export default function HolidaysTab() {
       setEditEmployeeTypeIds([]);
       setGroupStartDate("");
       setGroupEndDate("");
-      setEditEmployeeTypeIds([]);
 
       await load();
     } catch (error) {
-      console.error("Holiday group save error:", error);
+      console.error(
+        "Holiday group save error:",
+        error
+      );
 
       toast.error(
         error instanceof Error
@@ -607,9 +722,12 @@ export default function HolidaysTab() {
         id: "holiday-template",
       });
 
-      const res = await fetch("/api/templates/holiday", {
-        method: "GET",
-      });
+      const res = await fetch(
+        "/api/templates/holiday",
+        {
+          method: "GET",
+        }
+      );
 
       if (!res.ok) {
         const text = await res.text();
@@ -631,9 +749,11 @@ export default function HolidaysTab() {
         throw new Error("Template file is empty");
       }
 
-      const url = window.URL.createObjectURL(blob);
+      const url =
+        window.URL.createObjectURL(blob);
 
-      const a = document.createElement("a");
+      const a =
+        document.createElement("a");
 
       a.href = url;
       a.download = "holiday_template.xlsx";
@@ -668,7 +788,9 @@ export default function HolidaysTab() {
   // BULK UPLOAD
   // =========================================================
 
-  const handleUpload = async (e: React.FormEvent) => {
+  const handleUpload = async (
+    e: React.FormEvent
+  ) => {
     e.preventDefault();
 
     if (!file) {
@@ -684,15 +806,20 @@ export default function HolidaysTab() {
     formData.append("file", file);
 
     try {
-      const res = await fetch("/api/holidays/bulk-upload", {
-        method: "POST",
-        body: formData,
-      });
+      const res = await fetch(
+        "/api/holidays/bulk-upload",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
 
       const data = await res.json();
 
       if (!res.ok) {
-        toast.error(data.error || "Holiday upload failed");
+        toast.error(
+          data.error || "Holiday upload failed"
+        );
 
         setUploadResult(data);
         return;
@@ -707,14 +834,17 @@ export default function HolidaysTab() {
       }
 
       if (data.failed > 0) {
-        toast.error(`${data.failed} row(s) failed`);
+        toast.error(
+          `${data.failed} row(s) failed`
+        );
       }
 
       setFile(null);
 
-      const input = document.getElementById(
-        "holiday-upload"
-      ) as HTMLInputElement | null;
+      const input =
+        document.getElementById(
+          "holiday-upload"
+        ) as HTMLInputElement | null;
 
       if (input) {
         input.value = "";
@@ -722,7 +852,10 @@ export default function HolidaysTab() {
 
       await load();
     } catch (error) {
-      console.error("Holiday upload error:", error);
+      console.error(
+        "Holiday upload error:",
+        error
+      );
 
       toast.error("Holiday upload failed");
     } finally {
@@ -758,15 +891,65 @@ export default function HolidaysTab() {
   };
 
   // =========================================================
-  // UI
+  // FILTER HOLIDAYS
   // =========================================================
+
+  const filteredItems = items.filter((item) => {
+    const search = searchTerm.trim().toLowerCase();
+
+    if (!search) {
+      return isFirstInGroup(item);
+    }
+
+    const group = getHolidayGroup(item);
+
+    return (
+      isFirstInGroup(item) &&
+      group.some((holiday) => {
+        const employeeTypeNames =
+          holiday.employeeTypeAssignments
+            ?.map(
+              (assignment) =>
+                assignment.employeeType.name
+            )
+            .join(" ") ?? "";
+
+        return (
+          holiday.name
+            .toLowerCase()
+            .includes(search) ||
+          (holiday.description ?? "")
+            .toLowerCase()
+            .includes(search) ||
+          employeeTypeNames
+            .toLowerCase()
+            .includes(search) ||
+          formatDateForInput(
+            holiday.date
+          ).includes(search)
+        );
+      })
+    );
+  });
+
+  const filteredGroupItems = filteredItems
+    .map((item) => getHolidayGroup(item)[0])
+    .filter(
+      (item, index, array) =>
+        array.findIndex(
+          (groupItem) =>
+            groupItem.id === item.id
+        ) === index
+    )
+    .sort((a, b) =>
+      formatDateForInput(a.date).localeCompare(
+        formatDateForInput(b.date)
+      )
+    );
 
   return (
     <div>
-      {/* =====================================================
-          BULK UPLOAD
-      ====================================================== */}
-
+      {/* BULK UPLOAD */}
       <div className="mb-6 rounded-lg border border-slate-200 bg-white p-5">
         <div className="mb-4">
           <h2 className="text-lg font-semibold text-slate-900">
@@ -799,7 +982,9 @@ export default function HolidaysTab() {
             type="file"
             accept=".xlsx"
             onChange={(e) =>
-              setFile(e.target.files?.[0] || null)
+              setFile(
+                e.target.files?.[0] || null
+              )
             }
             className="block rounded-md border border-slate-300 bg-white text-sm text-slate-600 file:mr-3 file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-slate-700"
           />
@@ -809,7 +994,9 @@ export default function HolidaysTab() {
             disabled={!file || uploading}
             className="rounded-lg bg-slate-900 px-6 py-2.5 font-semibold text-white transition-all duration-200 hover:bg-slate-800 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {uploading ? "Uploading..." : "Upload Holidays"}
+            {uploading
+              ? "Uploading..."
+              : "Upload Holidays"}
           </button>
         </form>
 
@@ -821,11 +1008,13 @@ export default function HolidaysTab() {
 
             <div className="mt-2 flex gap-6 text-sm">
               <span className="text-emerald-700">
-                ✓ Created: {uploadResult.success ?? 0}
+                ✓ Created:{" "}
+                {uploadResult.success ?? 0}
               </span>
 
               <span className="text-red-700">
-                ✗ Failed: {uploadResult.failed ?? 0}
+                ✗ Failed:{" "}
+                {uploadResult.failed ?? 0}
               </span>
             </div>
 
@@ -878,17 +1067,16 @@ export default function HolidaysTab() {
         )}
       </div>
 
-      {/* =====================================================
-          SINGLE HOLIDAY
-      ====================================================== */}
-
+      {/* SINGLE HOLIDAY */}
       <form
         onSubmit={handleAdd}
         className="mb-4 flex flex-wrap gap-2"
       >
         <input
           value={newName}
-          onChange={(e) => setNewName(e.target.value)}
+          onChange={(e) =>
+            setNewName(e.target.value)
+          }
           placeholder="Holiday name"
           className="max-w-sm flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all duration-200"
         />
@@ -896,7 +1084,9 @@ export default function HolidaysTab() {
         <input
           type="date"
           value={newStartDate}
-          onChange={(e) => setNewStartDate(e.target.value)}
+          onChange={(e) =>
+            setNewStartDate(e.target.value)
+          }
           className="rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all duration-200"
         />
 
@@ -904,7 +1094,9 @@ export default function HolidaysTab() {
           type="date"
           value={newEndDate}
           min={newStartDate || undefined}
-          onChange={(e) => setNewEndDate(e.target.value)}
+          onChange={(e) =>
+            setNewEndDate(e.target.value)
+          }
           className="rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all duration-200"
         />
 
@@ -917,36 +1109,13 @@ export default function HolidaysTab() {
           className="max-w-sm flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all duration-200"
         />
 
-        <div className="flex flex-wrap items-center gap-3 rounded-md border border-slate-300 bg-white px-3 py-2">
-          <span className="text-sm font-medium text-slate-700">
-            Employee Types:
-          </span>
-
-          {employeeTypes.map((employeeType) => (
-            <label
-              key={employeeType.id}
-              className="flex items-center gap-1.5 text-sm text-slate-700"
-            >
-              <input
-                type="checkbox"
-                checked={selectedEmployeeTypeIds.includes(
-                  employeeType.id
-                )}
-                onChange={(e) => {
-                  setSelectedEmployeeTypeIds((prev) =>
-                    e.target.checked
-                      ? [...prev, employeeType.id]
-                      : prev.filter(
-                        (id) => id !== employeeType.id
-                      )
-                  );
-                }}
-              />
-
-              {employeeType.name}
-            </label>
-          ))}
-        </div>
+        <EmployeeTypeDropdown
+          employeeTypes={employeeTypes}
+          selectedIds={selectedEmployeeTypeIds}
+          setSelectedIds={
+            setSelectedEmployeeTypeIds
+          }
+        />
 
         <button
           type="submit"
@@ -955,20 +1124,18 @@ export default function HolidaysTab() {
           Add
         </button>
 
-        {!exportPermissionLoading && canExportHolidays && (
-          <a
-            href="/api/holidays/export"
-            className="rounded-lg border border-slate-300 bg-white px-6 py-2.5 font-semibold text-slate-900 transition-all duration-200 hover:border-slate-400 hover:bg-slate-50"
-          >
-            Export Excel
-          </a>
-        )}
+        {!exportPermissionLoading &&
+          canExportHolidays && (
+            <a
+              href="/api/holidays/export"
+              className="rounded-lg border border-slate-300 bg-white px-6 py-2.5 font-semibold text-slate-900 transition-all duration-200 hover:border-slate-400 hover:bg-slate-50"
+            >
+              Export Excel
+            </a>
+          )}
       </form>
 
-      {/* =====================================================
-          GROUP EDIT
-      ====================================================== */}
-
+      {/* GROUP EDIT */}
       {editingGroup && (
         <div className="mb-4 rounded-lg border border-slate-300 bg-slate-50 p-4">
           <div className="mb-3">
@@ -977,7 +1144,8 @@ export default function HolidaysTab() {
             </h3>
 
             <p className="mt-1 text-xs text-slate-600">
-              This group contains {editingGroup.length} consecutive
+              This group contains{" "}
+              {editingGroup.length} consecutive
               day(s).
             </p>
           </div>
@@ -1005,7 +1173,9 @@ export default function HolidaysTab() {
               <input
                 value={groupDescription}
                 onChange={(e) =>
-                  setGroupDescription(e.target.value)
+                  setGroupDescription(
+                    e.target.value
+                  )
                 }
                 placeholder="Description"
                 className="w-64 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all duration-200"
@@ -1021,7 +1191,9 @@ export default function HolidaysTab() {
                 type="date"
                 value={groupStartDate}
                 onChange={(e) =>
-                  setGroupStartDate(e.target.value)
+                  setGroupStartDate(
+                    e.target.value
+                  )
                 }
                 className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all duration-200"
               />
@@ -1036,7 +1208,9 @@ export default function HolidaysTab() {
                 type="date"
                 value={groupEndDate}
                 onChange={(e) =>
-                  setGroupEndDate(e.target.value)
+                  setGroupEndDate(
+                    e.target.value
+                  )
                 }
                 className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all duration-200"
               />
@@ -1047,32 +1221,15 @@ export default function HolidaysTab() {
                 Employee Types
               </label>
 
-              <div className="flex flex-wrap gap-3 rounded-md border border-slate-300 bg-white px-3 py-2">
-                {employeeTypes.map((employeeType) => (
-                  <label
-                    key={employeeType.id}
-                    className="flex items-center gap-1.5 text-sm text-slate-700"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={groupEmployeeTypeIds.includes(
-                        employeeType.id
-                      )}
-                      onChange={(e) => {
-                        setGroupEmployeeTypeIds((prev) =>
-                          e.target.checked
-                            ? [...prev, employeeType.id]
-                            : prev.filter(
-                              (id) => id !== employeeType.id
-                            )
-                        );
-                      }}
-                    />
-
-                    {employeeType.name}
-                  </label>
-                ))}
-              </div>
+              <EmployeeTypeDropdown
+                employeeTypes={employeeTypes}
+                selectedIds={
+                  groupEmployeeTypeIds
+                }
+                setSelectedIds={
+                  setGroupEmployeeTypeIds
+                }
+              />
             </div>
 
             <button
@@ -1094,9 +1251,18 @@ export default function HolidaysTab() {
         </div>
       )}
 
-      {/* =====================================================
-          HOLIDAY TABLE
-      ====================================================== */}
+      {/* HOLIDAY TABLE */}
+      <div className="mb-3">
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(e) =>
+            setSearchTerm(e.target.value)
+          }
+          placeholder="Search holidays..."
+          className="w-full max-w-sm rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all duration-200"
+        />
+      </div>
 
       <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
         <table className="w-full text-sm">
@@ -1136,6 +1302,19 @@ export default function HolidaysTab() {
               </tr>
             )}
 
+            {!loading &&
+              items.length > 0 &&
+              filteredGroupItems.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="px-4 py-6 text-center text-slate-400"
+                  >
+                    No holidays found.
+                  </td>
+                </tr>
+              )}
+
             {!loading && items.length === 0 && (
               <tr>
                 <td
@@ -1147,226 +1326,234 @@ export default function HolidaysTab() {
               </tr>
             )}
 
-            {items.map((item) =>
-              isFirstInGroup(item) ? (
-                <tr
-                  key={item.id}
-                  className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors duration-200"
-                >
-                  {/* ACTION */}
-                  <td className="px-4 py-2.5">
-                    {editingId === item.id ? (
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const group =
-                              getHolidayGroup(item);
+            {filteredGroupItems.map((item) => (
+              <tr
+                key={item.id}
+                className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors duration-200"
+              >
+                {/* ACTION */}
+                <td className="px-4 py-2.5">
+                  {editingId === item.id ? (
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const group =
+                            getHolidayGroup(item);
 
-                            if (group.length === 1) {
-                              handleEdit(item.id);
-                            } else {
-                              handleGroupEditSave(item.id);
-                            }
-                          }}
-                          className="text-xs font-medium text-green-600 hover:text-green-700"
-                        >
-                          Save
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={cancelInlineEdit}
-                          className="text-xs font-medium text-slate-600 hover:text-slate-900"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const group =
-                              getHolidayGroup(item);
-
-                            setEditingId(item.id);
-                            setEditingName(item.name);
-                            setEditingDescription(
-                              item.description || ""
+                          if (group.length === 1) {
+                            handleEdit(item.id);
+                          } else {
+                            handleGroupEditSave(
+                              item.id
                             );
-                            setEditEmployeeTypeIds(
-                              item.employeeTypeAssignments?.map(
-                                (assignment) =>
-                                  assignment.employeeType.id
-                              ) ?? []
-                            );
-                            setEditingGroup(null);
-
-                            if (group.length === 1) {
-                              setEditingDate(
-                                formatDateForInput(item.date)
-                              );
-                              setGroupStartDate("");
-                              setGroupEndDate("");
-                            } else {
-                              setEditingDate("");
-                              setGroupStartDate(
-                                formatDateForInput(group[0].date)
-                              );
-                              setGroupEndDate(
-                                formatDateForInput(
-                                  group[group.length - 1].date
-                                )
-                              );
-                            }
-                          }}
-                          className="text-xs font-medium text-slate-700 hover:text-slate-900"
-                        >
-                          Edit
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleDelete(
-                              item.id,
-                              item.name
-                            )
                           }
-                          className="text-xs font-medium text-red-600 hover:text-red-700"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    )}
-                  </td>
+                        }}
+                        className="text-xs font-medium text-green-600 hover:text-green-700"
+                      >
+                        Save
+                      </button>
 
-                  {/* HOLIDAY NAME */}
-                  <td className="px-4 py-2.5 text-slate-700">
-                    {editingId === item.id ? (
-                      <input
-                        value={editingName}
-                        onChange={(e) =>
-                          setEditingName(e.target.value)
+                      <button
+                        type="button"
+                        onClick={cancelInlineEdit}
+                        className="text-xs font-medium text-slate-600 hover:text-slate-900"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const group =
+                            getHolidayGroup(item);
+
+                          setEditingId(item.id);
+                          setEditingName(
+                            item.name
+                          );
+
+                          setEditingDescription(
+                            item.description || ""
+                          );
+
+                          setEditEmployeeTypeIds(
+                            item.employeeTypeAssignments?.map(
+                              (assignment) =>
+                                assignment
+                                  .employeeType.id
+                            ) ?? []
+                          );
+
+                          setEditingGroup(null);
+
+                          if (group.length === 1) {
+                            setEditingDate(
+                              formatDateForInput(
+                                item.date
+                              )
+                            );
+
+                            setGroupStartDate("");
+                            setGroupEndDate("");
+                          } else {
+                            setEditingDate("");
+
+                            setGroupStartDate(
+                              formatDateForInput(
+                                group[0].date
+                              )
+                            );
+
+                            setGroupEndDate(
+                              formatDateForInput(
+                                group[
+                                  group.length - 1
+                                ].date
+                              )
+                            );
+                          }
+                        }}
+                        className="text-xs font-medium text-slate-700 hover:text-slate-900"
+                      >
+                        Edit
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleDelete(
+                            item.id,
+                            item.name
+                          )
                         }
-                        className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all duration-200"
+                        className="text-xs font-medium text-red-600 hover:text-red-700"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  )}
+                </td>
+
+                {/* HOLIDAY NAME */}
+                <td className="px-4 py-2.5 text-slate-700">
+                  {editingId === item.id ? (
+                    <input
+                      value={editingName}
+                      onChange={(e) =>
+                        setEditingName(
+                          e.target.value
+                        )
+                      }
+                      className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all duration-200"
+                    />
+                  ) : (
+                    item.name
+                  )}
+                </td>
+
+                {/* DATE */}
+                <td className="px-4 py-2.5 text-slate-700">
+                  {editingId === item.id ? (
+                    getHolidayGroup(item).length ===
+                      1 ? (
+                      <input
+                        type="date"
+                        value={editingDate}
+                        onChange={(e) =>
+                          setEditingDate(
+                            e.target.value
+                          )
+                        }
+                        className="rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all duration-200"
                       />
                     ) : (
-                      item.name
-                    )}
-                  </td>
-
-                  {/* DATE */}
-                  <td className="px-4 py-2.5 text-slate-700">
-                    {editingId === item.id ? (
-                      getHolidayGroup(item).length === 1 ? (
+                      <div className="flex gap-2">
                         <input
                           type="date"
-                          value={editingDate}
+                          value={groupStartDate}
                           onChange={(e) =>
-                            setEditingDate(e.target.value)
+                            setGroupStartDate(
+                              e.target.value
+                            )
                           }
                           className="rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all duration-200"
                         />
-                      ) : (
-                        <div className="flex gap-2">
-                          <input
-                            type="date"
-                            value={groupStartDate}
-                            onChange={(e) =>
-                              setGroupStartDate(e.target.value)
-                            }
-                            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all duration-200"
-                          />
 
-                          <span className="text-slate-400">
-                            to
-                          </span>
+                        <span className="text-slate-400">
+                          to
+                        </span>
 
-                          <input
-                            type="date"
-                            value={groupEndDate}
-                            onChange={(e) =>
-                              setGroupEndDate(e.target.value)
-                            }
-                            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all duration-200"
-                          />
-                        </div>
-                      )
-                    ) : (
-                      formatDateRange(item)
-                    )}
-                  </td>
-
-                  {/* DESCRIPTION */}
-                  <td className="max-w-xs px-4 py-2.5 text-slate-700">
-                    {editingId === item.id ? (
-                      <input
-                        value={editingDescription}
-                        onChange={(e) =>
-                          setEditingDescription(e.target.value)
-                        }
-                        placeholder="Description (optional)"
-                        className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all duration-200"
-                      />
-                    ) : (
-                      <span className="truncate">
-                        {item.description || "-"}
-                      </span>
-                    )}
-                  </td>
-
-                  {/* EMPLOYEE TYPES */}
-                  <td className="px-4 py-2.5 text-slate-700">
-                    {editingId === item.id ? (
-                      <div className="flex flex-wrap gap-3 rounded-md border border-slate-300 bg-white px-3 py-2">
-                        {employeeTypes.map((employeeType) => (
-                          <label
-                            key={employeeType.id}
-                            className="flex items-center gap-1.5 text-sm text-slate-700"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={editEmployeeTypeIds.includes(
-                                employeeType.id
-                              )}
-                              onChange={(e) => {
-                                setEditEmployeeTypeIds((prev) =>
-                                  e.target.checked
-                                    ? [
-                                      ...prev,
-                                      employeeType.id,
-                                    ]
-                                    : prev.filter(
-                                      (id) =>
-                                        id !==
-                                        employeeType.id
-                                    )
-                                );
-                              }}
-                            />
-
-                            {employeeType.name}
-                          </label>
-                        ))}
-                      </div>
-                    ) : (
-                      <span>
-                        {item.employeeTypeAssignments?.length
-                          ? item.employeeTypeAssignments
-                            .map(
-                              (assignment) =>
-                                assignment.employeeType.name
+                        <input
+                          type="date"
+                          value={groupEndDate}
+                          onChange={(e) =>
+                            setGroupEndDate(
+                              e.target.value
                             )
-                            .join(", ")
-                          : "-"}
-                      </span>
-                    )}
-                  </td>
-                </tr>
-              ) : null
-            )}
+                          }
+                          className="rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all duration-200"
+                        />
+                      </div>
+                    )
+                  ) : (
+                    formatDateRange(item)
+                  )}
+                </td>
+
+                {/* DESCRIPTION */}
+                <td className="max-w-xs px-4 py-2.5 text-slate-700">
+                  {editingId === item.id ? (
+                    <input
+                      value={editingDescription}
+                      onChange={(e) =>
+                        setEditingDescription(
+                          e.target.value
+                        )
+                      }
+                      placeholder="Description (optional)"
+                      className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all duration-200"
+                    />
+                  ) : (
+                    <span className="truncate">
+                      {item.description || "-"}
+                    </span>
+                  )}
+                </td>
+
+                {/* EMPLOYEE TYPES */}
+                <td className="px-4 py-2.5 text-slate-700">
+                  {editingId === item.id ? (
+                    <EmployeeTypeDropdown
+                      employeeTypes={employeeTypes}
+                      selectedIds={
+                        editEmployeeTypeIds
+                      }
+                      setSelectedIds={
+                        setEditEmployeeTypeIds
+                      }
+                    />
+                  ) : (
+                    <span>
+                      {item
+                        .employeeTypeAssignments
+                        ?.length
+                        ? item.employeeTypeAssignments
+                          .map(
+                            (assignment) =>
+                              assignment
+                                .employeeType
+                                .name
+                          )
+                          .join(", ")
+                        : "-"}
+                    </span>
+                  )}
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>

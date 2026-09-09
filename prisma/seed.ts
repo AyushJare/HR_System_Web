@@ -54,6 +54,49 @@ async function main() {
     },
   };
 
+  // ==================== CREATE DEFAULT OFFICES ====================
+
+  const offices = [
+    {
+      name: "Amber Elliance Office",
+      latitude: 19.1681,
+      longitude: 73.0456,
+      radiusMeters: 100,
+    },
+    {
+      name: "New York Office",
+      latitude: 40.7128,
+      longitude: -74.0060,
+      radiusMeters: 100,
+    },
+    {
+      name: "Mumbai Office",
+      latitude: 19.1178731,
+      longitude: 72.9270838,
+      radiusMeters: 100,
+    },
+    {
+      name: "Bangalore Office",
+      latitude: 12.9716,
+      longitude: 77.5946,
+      radiusMeters: 100,
+    },
+  ];
+
+  for (const office of offices) {
+    const createdOffice = await prisma.office.upsert({
+      where: { name: office.name },
+      update: {
+        latitude: office.latitude,
+        longitude: office.longitude,
+        radiusMeters: office.radiusMeters,
+      },
+      create: office,
+    });
+
+    console.log(`✅ Office ready: ${createdOffice.name}`);
+  }
+
   try {
     // Create UserTypes
     const adminUserType = await prisma.userType.upsert({

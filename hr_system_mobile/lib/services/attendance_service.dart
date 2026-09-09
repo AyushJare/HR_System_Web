@@ -28,6 +28,7 @@ class AttendanceService {
         monthNumber > 12) {
       throw Exception('Invalid month');
     }
+
     print(
       'SUMMARY URL: $baseUrl/api/attendance/summary?year=$year&month=$monthNumber',
     );
@@ -62,18 +63,44 @@ class AttendanceService {
   // ============================================================
   // CHECK IN
   // ============================================================
+  //
+  // NOTE:
+  // The actual Clock-In location-aware flow is handled by
+  // checkInWithLocation().
+  //
+  // This method is kept so existing callers do not break.
+  // ============================================================
   static Future<Map<String, dynamic>> checkIn() async {
     final response = await http.post(
       Uri.parse('$baseUrl/api/attendance/check-in'),
       headers: _headers,
-      body: jsonEncode({'action': 'LOGIN', 'date': _todayDate()}),
+      body: jsonEncode({
+        'date': _todayDate(),
+        'timestamp': DateTime.now().toUtc().toIso8601String(),
+      }),
     );
 
     return _handleResponse(response, 'Check-in failed');
   }
 
   // ============================================================
-  // CHECK IN WITH LOCATION (NEW METHOD)
+  // CHECK IN WITH LOCATION
+  // ============================================================
+  //
+  // Location is sent ONLY when Clock In is pressed.
+  //
+  // Backend decides:
+  //
+  // RESTRICTED_100M:
+  //   - GPS required
+  //   - Assigned office required
+  //   - Must be within office radius
+  //
+  // UNRESTRICTED:
+  //   - No office-radius restriction
+  //
+  // If outside the allowed radius, backend returns 422.
+  // No attendance record is created.
   // ============================================================
   static Future<Map<String, dynamic>> checkInWithLocation(
     Map<String, dynamic> location,
@@ -88,36 +115,61 @@ class AttendanceService {
           'gpsAccuracy': location['accuracy'],
           'deviceId': 'flutter-web',
           'isMockLocation': false,
-          'timestamp': DateTime.now().toUtc().toIso8601String(), // ← ADD HERE
+          'timestamp': DateTime.now().toUtc().toIso8601String(),
         }),
       );
 
-      final data = jsonDecode(response.body);
+      final data = _decode(response);
 
+      // ==========================================================
+      // SUCCESSFUL CLOCK-IN
+      // ==========================================================
       if (response.statusCode == 201) {
+        if (data is Map) {
+          return {
+            'success': true,
+            'message': data['message'] ?? 'Checked in successfully',
+            'attendance': data['attendance'] ?? data,
+            'distance': data['officeDistance'] ?? data['distance'] ?? 0,
+            'officeName': data['officeName'],
+            'officeRadius': data['officeRadius'],
+            'status': 'PRESENT',
+            'statusCode': 201,
+          };
+        }
+
         return {
           'success': true,
-          'message': data['message'] ?? 'Checked in successfully',
-          'attendance': data['attendance'],
-          'distance': data['distance'] ?? 0,
+          'message': 'Checked in successfully',
           'status': 'PRESENT',
+          'statusCode': 201,
         };
-      } else if (response.statusCode == 202) {
-        return {
-          'success': false,
-          'requiresApproval': true,
-          'message': data['message'] ?? 'Out of radius. Awaiting approval.',
-          'distance': data['distance'] ?? 0,
-          'approvalId': data['approvalId'],
-          'statusCode': 202,
-        };
-      } else {
+      }
+
+      // ==========================================================
+      // CLOCK-IN REJECTED
+      // ==========================================================
+      //
+      // The new backend does NOT use the old 202 approval flow.
+      // A restricted employee outside the office receives 422.
+      // ==========================================================
+      if (data is Map) {
         return {
           'success': false,
           'message': data['error'] ?? 'Check-in failed',
           'statusCode': response.statusCode,
+          'outsideOffice': data['outsideOffice'] ?? false,
+          'distance': data['distance'] ?? data['officeDistance'] ?? 0,
+          'allowedRadius': data['allowedRadius'] ?? data['officeRadius'],
+          'office': data['office'],
         };
       }
+
+      return {
+        'success': false,
+        'message': 'Check-in failed',
+        'statusCode': response.statusCode,
+      };
     } catch (e) {
       return {'success': false, 'message': 'Network error: ${e.toString()}'};
     }
@@ -131,7 +183,7 @@ class AttendanceService {
   ) async {
     // Keep this parameter (not used for old endpoint)
     final response = await http.post(
-      Uri.parse('$baseUrl/api/attendance'), // ✅ OLD ENDPOINT (works!)
+      Uri.parse('$baseUrl/api/attendance'),
       headers: _headers,
       body: jsonEncode({
         'action': 'LOGOUT',
