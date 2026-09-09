@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,6 +15,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool loading = false;
   String? error;
+  String appVersion = '';
 
   // ============================================================
   // FORGOT PASSWORD
@@ -30,6 +32,22 @@ class _LoginScreenState extends State<LoginScreen> {
   bool forgotLoading = false;
   String? forgotError;
   String? forgotSuccess;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAppVersion();
+  }
+
+  Future<void> _loadAppVersion() async {
+    final info = await PackageInfo.fromPlatform();
+
+    if (!mounted) return;
+
+    setState(() {
+      appVersion = info.version;
+    });
+  }
 
   Future<void> handleLogin() async {
     FocusScope.of(context).unfocus();
@@ -279,6 +297,18 @@ class _LoginScreenState extends State<LoginScreen> {
                       letterSpacing: 2,
                     ),
                   ),
+
+                  if (appVersion.isNotEmpty)
+                    Text(
+                      'v$appVersion',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 9,
+                        color: Colors.grey,
+                        fontWeight: FontWeight.w400,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
 
                   const SizedBox(height: 8),
 
