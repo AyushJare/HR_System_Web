@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class AuthService {
-  static const String baseUrl = 'http://localhost:3000';
+  static const String baseUrl = 'https://vmcbeta.onfees.com';
   static String? _accessToken;
   static String? _refreshToken;
 
