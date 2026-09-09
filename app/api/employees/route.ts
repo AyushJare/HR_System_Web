@@ -6,7 +6,7 @@ import { getSession } from "@/lib/auth";
 import { checkPermission } from "@/lib/permissions";
 
 import { validateEmail } from "@/lib/validators/email";
-import { validatePassword } from "@/lib/validators/password";
+// import { validatePassword } from "@/lib/validators/password";
 import { validatePhoneNumber } from "@/lib/validators/phone";
 
 export async function GET() {
@@ -161,7 +161,13 @@ export async function POST(request: Request) {
       );
     }
 
-    // Password validation
+    // =====================================================
+    // PASSWORD VALIDATION DISABLED
+    // =====================================================
+
+    /*
+    // Password policy validation has been disabled.
+
     const passwordValidation = validatePassword(password);
 
     if (!passwordValidation.valid) {
@@ -173,6 +179,7 @@ export async function POST(request: Request) {
         { status: 422 }
       );
     }
+    */
 
     // Phone validation
     const phoneValidation = validatePhoneNumber(mobile);
@@ -203,6 +210,7 @@ export async function POST(request: Request) {
       );
     }
 
+    // Password is still securely hashed before being stored.
     const passwordHash = await hashPassword(password);
 
     const employee = await prisma.employee.create({

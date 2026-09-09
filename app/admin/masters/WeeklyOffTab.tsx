@@ -17,16 +17,39 @@ const weekNumbers = [1, 2, 3, 4, 5];
 
 type WeeklyOffData = Record<string, number[]>;
 
+type EmployeeType = {
+  id: string;
+  name: string;
+  noticePeriod?: number;
+};
+
+type EmployeeTypeWeeklyOffData = Record<string, WeeklyOffData>;
+
+const createEmptyWeeklyOffData = (): WeeklyOffData => ({
+  "0": [],
+  "1": [],
+  "2": [],
+  "3": [],
+  "4": [],
+  "5": [],
+  "6": [],
+});
+
 export default function WeeklyOffTab() {
-  const [weeklyOffData, setWeeklyOffData] = useState<WeeklyOffData>({
-    "0": [],
-    "1": [],
-    "2": [],
-    "3": [],
-    "4": [],
-    "5": [],
-    "6": [],
-  });
+  const [weeklyOffData, setWeeklyOffData] = useState<WeeklyOffData>(
+    createEmptyWeeklyOffData()
+  );
+
+  // Employee-type-specific weekly-off configurations.
+  const [employeeTypeWeeklyOffData, setEmployeeTypeWeeklyOffData] =
+    useState<EmployeeTypeWeeklyOffData>({});
+
+  const [employeeTypes, setEmployeeTypes] = useState<EmployeeType[]>([]);
+
+  // "default" keeps the existing configuration.
+  // Selecting an employee type loads that employee type's configuration.
+  const [selectedEmployeeTypeId, setSelectedEmployeeTypeId] =
+    useState<string>("default");
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -35,51 +58,120 @@ export default function WeeklyOffTab() {
   useEffect(() => {
     async function loadSettings() {
       try {
-        const res = await fetch("/api/attendance-settings", {
-          credentials: "include",
-        });
+        const [settingsRes, employeeTypesRes] = await Promise.all([
+          fetch("/api/attendance-settings", {
+            credentials: "include",
+          }),
+          fetch("/api/employee-types", {
+            credentials: "include",
+          }),
+        ]);
 
-        const data = await res.json();
+        const settingsData = await settingsRes.json();
+        const employeeTypesData = await employeeTypesRes.json();
 
-        if (!res.ok) {
-          throw new Error(data?.error || "Failed to load attendance settings");
+        if (!settingsRes.ok) {
+          throw new Error(
+            settingsData?.error || "Failed to load attendance settings"
+          );
         }
 
-        // Handle both old and new format for backwards compatibility
-        if (typeof data?.weeklyOffDays === "object" && !Array.isArray(data.weeklyOffDays)) {
-          setWeeklyOffData(data.weeklyOffDays);
+        if (!employeeTypesRes.ok) {
+          throw new Error(
+            employeeTypesData?.error || "Failed to load employee types"
+          );
+        }
+
+        // Employee Types API returns the employee types directly as an array.
+        if (Array.isArray(employeeTypesData)) {
+          setEmployeeTypes(
+            employeeTypesData.map((item) => ({
+              id: item.id?.toString() ?? "",
+              name: item.name?.toString() ?? "",
+              noticePeriod:
+                typeof item.noticePeriod === "number"
+                  ? item.noticePeriod
+                  : undefined,
+            }))
+          );
+        }
+
+        const data = settingsData?.weeklyOffDays;
+
+        // Handle both old and new format for backwards compatibility.
+        if (typeof data === "object" && !Array.isArray(data)) {
+          // New employee-type format:
+          //
+          // {
+          //   default: {
+          //     "0": [1, 2, ...],
+          //     ...
+          //   },
+          //   employeeTypes: {
+          //     "employee-type-id": {
+          //       "5": [2, 4]
+          //     }
+          //   }
+          // }
+          if (
+            data.default &&
+            typeof data.default === "object" &&
+            !Array.isArray(data.default)
+          ) {
+            setWeeklyOffData({
+              ...createEmptyWeeklyOffData(),
+              ...data.default,
+            });
+
+            if (
+              data.employeeTypes &&
+              typeof data.employeeTypes === "object" &&
+              !Array.isArray(data.employeeTypes)
+            ) {
+              setEmployeeTypeWeeklyOffData(data.employeeTypes);
+            } else {
+              setEmployeeTypeWeeklyOffData({});
+            }
+          } else {
+            // Existing format:
+            //
+            // {
+            //   "0": [],
+            //   "1": [],
+            //   ...
+            // }
+            //
+            // Keep it as the default configuration.
+            setWeeklyOffData({
+              ...createEmptyWeeklyOffData(),
+              ...data,
+            });
+
+            setEmployeeTypeWeeklyOffData({});
+          }
         } else {
-          // Old format - convert
-          const oldDays = Array.isArray(data?.weeklyOffDays) ? data.weeklyOffDays : [];
-          const newFormat: WeeklyOffData = {
-            "0": [],
-            "1": [],
-            "2": [],
-            "3": [],
-            "4": [],
-            "5": [],
-            "6": [],
-          };
+          // Old format - convert.
+          const oldDays = Array.isArray(data) ? data : [];
+
+          const newFormat = createEmptyWeeklyOffData();
 
           for (const day of oldDays) {
-            newFormat[day.toString()] = [1, 2, 3, 4, 5]; // All weeks
+            newFormat[day.toString()] = [1, 2, 3, 4, 5];
           }
 
           setWeeklyOffData(newFormat);
+          setEmployeeTypeWeeklyOffData({});
         }
       } catch (error) {
         console.error("Failed to load attendance settings:", error);
-        setWeeklyOffData({
-          "0": [],
-          "1": [],
-          "2": [],
-          "3": [],
-          "4": [],
-          "5": [],
-          "6": [],
-        });
+
+        setWeeklyOffData(createEmptyWeeklyOffData());
+        setEmployeeTypeWeeklyOffData({});
+
         toast.error(
-          error instanceof Error ? error.message : "Failed to load attendance settings"
+          error instanceof Error
+            ? error.message
+            : "Failed to load attendance settings"
         );
       } finally {
         setLoading(false);
@@ -89,9 +181,41 @@ export default function WeeklyOffTab() {
     loadSettings();
   }, []);
 
+  // Get the currently selected weekly-off configuration.
+  const getCurrentWeeklyOffData = (): WeeklyOffData => {
+    if (selectedEmployeeTypeId === "default") {
+      return weeklyOffData;
+    }
+
+    return (
+      employeeTypeWeeklyOffData[selectedEmployeeTypeId] ||
+      createEmptyWeeklyOffData()
+    );
+  };
+
+  // Update the currently selected weekly-off configuration.
+  const updateCurrentWeeklyOffData = (
+    updater: (previous: WeeklyOffData) => WeeklyOffData
+  ) => {
+    if (selectedEmployeeTypeId === "default") {
+      setWeeklyOffData((prev) => updater(prev));
+      return;
+    }
+
+    setEmployeeTypeWeeklyOffData((prev) => {
+      const current =
+        prev[selectedEmployeeTypeId] || createEmptyWeeklyOffData();
+
+      return {
+        ...prev,
+        [selectedEmployeeTypeId]: updater(current),
+      };
+    });
+  };
+
   // Toggle week on/off for a specific day
   const toggleWeek = (day: number, week: number) => {
-    setWeeklyOffData((prev) => {
+    updateCurrentWeeklyOffData((prev) => {
       const dayKey = day.toString();
       const currentWeeks = prev[dayKey] || [];
 
@@ -108,7 +232,7 @@ export default function WeeklyOffTab() {
 
   // Toggle all weeks for a day
   const toggleAllWeeksForDay = (day: number) => {
-    setWeeklyOffData((prev) => {
+    updateCurrentWeeklyOffData((prev) => {
       const dayKey = day.toString();
       const currentWeeks = prev[dayKey] || [];
 
@@ -124,8 +248,9 @@ export default function WeeklyOffTab() {
 
   // Toggle a week for all days
   const toggleAllDaysForWeek = (week: number) => {
-    setWeeklyOffData((prev) => {
+    updateCurrentWeeklyOffData((prev) => {
       const newData = { ...prev };
+
       const allDaysHaveWeek = dayNames.every(
         (_, dayIdx) =>
           (newData[dayIdx.toString()] || []).includes(week)
@@ -154,6 +279,13 @@ export default function WeeklyOffTab() {
     setSaving(true);
 
     try {
+      // New format keeps the old/default configuration and adds
+      // employee-type-specific configurations.
+      const updatedWeeklyOffDays = {
+        default: weeklyOffData,
+        employeeTypes: employeeTypeWeeklyOffData,
+      };
+
       const res = await fetch("/api/attendance-settings", {
         method: "PUT",
         headers: {
@@ -161,7 +293,7 @@ export default function WeeklyOffTab() {
         },
         credentials: "include",
         body: JSON.stringify({
-          weeklyOffDays: weeklyOffData,
+          weeklyOffDays: updatedWeeklyOffDays,
         }),
       });
 
@@ -186,12 +318,46 @@ export default function WeeklyOffTab() {
     return <div className="text-slate-400 text-sm">Loading...</div>;
   }
 
+  const currentWeeklyOffData = getCurrentWeeklyOffData();
+
   return (
     <div>
       <p className="text-sm text-slate-600 mb-4">
-        Select which weeks of each day are marked as off. These days will never count as
-        absent, even if no attendance is marked.
+        Select which weeks of each day are marked as off. These days will never
+        count as absent, even if no attendance is marked.
       </p>
+
+      {/* Employee Type Selector */}
+      <div className="bg-white rounded-lg border border-slate-200 p-4 mb-4">
+        <label
+          htmlFor="weekly-off-employee-type"
+          className="block text-sm font-semibold text-slate-700 mb-2"
+        >
+          Employee Type
+        </label>
+
+        <select
+          id="weekly-off-employee-type"
+          value={selectedEmployeeTypeId}
+          onChange={(event) => {
+            setSelectedEmployeeTypeId(event.target.value);
+          }}
+          className="w-full max-w-md rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500"
+        >
+          <option value="default">Default / All Employee Types</option>
+
+          {employeeTypes.map((employeeType) => (
+            <option key={employeeType.id} value={employeeType.id}>
+              {employeeType.name}
+            </option>
+          ))}
+        </select>
+
+        <p className="text-xs text-slate-500 mt-2">
+          Configure the default weekly offs first, then select an employee
+          type to give that employee type its own weekly-off rules.
+        </p>
+      </div>
 
       <div className="bg-white rounded-lg border border-slate-200 p-6 overflow-x-auto">
         {/* Table Header */}
@@ -201,6 +367,7 @@ export default function WeeklyOffTab() {
               <th className="text-left py-2 px-3 font-semibold text-slate-700 border-b">
                 Day
               </th>
+
               {weekNumbers.map((week) => (
                 <th
                   key={week}
@@ -212,6 +379,7 @@ export default function WeeklyOffTab() {
                   <div className="text-sm">{week}</div>
                 </th>
               ))}
+
               <th className="text-center py-2 px-3 font-semibold text-slate-700 border-b">
                 All
               </th>
@@ -222,7 +390,8 @@ export default function WeeklyOffTab() {
           <tbody>
             {dayNames.map((dayName, dayIdx) => {
               const dayKey = dayIdx.toString();
-              const selectedWeeks = weeklyOffData[dayKey] || [];
+              const selectedWeeks = currentWeeklyOffData[dayKey] || [];
+
               const allWeeksSelected =
                 selectedWeeks.length === weekNumbers.length;
 
@@ -267,10 +436,15 @@ export default function WeeklyOffTab() {
 
       {/* Summary */}
       <div className="mt-4 p-3 bg-slate-50 rounded-lg border border-slate-200">
-        <p className="text-sm text-slate-600 font-medium mb-2">Summary:</p>
+        <p className="text-sm text-slate-600 font-medium mb-2">
+          Summary:
+        </p>
+
         <div className="text-sm text-slate-700 space-y-1">
           {dayNames.map((dayName, dayIdx) => {
-            const weeks = weeklyOffData[dayIdx.toString()] || [];
+            const weeks =
+              currentWeeklyOffData[dayIdx.toString()] || [];
+
             if (weeks.length === 0) return null;
 
             const weekLabels = weeks
@@ -282,13 +456,15 @@ export default function WeeklyOffTab() {
                   "4th",
                   "5th",
                 ];
+
                 return labels[w - 1];
               })
               .join(", ");
 
             return (
               <div key={dayIdx}>
-                <span className="font-medium">{dayName}:</span> {weekLabels}
+                <span className="font-medium">{dayName}:</span>{" "}
+                {weekLabels}
               </div>
             );
           })}

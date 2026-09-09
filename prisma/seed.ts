@@ -61,25 +61,25 @@ async function main() {
       name: "Amber Elliance Office",
       latitude: 19.1681,
       longitude: 73.0456,
-      radiusMeters: 100,
+      radiusMeters: 200,
     },
     {
       name: "New York Office",
       latitude: 40.7128,
       longitude: -74.0060,
-      radiusMeters: 100,
+      radiusMeters: 200,
     },
     {
       name: "Mumbai Office",
       latitude: 19.1178731,
       longitude: 72.9270838,
-      radiusMeters: 100,
+      radiusMeters: 200,
     },
     {
       name: "Bangalore Office",
       latitude: 12.9716,
       longitude: 77.5946,
-      radiusMeters: 100,
+      radiusMeters: 200,
     },
   ];
 
@@ -119,12 +119,14 @@ async function main() {
         description: "Default employee access with attendance and attendance correction query permissions",
         permissions: employeeDefaultPermissions,
         isSystem: true,
+        locationMode: "RESTRICTED_100M",
       },
       create: {
         name: "Employee (Default)",
         description: "Default employee access with attendance and attendance correction query permissions",
         permissions: employeeDefaultPermissions,
         isSystem: true,
+        locationMode: "RESTRICTED_100M",
       },
     });
 

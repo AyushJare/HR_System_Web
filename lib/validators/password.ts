@@ -58,19 +58,22 @@ export const validatePassword = (
       score: 0,
       errors: ["Password is required"],
       warnings,
-      suggestions: ["Enter a password that meets all requirements"],
+      suggestions: ["Enter a password"],
     };
   }
 
+  /*
+  // ==================== PASSWORD POLICY VALIDATION DISABLED ====================
+
   // Length validation
   if (password.length < policy.minLength) {
-    errors.push(`Password must be at least ${policy.minLength} characters (current: ${password.length})`);
+    errors.push(`Password must be at least ${ policy.minLength } characters(current: ${ password.length })`);
   } else {
     score += 20;
   }
 
   if (password.length > policy.maxLength) {
-    errors.push(`Password must not exceed ${policy.maxLength} characters`);
+    errors.push(`Password must not exceed ${ policy.maxLength } characters`);
   }
 
   // Character type validation
@@ -93,9 +96,9 @@ export const validatePassword = (
   }
 
   if (policy.requireSpecialChars) {
-    const specialRegex = new RegExp(`[${policy.specialCharSet.replace(/[-\[\]{}()*+?.,\\^$|#\s]/g, "\\$&")}]`);
+    const specialRegex = new RegExp(`[${ policy.specialCharSet.replace(/[-\[\]{}()*+?.,\\^$|#\s]/g, "\\$&") }]`);
     if (!specialRegex.test(password)) {
-      errors.push(`Password must contain at least one special character (${policy.specialCharSet.slice(0, 10)}...)`);
+      errors.push(`Password must contain at least one special character(${ policy.specialCharSet.slice(0, 10) }...)`);
     } else {
       score += 20;
     }
@@ -127,7 +130,7 @@ export const validatePassword = (
 
   // Suggestions for improvement
   if (password.length < policy.minLength + 2) {
-    suggestions.push(`Add ${policy.minLength - password.length} more characters for stronger password`);
+    suggestions.push(`Add ${ policy.minLength - password.length } more characters for stronger password`);
   }
 
   if (!/[0-9]/.test(password)) {
@@ -140,6 +143,14 @@ export const validatePassword = (
 
   // Ensure score is within bounds
   score = Math.min(100, Math.max(0, score));
+
+  */
+
+  // Password policy validation has been disabled.
+  // Password composition requirements and their error/warning messages
+  // are intentionally commented out.
+  //
+  // Suggested password generation below remains fully active.
 
   return {
     valid: errors.length === 0,

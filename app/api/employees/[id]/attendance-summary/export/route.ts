@@ -3,7 +3,10 @@ import * as ExcelJS from "exceljs";
 
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
-import { isWeeklyOff } from "@/lib/attendanceUtils";
+import {
+    getWeeklyOffConfigForEmployeeType,
+    isWeeklyOff,
+} from "@/lib/attendanceUtils";
 
 type Params = {
     id: string;
@@ -174,7 +177,6 @@ export async function GET(
 
         const [
             employee,
-            settings,
             holidays,
             attendances,
         ] = await Promise.all([
@@ -186,6 +188,7 @@ export async function GET(
                     fullName: true,
                     employeeCode: true,
                     email: true,
+                    employeeTypeId: true,
                     department: {
                         select: {
                             name: true,
@@ -199,13 +202,22 @@ export async function GET(
                 },
             }),
 
-            prisma.attendanceSettings.findFirst(),
-
             prisma.holiday.findMany({
                 where: {
                     date: {
                         gte: startDate,
                         lte: endDate,
+                    },
+                    employeeTypeAssignments: {
+                        some: {
+                            employeeType: {
+                                employees: {
+                                    some: {
+                                        id,
+                                    },
+                                },
+                            },
+                        },
                     },
                 },
             }),
@@ -241,47 +253,10 @@ export async function GET(
          * ==========================================================
          */
 
-        let weeklyOffConfig: Record<
-            string,
-            number[]
-        > = {
-            "0": [],
-            "1": [],
-            "2": [],
-            "3": [],
-            "4": [],
-            "5": [],
-            "6": [],
-        };
-
-        if (settings?.weeklyOffDays) {
-            if (
-                typeof settings.weeklyOffDays ===
-                "object" &&
-                !Array.isArray(
-                    settings.weeklyOffDays
-                )
-            ) {
-                weeklyOffConfig =
-                    settings.weeklyOffDays as Record<
-                        string,
-                        number[]
-                    >;
-            } else if (
-                Array.isArray(
-                    settings.weeklyOffDays
-                )
-            ) {
-                const oldDaysArray =
-                    settings.weeklyOffDays as number[];
-
-                for (const day of oldDaysArray) {
-                    weeklyOffConfig[
-                        day.toString()
-                    ] = [1, 2, 3, 4, 5];
-                }
-            }
-        }
+        const weeklyOffConfig =
+            await getWeeklyOffConfigForEmployeeType(
+                employee.employeeTypeId
+            );
 
         /*
          * ==========================================================

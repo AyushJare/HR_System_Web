@@ -12,7 +12,8 @@ import {
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
-import { validatePassword as validatePasswordUtil } from "@/lib/validators/password";
+// Password policy validation intentionally disabled.
+// import { validatePassword as validatePasswordUtil } from "@/lib/validators/password";
 
 import {
   showErrorToast,
@@ -185,8 +186,6 @@ export default function AddEmployeePage() {
             const validData =
               validateArrayResponse(data, endpoint.name);
 
-            // validateArrayResponse returns unknown[],
-            // so explicitly verify/cast before updating state.
             const options: Option[] = validData.filter(
               (item): item is Option => {
                 return (
@@ -236,11 +235,6 @@ export default function AddEmployeePage() {
 
         let userTypesArray: unknown = data;
 
-        // Support both:
-        // [ ... ]
-        //
-        // and:
-        // { data: [ ... ] }
         if (
           data !== null &&
           typeof data === "object" &&
@@ -331,11 +325,6 @@ export default function AddEmployeePage() {
 
   // ============================================================
   // VALIDATION
-  //
-  // IMPORTANT:
-  // These functions DO NOT show toasts.
-  //
-  // Errors are displayed directly below the relevant field.
   // ============================================================
 
   const validateFullName = (
@@ -379,33 +368,30 @@ export default function AddEmployeePage() {
     return "";
   };
 
+  // ============================================================
+  // PASSWORD VALIDATION DISABLED
+  //
+  // All password policy checks are intentionally disabled.
+  // Suggested Password generation remains active.
+  // ============================================================
+
   const validatePasswordField = (
-    value: string
+    _value: string
   ): string[] => {
-    if (!value) {
-      return ["Password is required"];
-    }
 
-    try {
-      const validation =
-        validatePasswordUtil(value);
+    // Password policy validation disabled.
+    // No minimum length check.
+    // No maximum length check.
+    // No uppercase check.
+    // No lowercase check.
+    // No number check.
+    // No special character check.
+    // No common password check.
+    // No repeated character check.
+    // No simple pattern check.
+    // No common word check.
 
-      if (
-        validation.errors &&
-        validation.errors.length > 0
-      ) {
-        return validation.errors;
-      }
-
-      return [];
-    } catch (error) {
-      console.error(
-        "Password validation error:",
-        error
-      );
-
-      return ["Unable to validate password"];
-    }
+    return [];
   };
 
   const validateConfirmPasswordField = (
@@ -464,7 +450,6 @@ export default function AddEmployeePage() {
     value: string,
     role: string
   ): string => {
-    // Admin does not require User Type.
     if (role === "ADMIN") {
       return "";
     }
@@ -514,8 +499,6 @@ export default function AddEmployeePage() {
       ];
     };
 
-    // Guarantee at least one character
-    // from each required category.
     const passwordCharacters = [
       randomCharacter(uppercase),
       randomCharacter(lowercase),
@@ -523,7 +506,6 @@ export default function AddEmployeePage() {
       randomCharacter(symbols),
     ];
 
-    // Add remaining random characters.
     for (
       let i = passwordCharacters.length;
       i < 16;
@@ -534,7 +516,6 @@ export default function AddEmployeePage() {
       );
     }
 
-    // Securely shuffle the generated password.
     for (
       let i = passwordCharacters.length - 1;
       i > 0;
@@ -606,9 +587,6 @@ export default function AddEmployeePage() {
 
   // ============================================================
   // CHANGE HANDLER
-  //
-  // No validation toast while typing.
-  // Clear the existing inline error when user edits.
   // ============================================================
 
   const handleChange = (
@@ -686,9 +664,6 @@ export default function AddEmployeePage() {
 
   // ============================================================
   // BLUR HANDLER
-  //
-  // Validation happens here but ONLY updates inline errors.
-  // NO TOASTS.
   // ============================================================
 
   const handleBlur = (
@@ -713,12 +688,16 @@ export default function AddEmployeePage() {
         }));
         break;
 
-      case "password":
-        setErrors((prev) => ({
-          ...prev,
-          password: validatePasswordField(value),
-        }));
-        break;
+      // ========================================================
+      // PASSWORD POLICY VALIDATION DISABLED
+      // ========================================================
+
+      // case "password":
+      //   setErrors((prev) => ({
+      //     ...prev,
+      //     password: validatePasswordField(value),
+      //   }));
+      //   break;
 
       case "confirmPassword":
         setErrors((prev) => ({
@@ -775,18 +754,22 @@ export default function AddEmployeePage() {
   ) => {
     e.preventDefault();
 
-    // Validate everything.
-    // IMPORTANT: validation functions do NOT show toasts.
     const fullNameError =
       validateFullName(formData.fullName);
 
     const emailError =
       validateEmailField(formData.email);
 
-    const passwordError =
-      validatePasswordField(
-        formData.password
-      );
+    // ========================================================
+    // PASSWORD POLICY VALIDATION DISABLED
+    // ========================================================
+
+    // const passwordError =
+    //   validatePasswordField(
+    //     formData.password
+    //   );
+
+    const passwordError: string[] = [];
 
     const confirmPasswordError =
       validateConfirmPasswordField(
@@ -831,15 +814,13 @@ export default function AddEmployeePage() {
     const hasErrors =
       Boolean(fullNameError) ||
       Boolean(emailError) ||
-      passwordError.length > 0 ||
+      // Password policy validation excluded.
       Boolean(confirmPasswordError) ||
       mobileError.length > 0 ||
       Boolean(roleError) ||
       Boolean(userTypeError);
 
     if (hasErrors) {
-      // ONLY ONE general toast.
-      // Individual errors remain below their fields.
       showErrorToast(
         "Validation Failed",
         "Please fix the highlighted fields before submitting"
@@ -1046,7 +1027,6 @@ export default function AddEmployeePage() {
         error
       );
 
-      // API/server errors ARE allowed to use toast.
       handleApiError(
         error,
         "Employee Creation"
@@ -1124,10 +1104,7 @@ export default function AddEmployeePage() {
       >
         <div className="grid grid-cols-2 gap-6">
 
-          {/* ================================================== */}
           {/* FULL NAME */}
-          {/* ================================================== */}
-
           <div>
             <label className="block text-sm font-semibold text-slate-900 mb-2">
               Full Name *
@@ -1152,10 +1129,7 @@ export default function AddEmployeePage() {
             )}
           </div>
 
-          {/* ================================================== */}
           {/* EMAIL */}
-          {/* ================================================== */}
-
           <div>
             <label className="block text-sm font-semibold text-slate-900 mb-2">
               Email *
@@ -1181,10 +1155,7 @@ export default function AddEmployeePage() {
             )}
           </div>
 
-          {/* ================================================== */}
           {/* PASSWORD */}
-          {/* ================================================== */}
-
           <div className="relative">
             <label className="block text-sm font-semibold text-slate-900 mb-2">
               Password *
@@ -1213,7 +1184,7 @@ export default function AddEmployeePage() {
                 }`}
             />
 
-            {/* SUGGESTED PASSWORD */}
+            {/* SUGGESTED PASSWORD — KEPT ACTIVE */}
             {showPasswordSuggestion && (
               <div className="absolute z-20 left-0 right-0 mt-2 rounded-lg border border-slate-200 bg-white p-4 shadow-lg">
                 <div className="flex items-center justify-between mb-3">
@@ -1264,6 +1235,14 @@ export default function AddEmployeePage() {
               </div>
             )}
 
+            {/* ==================================================
+                PASSWORD POLICY ERROR DISPLAY DISABLED
+
+                The old password-policy errors are intentionally
+                commented out so they cannot be displayed.
+            ================================================== */}
+
+            {/*
             {errors.password.length > 0 && (
               <div className="mt-2 space-y-1">
                 {errors.password.map(
@@ -1284,12 +1263,10 @@ export default function AddEmployeePage() {
                 )}
               </div>
             )}
+            */}
           </div>
 
-          {/* ================================================== */}
           {/* CONFIRM PASSWORD */}
-          {/* ================================================== */}
-
           <div>
             <label className="block text-sm font-semibold text-slate-900 mb-2">
               Confirm Password *
@@ -1316,10 +1293,7 @@ export default function AddEmployeePage() {
             )}
           </div>
 
-          {/* ================================================== */}
           {/* MOBILE */}
-          {/* ================================================== */}
-
           <div>
             <label className="block text-sm font-semibold text-slate-900 mb-2">
               Phone Number *
@@ -1360,10 +1334,7 @@ export default function AddEmployeePage() {
             )}
           </div>
 
-          {/* ================================================== */}
           {/* GENDER */}
-          {/* ================================================== */}
-
           <div>
             <label className="block text-sm font-semibold text-slate-900 mb-2">
               Gender
@@ -1403,10 +1374,7 @@ export default function AddEmployeePage() {
             )}
           </div>
 
-          {/* ================================================== */}
           {/* ROLE */}
-          {/* ================================================== */}
-
           <div>
             <label className="block text-sm font-semibold text-slate-900 mb-2">
               Role *
@@ -1438,10 +1406,7 @@ export default function AddEmployeePage() {
             )}
           </div>
 
-          {/* ================================================== */}
           {/* USER TYPE */}
-          {/* ================================================== */}
-
           <div className="col-span-2">
             <label className="block text-sm font-semibold text-slate-900 mb-2">
               User Type {!isAdmin && "*"}
@@ -1502,10 +1467,7 @@ export default function AddEmployeePage() {
             )}
           </div>
 
-          {/* ================================================== */}
           {/* OFFICE */}
-          {/* ================================================== */}
-
           <div className="col-span-2">
             <label className="block text-sm font-semibold text-slate-900 mb-2">
               Office
@@ -1552,10 +1514,7 @@ export default function AddEmployeePage() {
             </p>
           </div>
 
-          {/* ================================================== */}
           {/* DEPARTMENT */}
-          {/* ================================================== */}
-
           <div>
             <label className="block text-sm font-semibold text-slate-900 mb-2">
               Department
@@ -1598,10 +1557,7 @@ export default function AddEmployeePage() {
             )}
           </div>
 
-          {/* ================================================== */}
           {/* DESIGNATION */}
-          {/* ================================================== */}
-
           <div>
             <label className="block text-sm font-semibold text-slate-900 mb-2">
               Designation
@@ -1644,10 +1600,7 @@ export default function AddEmployeePage() {
             )}
           </div>
 
-          {/* ================================================== */}
           {/* EMPLOYEE TYPE */}
-          {/* ================================================== */}
-
           <div>
             <label className="block text-sm font-semibold text-slate-900 mb-2">
               Employee Type
@@ -1691,10 +1644,7 @@ export default function AddEmployeePage() {
           </div>
         </div>
 
-        {/* ==================================================== */}
         {/* ADMIN INFORMATION */}
-        {/* ==================================================== */}
-
         {isAdmin && (
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
             <p className="text-sm font-semibold text-amber-800">
@@ -1707,10 +1657,7 @@ export default function AddEmployeePage() {
           </div>
         )}
 
-        {/* ==================================================== */}
         {/* ACTIONS */}
-        {/* ==================================================== */}
-
         <div className="flex gap-3 pt-4 border-t border-slate-100">
 
           <button

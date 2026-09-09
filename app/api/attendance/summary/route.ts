@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { checkPermission } from "@/lib/permissions";
-import { getWeeklyOffSettings } from "@/lib/attendanceUtils";
+import { getWeeklyOffConfigForEmployeeType } from "@/lib/attendanceUtils";
 import { getTodayIndiaDateString } from "@/lib/attendanceAutomation";
 
 type WeeklyOffConfig = Record<string, number[]>;
@@ -167,8 +167,10 @@ export async function GET(request: NextRequest) {
             Date.UTC(year, month, 0)
         ).getUTCDate();
 
-        const [weeklyOffSettings, holidays, attendances] = await Promise.all([
-            getWeeklyOffSettings(),
+        const [weeklyOffConfig, holidays, attendances] = await Promise.all([
+            getWeeklyOffConfigForEmployeeType(
+                employee.employeeTypeId
+            ),
             prisma.holiday.findMany({
                 where: {
                     date: {
@@ -211,7 +213,8 @@ export async function GET(request: NextRequest) {
             }),
         ]);
 
-        const weeklyOffConfig = normalizeWeeklyOffConfig(weeklyOffSettings);
+        const normalizedWeeklyOffConfig =
+            normalizeWeeklyOffConfig(weeklyOffConfig);
 
         const holidayByDate = new Map<string, { name: string }>();
         for (const holiday of holidays) {
@@ -259,7 +262,7 @@ export async function GET(request: NextRequest) {
             const holiday = holidayByDate.get(dateStr);
             const weeklyOff = isConfiguredWeeklyOff(
                 date,
-                weeklyOffConfig
+                normalizedWeeklyOffConfig
             );
 
             // Count calendar-level off days independently, regardless of whether

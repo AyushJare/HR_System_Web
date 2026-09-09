@@ -37,7 +37,7 @@ export const PERMISSION_MODULES: ModuleConfig[] = [
     {
         key: "Attendance",
         label: "Attendance",
-        actions: ["view", "add", "edit"],
+        actions: ["view", "add", "edit", "export"],
         children: [
             { key: "Daily Attendance", label: "Daily Attendance", actions: ["view", "add", "edit"] },
             { key: "Check In", label: "Check In", actions: ["view", "add"] },

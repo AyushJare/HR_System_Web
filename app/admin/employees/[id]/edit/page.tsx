@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import toast from "react-hot-toast";
-import { validatePassword as validatePasswordUtil } from "@/lib/validators/password";
+// import { validatePassword as validatePasswordUtil } from "@/lib/validators/password";
 import {
   showErrorToast,
   showSuccessToast,
@@ -300,25 +300,20 @@ export default function EditEmployeePage() {
 
   const validatePasswordField = (value: string): string[] => {
     try {
-      // Password is optional during edit.
+      // Password validation checks have been disabled.
       // Empty means keep the current password.
+      // Password policy checks such as length, uppercase,
+      // lowercase, number, special character, repeated
+      // elements, common passwords, patterns, etc. are disabled.
+
       if (!value) {
         return [];
       }
 
-      const validation = validatePasswordUtil(value);
-
-      if (
-        validation.errors &&
-        validation.errors.length > 0
-      ) {
-        return validation.errors;
-      }
-
       return [];
     } catch (error) {
-      handleApiError(error, "Password Validation");
-      return ["Validation error occurred"];
+      // Password validation errors have been disabled.
+      return [];
     }
   };
 
@@ -470,18 +465,14 @@ export default function EditEmployeePage() {
               email:
                 validateEmailField(value),
             }));
-          } else if (name === "password") {
-            // Revalidate password whenever it changes.
-            // This also clears the server-side
-            // "same password" error once the user
-            // changes the password.
-            const passwordErrors =
-              validatePasswordField(value);
-
-            setErrors((prevErrors) => ({
-              ...prevErrors,
-              password: passwordErrors,
-            }));
+            // } else if (name === "password") {
+            //   // Password validation has been disabled.
+            //   // No password policy checks are performed
+            //   // while editing an employee.
+            //   setErrors((prevErrors) => ({
+            //     ...prevErrors,
+            //     password: [],
+            //   }));
           } else if (name === "mobile") {
             const mobileErrors =
               validateMobileField(value);
@@ -531,10 +522,13 @@ export default function EditEmployeePage() {
       const emailError =
         validateEmailField(formData.email);
 
-      const passwordError =
-        validatePasswordField(
-          formData.password
-        );
+      // Password validation has been disabled.
+      // const passwordError =
+      //   validatePasswordField(
+      //     formData.password
+      //   );
+
+      const passwordError: string[] = [];
 
       const mobileError =
         validateMobileField(
@@ -555,7 +549,7 @@ export default function EditEmployeePage() {
       setErrors({
         fullName: fullNameError,
         email: emailError,
-        password: passwordError,
+        password: [],
         mobile: mobileError,
         gender: "",
         role: roleError,
@@ -569,7 +563,6 @@ export default function EditEmployeePage() {
       if (
         fullNameError ||
         emailError ||
-        passwordError.length > 0 ||
         mobileError.length > 0 ||
         roleError ||
         userTypeError
@@ -655,39 +648,33 @@ export default function EditEmployeePage() {
 
         toast.dismiss();
 
-        /*
-         * IMPORTANT:
-         *
-         * The backend checks the supplied password
-         * against the existing bcrypt password hash.
-         *
-         * If they are the same, the backend returns
-         * HTTP 400 with an error message.
-         *
-         * We put that error directly into the password
-         * field so the user sees exactly what went wrong.
-         */
-        if (
-          res.status === 400 &&
-          responseData?.error
-        ) {
-          const passwordError =
-            responseData.error;
-
-          setErrors((prevErrors) => ({
-            ...prevErrors,
-            password: [
-              passwordError,
-            ],
-          }));
-
-          showErrorToast(
-            "Password Error",
-            passwordError
-          );
-
-          return;
-        }
+        // Password-specific backend error handling
+        // has been disabled.
+        //
+        // The following block previously displayed
+        // password validation/same-password errors:
+        //
+        // if (
+        //   res.status === 400 &&
+        //   responseData?.error
+        // ) {
+        //   const passwordError =
+        //     responseData.error;
+        //
+        //   setErrors((prevErrors) => ({
+        //     ...prevErrors,
+        //     password: [
+        //       passwordError,
+        //     ],
+        //   }));
+        //
+        //   showErrorToast(
+        //     "Password Error",
+        //     passwordError
+        //   );
+        //
+        //   return;
+        // }
 
         throw new Error(
           responseData?.error ||
@@ -847,27 +834,31 @@ export default function EditEmployeePage() {
                 }`}
             />
 
-            {errors.password &&
-              errors.password.length > 0 && (
-                <div className="mt-2 space-y-1">
-                  {errors.password.map(
-                    (error, index) => (
-                      <div
-                        key={index}
-                        className="flex items-start gap-2"
-                      >
-                        <span className="text-red-600 mt-0.5">
-                          •
-                        </span>
+            {/*
+              Password validation error display has been disabled.
 
-                        <p className="text-sm text-red-600">
-                          {error}
-                        </p>
-                      </div>
-                    )
-                  )}
-                </div>
-              )}
+              {errors.password &&
+                errors.password.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    {errors.password.map(
+                      (error, index) => (
+                        <div
+                          key={index}
+                          className="flex items-start gap-2"
+                        >
+                          <span className="text-red-600 mt-0.5">
+                            •
+                          </span>
+
+                          <p className="text-sm text-red-600">
+                            {error}
+                          </p>
+                        </div>
+                      )
+                    )}
+                  </div>
+                )}
+            */}
 
             <p className="mt-1 text-xs text-slate-500">
               Only fill this if you want to change the password
@@ -1309,7 +1300,8 @@ export default function EditEmployeePage() {
             )}
 
             <p className="mt-2 text-xs text-slate-500">
-              The selected office is used for location-based clock-in verification.            </p>
+              The selected office is used for location-based clock-in verification.
+            </p>
           </div>
         </div>
 

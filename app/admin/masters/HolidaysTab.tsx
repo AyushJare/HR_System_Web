@@ -110,6 +110,7 @@ export default function HolidaysTab() {
   const [employeeTypes, setEmployeeTypes] = useState<EmployeeType[]>([]);
   const [selectedEmployeeTypeIds, setSelectedEmployeeTypeIds] =
     useState<string[]>([]);
+  const [addingHoliday, setAddingHoliday] = useState(false);
 
   // Individual edit
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -225,7 +226,20 @@ export default function HolidaysTab() {
   };
 
   // =========================================================
-  // ADD SINGLE HOLIDAY
+  // ADD SINGLE / RANGE HOLIDAY
+  // =========================================================
+  //
+  // IMPORTANT:
+  // Every day in the range is submitted independently via
+  // Promise.allSettled. A single day failing (duplicate date,
+  // backend validation, etc.) must NEVER cancel the rest of
+  // the range - that was the root cause of long ranges (e.g.
+  // Sep 20 -> Sep 30) silently stopping partway through.
+  //
+  // addingHoliday guards against a double-submit (double
+  // click, or a second call firing while the first range is
+  // still mid-flight) which could otherwise interleave two
+  // overlapping runs.
   // =========================================================
 
   const handleAdd = async () => {
@@ -244,6 +258,12 @@ export default function HolidaysTab() {
       return;
     }
 
+    if (addingHoliday) {
+      return;
+    }
+
+    setAddingHoliday(true);
+
     try {
       /*
        * IMPORTANT:
@@ -254,6 +274,8 @@ export default function HolidaysTab() {
        * Example:
        * 14 Sep -> 30 Sep creates exactly 17 days.
        */
+      const dates: string[] = [];
+
       const start = new Date(`${newStartDate}T00:00:00Z`);
       const end = new Date(`${newEndDate}T00:00:00Z`);
 
@@ -262,37 +284,76 @@ export default function HolidaysTab() {
         current.getTime() <= end.getTime();
         current.setUTCDate(current.getUTCDate() + 1)
       ) {
-        const date = current.toISOString().slice(0, 10);
-
-        const res = await fetch("/api/holidays", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name: newName.trim(),
-            description: newDescription.trim() || null,
-            date,
-            employeeTypeIds: selectedEmployeeTypeIds,
-          }),
-        });
-
-        if (!res.ok) {
-          const data = await res.json().catch(() => null);
-
-          throw new Error(
-            data?.error || "Failed to add holiday"
-          );
-        }
+        dates.push(current.toISOString().slice(0, 10));
       }
 
-      toast.success("Holiday(s) added successfully");
+      const results = await Promise.allSettled(
+        dates.map(async (date) => {
+          const res = await fetch("/api/holidays", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              name: newName.trim(),
+              description: newDescription.trim() || null,
+              date,
+              employeeTypeIds: selectedEmployeeTypeIds,
+            }),
+          });
 
-      setNewName("");
-      setNewStartDate("");
-      setNewEndDate("");
-      setNewDescription("");
-      setSelectedEmployeeTypeIds([]);
+          if (!res.ok) {
+            const data = await res.json().catch(() => null);
+
+            throw new Error(
+              data?.error || "Failed to add holiday"
+            );
+          }
+
+          return date;
+        })
+      );
+
+      const failedDates = results
+        .map((result, index) =>
+          result.status === "rejected"
+            ? {
+              date: dates[index],
+              reason:
+                result.reason instanceof Error
+                  ? result.reason.message
+                  : "Failed to add holiday",
+            }
+            : null
+        )
+        .filter(
+          (entry): entry is { date: string; reason: string } =>
+            entry !== null
+        );
+
+      const successCount = dates.length - failedDates.length;
+
+      if (successCount > 0) {
+        toast.success(
+          successCount === dates.length
+            ? "Holiday(s) added successfully"
+            : `${successCount} of ${dates.length} day(s) added`
+        );
+
+        setNewName("");
+        setNewStartDate("");
+        setNewEndDate("");
+        setNewDescription("");
+        setSelectedEmployeeTypeIds([]);
+      }
+
+      if (failedDates.length > 0) {
+        toast.error(
+          `Could not add ${failedDates.length} day(s): ${failedDates
+            .map((entry) => `${entry.date} (${entry.reason})`)
+            .join(", ")}`
+        );
+      }
 
       await load();
     } catch (error) {
@@ -301,6 +362,8 @@ export default function HolidaysTab() {
           ? error.message
           : "Failed to add holiday"
       );
+    } finally {
+      setAddingHoliday(false);
     }
   };
 
@@ -1069,7 +1132,10 @@ export default function HolidaysTab() {
 
       {/* SINGLE HOLIDAY */}
       <form
-        onSubmit={handleAdd}
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleAdd();
+        }}
         className="mb-4 flex flex-wrap gap-2"
       >
         <input
@@ -1119,9 +1185,10 @@ export default function HolidaysTab() {
 
         <button
           type="submit"
-          className="rounded-lg bg-slate-900 px-6 py-2.5 font-semibold text-white transition-all duration-200 hover:bg-slate-800 hover:shadow-md"
+          disabled={addingHoliday}
+          className="rounded-lg bg-slate-900 px-6 py-2.5 font-semibold text-white transition-all duration-200 hover:bg-slate-800 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Add
+          {addingHoliday ? "Adding..." : "Add"}
         </button>
 
         {!exportPermissionLoading &&

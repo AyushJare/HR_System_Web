@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import ExcelJS from "exceljs";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { checkPermission } from "@/lib/permissions";
 import { toDateOnlyUTC } from "@/lib/dateOnly";
 import {
-  getWeeklyOffSettings,
+  getWeeklyOffConfigForEmployeeType,
   isWeeklyOff,
   checkIfDateIsOff,
 } from "@/lib/attendanceUtils";
@@ -79,8 +80,284 @@ export async function GET(request: NextRequest) {
 
     const employeeId = session.sub;
 
+    /*
+     * ==========================================================
+     * EXPORT TODAY'S ATTENDANCE
+     * ==========================================================
+     *
+     * ADMIN:
+     *   Always allowed.
+     *
+     * EMPLOYEE:
+     *   Must have Attendance -> Export permission.
+     *
+     * Export contains all active employees for today.
+     * ==========================================================
+     */
+
+    const exportRequested =
+      request.nextUrl.searchParams.get("export") === "true";
+
+    if (exportRequested) {
+      const canExport =
+        session.role === "ADMIN"
+          ? true
+          : await checkPermission(
+            employeeId,
+            "Attendance",
+            "export"
+          );
+
+      if (!canExport) {
+        return NextResponse.json(
+          {
+            error:
+              "You don't have permission to export Attendance",
+          },
+          { status: 403 }
+        );
+      }
+
+      const todayIndiaDate =
+        getTodayIndiaDate();
+
+      const todayDate =
+        toDateOnlyUTC(todayIndiaDate);
+
+      const employees =
+        await prisma.employee.findMany({
+          where: {
+            isActive: true,
+          },
+
+          orderBy: {
+            employeeCode: "asc",
+          },
+
+          select: {
+            employeeCode: true,
+            fullName: true,
+            employeeTypeId: true,
+
+            attendances: {
+              where: {
+                date: todayDate,
+                deletedAt: null,
+              },
+
+              select: {
+                checkInTime: true,
+                checkOutTime: true,
+                status: true,
+                reason: true,
+              },
+            },
+          },
+        });
+
+      const workbook =
+        new ExcelJS.Workbook();
+
+      workbook.creator =
+        "HR Management System";
+
+      workbook.created =
+        new Date();
+
+      const worksheet =
+        workbook.addWorksheet(
+          "Daily Attendance"
+        );
+
+      worksheet.columns = [
+        {
+          header: "Date",
+          key: "date",
+          width: 15,
+        },
+        {
+          header: "Employee Code",
+          key: "employeeCode",
+          width: 18,
+        },
+        {
+          header: "Employee Name",
+          key: "fullName",
+          width: 28,
+        },
+        {
+          header: "Status",
+          key: "status",
+          width: 18,
+        },
+        {
+          header: "Time In",
+          key: "timeIn",
+          width: 15,
+        },
+        {
+          header: "Time Out",
+          key: "timeOut",
+          width: 15,
+        },
+        {
+          header: "Worked Duration",
+          key: "workedDuration",
+          width: 20,
+        },
+        {
+          header: "Reason",
+          key: "reason",
+          width: 35,
+        },
+      ];
+
+      /*
+       * Style the header row.
+       */
+      const headerRow =
+        worksheet.getRow(1);
+
+      headerRow.font = {
+        bold: true,
+      };
+
+      headerRow.alignment = {
+        vertical: "middle",
+        horizontal: "center",
+      };
+
+      /*
+       * Add every active employee.
+       *
+       * Employees without an attendance record are also included.
+       *
+       * Weekly-off calculation is employee-type-specific.
+       */
+      for (const employee of employees) {
+        const attendance =
+          employee.attendances[0] ?? null;
+
+        const weeklyOffConfig =
+          await getWeeklyOffConfigForEmployeeType(
+            employee.employeeTypeId
+          );
+
+        const isDateWeeklyOff =
+          isWeeklyOff(
+            todayDate,
+            weeklyOffConfig
+          );
+
+        const effectiveStatus =
+          isDateWeeklyOff &&
+            attendance?.status === "ABSENT"
+            ? "WEEKLY_OFF"
+            : attendance?.status;
+
+        const workedMinutes =
+          attendance?.checkInTime &&
+            attendance?.checkOutTime
+            ? calculateWorkedMinutes(
+              attendance.checkInTime,
+              attendance.checkOutTime
+            )
+            : null;
+
+        const workedDuration =
+          workedMinutes !== null
+            ? formatWorkedDuration(
+              workedMinutes
+            )
+            : null;
+
+        const timeIn =
+          attendance?.checkInTime
+            ? attendance.checkInTime.toLocaleTimeString(
+              "en-IN",
+              {
+                timeZone: "Asia/Kolkata",
+                hour: "2-digit",
+                minute: "2-digit",
+              }
+            )
+            : "";
+
+        const timeOut =
+          attendance?.checkOutTime
+            ? attendance.checkOutTime.toLocaleTimeString(
+              "en-IN",
+              {
+                timeZone: "Asia/Kolkata",
+                hour: "2-digit",
+                minute: "2-digit",
+              }
+            )
+            : "";
+
+        worksheet.addRow({
+          date: todayIndiaDate,
+
+          employeeCode:
+            employee.employeeCode,
+
+          fullName:
+            employee.fullName,
+
+          status:
+            effectiveStatus ??
+            "NOT MARKED",
+
+          timeIn,
+
+          timeOut,
+
+          workedDuration:
+            workedDuration ?? "",
+
+          reason:
+            attendance?.reason ?? "",
+        });
+      }
+
+      /*
+       * Make the worksheet easier to read.
+       */
+      worksheet.views = [
+        {
+          state: "frozen",
+          ySplit: 1,
+        },
+      ];
+
+      worksheet.autoFilter = {
+        from: "A1",
+        to: "H1",
+      };
+
+      const buffer =
+        await workbook.xlsx.writeBuffer();
+
+      return new NextResponse(buffer, {
+        status: 200,
+
+        headers: {
+          "Content-Type":
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+
+          "Content-Disposition":
+            `attachment; filename="Daily_Attendance_${todayIndiaDate}.xlsx"`,
+
+          "Cache-Control":
+            "no-store",
+        },
+      });
+    }
+
     const dateParam =
-      request.nextUrl.searchParams.get("date");
+      request.nextUrl.searchParams.get(
+        "date"
+      );
 
     if (!dateParam) {
       return NextResponse.json(
@@ -141,13 +418,8 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const date = toDateOnlyUTC(dateParam);
-
-    const weeklyOffConfig =
-      await getWeeklyOffSettings();
-
-    const dateOffInfo =
-      await checkIfDateIsOff(date);
+    const date =
+      toDateOnlyUTC(dateParam);
 
     const employeeWhere =
       session.role === "ADMIN"
@@ -171,6 +443,7 @@ export async function GET(request: NextRequest) {
           id: true,
           employeeCode: true,
           fullName: true,
+          employeeTypeId: true,
 
           attendances: {
             where: {
@@ -189,75 +462,125 @@ export async function GET(request: NextRequest) {
         },
       });
 
-    const isDateWeeklyOff =
-      isWeeklyOff(
-        date,
-        weeklyOffConfig
-      );
+    /*
+     * Keep the top-level dateOffInfo for compatibility
+     * with the existing response.
+     *
+     * For employee-specific behavior, each employee below
+     * receives its own dateInfo based on employeeTypeId.
+     */
+    const dateOffInfo =
+      await checkIfDateIsOff(date);
 
     const result =
-      employees.map((emp) => {
-        const attendance =
-          emp.attendances[0] ?? null;
+      await Promise.all(
+        employees.map(
+          async (emp) => {
+            const attendance =
+              emp.attendances[0] ?? null;
 
-        const effectiveStatus =
-          isDateWeeklyOff &&
-            attendance?.status === "ABSENT"
-            ? "WEEKLY_OFF"
-            : attendance?.status;
+            /*
+             * Get the weekly-off configuration
+             * for this employee's employee type.
+             */
+            const weeklyOffConfig =
+              await getWeeklyOffConfigForEmployeeType(
+                emp.employeeTypeId
+              );
 
-        const workedMinutes =
-          attendance?.checkInTime &&
-            attendance?.checkOutTime
-            ? calculateWorkedMinutes(
-              attendance.checkInTime,
-              attendance.checkOutTime
-            )
-            : null;
+            const isDateWeeklyOff =
+              isWeeklyOff(
+                date,
+                weeklyOffConfig
+              );
 
-        const workedDuration =
-          workedMinutes !== null
-            ? formatWorkedDuration(
-              workedMinutes
-            )
-            : null;
+            /*
+             * Get the date-off information specifically
+             * for this employee type.
+             *
+             * This means holidays and weekly offs are both
+             * evaluated according to the employee's type.
+             */
+            const employeeDateOffInfo =
+              await checkIfDateIsOff(
+                date,
+                emp.employeeTypeId
+              );
 
-        return {
-          employeeId: emp.id,
-          employeeCode: emp.employeeCode,
-          fullName: emp.fullName,
+            const effectiveStatus =
+              isDateWeeklyOff &&
+                attendance?.status === "ABSENT"
+                ? "WEEKLY_OFF"
+                : attendance?.status;
 
-          attendance: attendance
-            ? {
-              id: attendance.id,
+            const workedMinutes =
+              attendance?.checkInTime &&
+                attendance?.checkOutTime
+                ? calculateWorkedMinutes(
+                  attendance.checkInTime,
+                  attendance.checkOutTime
+                )
+                : null;
 
-              timeIn:
-                attendance.checkInTime,
+            const workedDuration =
+              workedMinutes !== null
+                ? formatWorkedDuration(
+                  workedMinutes
+                )
+                : null;
 
-              timeOut:
-                attendance.checkOutTime,
+            return {
+              employeeId:
+                emp.id,
 
-              status:
-                attendance.status,
+              employeeCode:
+                emp.employeeCode,
 
-              effectiveStatus,
+              fullName:
+                emp.fullName,
 
-              isWeeklyOff:
-                isDateWeeklyOff,
+              attendance:
+                attendance
+                  ? {
+                    id:
+                      attendance.id,
 
-              reason:
-                attendance.reason,
+                    timeIn:
+                      attendance.checkInTime,
 
-              workedMinutes,
+                    timeOut:
+                      attendance.checkOutTime,
 
-              workedDuration,
-            }
-            : null,
+                    status:
+                      attendance.status,
 
-          dateInfo: dateOffInfo,
-        };
-      });
+                    effectiveStatus,
 
+                    isWeeklyOff:
+                      isDateWeeklyOff,
+
+                    reason:
+                      attendance.reason,
+
+                    workedMinutes,
+
+                    workedDuration,
+                  }
+                  : null,
+
+              /*
+               * This is now employee-type-specific.
+               */
+              dateInfo:
+                employeeDateOffInfo,
+            };
+          }
+        )
+      );
+
+    /*
+     * Keep the existing top-level response structure.
+     */
     return NextResponse.json({
       role: session.role,
 
@@ -298,7 +621,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getSession(request);
+    const session =
+      await getSession(request);
 
     if (!session) {
       return NextResponse.json(
@@ -307,9 +631,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const employeeId = session.sub;
+    const employeeId =
+      session.sub;
 
-    const body = await request.json();
+    const body =
+      await request.json();
 
     const {
       employeeId: requestedEmployeeId,
@@ -330,7 +656,8 @@ export async function POST(request: NextRequest) {
     if (!date) {
       return NextResponse.json(
         {
-          error: "date is required",
+          error:
+            "date is required",
         },
         { status: 400 }
       );
@@ -356,7 +683,10 @@ export async function POST(request: NextRequest) {
       action === "LOGIN" ||
       action === "LOGOUT"
     ) {
-      if (session.role !== "EMPLOYEE" && session.role !== "ADMIN") {
+      if (
+        session.role !== "EMPLOYEE" &&
+        session.role !== "ADMIN"
+      ) {
         return NextResponse.json(
           {
             error:
@@ -371,7 +701,8 @@ export async function POST(request: NextRequest) {
        */
       if (
         requestedEmployeeId &&
-        requestedEmployeeId !== employeeId
+        requestedEmployeeId !==
+        employeeId
       ) {
         return NextResponse.json(
           {
@@ -418,7 +749,8 @@ export async function POST(request: NextRequest) {
       if (!employee) {
         return NextResponse.json(
           {
-            error: "Employee not found",
+            error:
+              "Employee not found",
           },
           { status: 404 }
         );
@@ -460,17 +792,23 @@ export async function POST(request: NextRequest) {
       /*
        * Don't allow login/logout on weekly off
        * or holiday.
+       *
+       * Weekly off is now based on the employee's
+       * employee type.
        */
       const dateOffInfo =
         await checkIfDateIsOff(
-          attendanceDate
+          attendanceDate,
+          employee.employeeTypeId
         );
 
       const applicableHoliday =
         employee.employeeTypeId
           ? await prisma.holiday.findFirst({
             where: {
-              date: attendanceDate,
+              date:
+                attendanceDate,
+
               employeeTypeAssignments: {
                 some: {
                   employeeTypeId:
@@ -478,6 +816,7 @@ export async function POST(request: NextRequest) {
                 },
               },
             },
+
             select: {
               id: true,
               name: true,
@@ -487,9 +826,13 @@ export async function POST(request: NextRequest) {
           : null;
 
       const isWeeklyOffDate =
-        dateOffInfo.reason === "WEEKLY_OFF";
+        dateOffInfo.reason ===
+        "WEEKLY_OFF";
 
-      if (isWeeklyOffDate || applicableHoliday) {
+      if (
+        isWeeklyOffDate ||
+        applicableHoliday
+      ) {
         return NextResponse.json(
           {
             error:
@@ -498,7 +841,8 @@ export async function POST(request: NextRequest) {
             dateOffInfo: {
               ...dateOffInfo,
               isOff: true,
-              holiday: applicableHoliday,
+              holiday:
+                applicableHoliday,
             },
           },
           { status: 400 }
@@ -514,21 +858,29 @@ export async function POST(request: NextRequest) {
           where: {
             type: "LEAVE",
             status: "APPROVED",
-            actorId: employeeId,
+            actorId:
+              employeeId,
           },
+
           select: {
             details: true,
           },
         });
 
       const hasApprovedLeave =
-        approvedLeaveApprovals.some((approval) => {
-          const details = approval.details as {
-            date?: string;
-          } | null;
+        approvedLeaveApprovals.some(
+          (approval) => {
+            const details =
+              approval.details as {
+                date?: string;
+              } | null;
 
-          return details?.date === date;
-        });
+            return (
+              details?.date ===
+              date
+            );
+          }
+        );
 
       if (hasApprovedLeave) {
         return NextResponse.json(
@@ -548,7 +900,8 @@ export async function POST(request: NextRequest) {
           where: {
             employeeId_date: {
               employeeId,
-              date: attendanceDate,
+              date:
+                attendanceDate,
             },
           },
         });
@@ -559,7 +912,8 @@ export async function POST(request: NextRequest) {
        */
       if (
         action === "LOGIN" &&
-        existingAttendance?.status === "ON_LEAVE"
+        existingAttendance?.status ===
+        "ON_LEAVE"
       ) {
         return NextResponse.json(
           {
@@ -589,28 +943,35 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        const now = new Date();
+        const now =
+          new Date();
 
         const attendance =
           existingAttendance
             ? await prisma.attendance.update({
               where: {
-                id: existingAttendance.id,
+                id:
+                  existingAttendance.id,
               },
 
               data: {
-                checkInTime: now,
+                checkInTime:
+                  now,
 
-                checkOutTime: null,
+                checkOutTime:
+                  null,
 
-                status: "PRESENT",
+                status:
+                  "PRESENT",
 
-                reason: null,
+                reason:
+                  null,
 
                 modifiedBy:
                   employeeId,
 
-                deletedAt: null,
+                deletedAt:
+                  null,
               },
             })
             : await prisma.attendance.create({
@@ -620,13 +981,17 @@ export async function POST(request: NextRequest) {
                 date:
                   attendanceDate,
 
-                checkInTime: now,
+                checkInTime:
+                  now,
 
-                checkOutTime: null,
+                checkOutTime:
+                  null,
 
-                status: "PRESENT",
+                status:
+                  "PRESENT",
 
-                reason: null,
+                reason:
+                  null,
 
                 modifiedBy:
                   employeeId,
@@ -707,7 +1072,8 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const now = new Date();
+      const now =
+        new Date();
 
       /*
        * Automatically determine status.
@@ -741,14 +1107,21 @@ export async function POST(request: NextRequest) {
           },
 
           data: {
-            checkOutTime: body.timestamp ? new Date(body.timestamp) : now,
+            checkOutTime:
+              body.timestamp
+                ? new Date(
+                  body.timestamp
+                )
+                : now,
+
             status:
               calculatedStatus,
 
             modifiedBy:
               employeeId,
 
-            deletedAt: null,
+            deletedAt:
+              null,
           },
         });
 
@@ -811,9 +1184,11 @@ export async function POST(request: NextRequest) {
         workedDuration,
 
         message:
-          attendance.status === "HALF_DAY"
+          attendance.status ===
+            "HALF_DAY"
             ? `Logged out successfully. Attendance marked as Half Day. Worked ${workedDuration}.`
-            : attendance.status === "WORKED"
+            : attendance.status ===
+              "WORKED"
               ? `Logged out successfully. Worked ${workedDuration}.`
               : "Logged out successfully. Attendance marked as Present.",
       });
@@ -829,7 +1204,8 @@ export async function POST(request: NextRequest) {
       false;
 
     if (session.role === "ADMIN") {
-      canModifyAttendance = true;
+      canModifyAttendance =
+        true;
     } else {
       const [
         attendanceAdd,
@@ -907,9 +1283,12 @@ export async function POST(request: NextRequest) {
      * ==========================================================
      */
 
-    let targetEmployeeId: string;
+    let targetEmployeeId:
+      string;
 
-    if (session.role === "ADMIN") {
+    if (
+      session.role === "ADMIN"
+    ) {
       if (!requestedEmployeeId) {
         return NextResponse.json(
           {
@@ -953,13 +1332,15 @@ export async function POST(request: NextRequest) {
     const targetEmployee =
       await prisma.employee.findUnique({
         where: {
-          id: targetEmployeeId,
+          id:
+            targetEmployeeId,
         },
 
         select: {
           id: true,
           fullName: true,
           isActive: true,
+          employeeTypeId: true,
         },
       });
 
@@ -990,10 +1371,15 @@ export async function POST(request: NextRequest) {
      * ==========================================================
      * DATE / WEEKLY OFF INFORMATION
      * ==========================================================
+     *
+     * Weekly off is now determined from the target employee's
+     * employee type.
      */
 
     const weeklyOffConfig =
-      await getWeeklyOffSettings();
+      await getWeeklyOffConfigForEmployeeType(
+        targetEmployee.employeeTypeId
+      );
 
     const isDateWeeklyOff =
       isWeeklyOff(
@@ -1003,7 +1389,8 @@ export async function POST(request: NextRequest) {
 
     const dateOffInfo =
       await checkIfDateIsOff(
-        attendanceDate
+        attendanceDate,
+        targetEmployee.employeeTypeId
       );
 
     if (
@@ -1071,7 +1458,8 @@ export async function POST(request: NextRequest) {
     if (
       existingAttendance &&
       !existingAttendance.deletedAt &&
-      existingAttendance.status === "ON_LEAVE"
+      existingAttendance.status ===
+      "ON_LEAVE"
     ) {
       return NextResponse.json(
         {
@@ -1119,7 +1507,8 @@ export async function POST(request: NextRequest) {
           null;
       } else {
         if (
-          typeof timeIn !== "string"
+          typeof timeIn !==
+          "string"
         ) {
           return NextResponse.json(
             {
@@ -1173,10 +1562,12 @@ export async function POST(request: NextRequest) {
       timeOut === null ||
       timeOut === ""
     ) {
-      newCheckOutTime = null;
+      newCheckOutTime =
+        null;
     } else {
       if (
-        typeof timeOut !== "string"
+        typeof timeOut !==
+        "string"
       ) {
         return NextResponse.json(
           {
@@ -1459,7 +1850,8 @@ export async function POST(request: NextRequest) {
      * ==========================================================
      */
 
-    let auditMessage: string;
+    let auditMessage:
+      string;
 
     if (
       auditAction ===

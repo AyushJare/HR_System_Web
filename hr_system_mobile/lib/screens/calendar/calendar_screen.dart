@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../services/attendance_service.dart';
-import '../leave/leave_screen.dart';
+// import '../leave/leave_screen.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -15,11 +15,24 @@ class _CalendarScreenState extends State<CalendarScreen> {
   static const Color _brandGreen = Color(0xFF16A34A);
   static const Color _pageBg = Color(0xFFF4F6FB);
 
-  DateTime _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month);
+  // ============================================================
+  // OLD CALENDAR STATE
+  // Kept for future restoration.
+  // ============================================================
+
+  // DateTime _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month);
 
   Map<String, dynamic>? _data;
   bool _loading = true;
   String? _error;
+
+  // ============================================================
+  // NEW: EXPANDABLE ATTENDANCE ROW STATE
+  // ============================================================
+
+  final Set<String> _expandedDays = <String>{};
+
+  List<Map<String, dynamic>> _recentAttendanceDays = [];
 
   @override
   void initState() {
@@ -34,16 +47,113 @@ class _CalendarScreenState extends State<CalendarScreen> {
     });
 
     try {
-      final month =
-          '${_selectedMonth.year.toString().padLeft(4, '0')}-'
-          '${_selectedMonth.month.toString().padLeft(2, '0')}';
+      // ============================================================
+      // NEW ATTENDANCE LIST
+      //
+      // We start from the current month and keep checking previous
+      // months until we have the latest 10 PRESENT / HALF_DAY days.
+      //
+      // This is necessary so that, for example, if the current
+      // month only has 6 qualifying attendance days, we can take
+      // the remaining 4 from the previous month.
+      // ============================================================
 
-      final data = await AttendanceService.getAttendanceSummary(month);
+      final now = DateTime.now();
+
+      final currentMonth = DateTime(now.year, now.month);
+
+      final recentDays = <Map<String, dynamic>>[];
+
+      Map<String, dynamic>? currentMonthData;
+
+      for (int monthOffset = 0; monthOffset < 12; monthOffset++) {
+        if (recentDays.length >= 10) {
+          break;
+        }
+
+        final month = DateTime(
+          currentMonth.year,
+          currentMonth.month - monthOffset,
+        );
+
+        final monthString =
+            '${month.year.toString().padLeft(4, '0')}-'
+            '${month.month.toString().padLeft(2, '0')}';
+
+        final data = await AttendanceService.getAttendanceSummary(monthString);
+
+        // Keep the current month's data for the existing monthly
+        // summary section.
+        if (monthOffset == 0) {
+          currentMonthData = data;
+        }
+
+        final days = data['days'];
+
+        if (days is! List) {
+          continue;
+        }
+
+        for (final item in days) {
+          if (item is! Map) {
+            continue;
+          }
+
+          final day = Map<String, dynamic>.from(item);
+
+          final status = day['status']?.toString().toUpperCase() ?? '';
+
+          // Only Present / Worked / Half Day are displayed.
+          if (status != 'PRESENT' &&
+              status != 'WORKED' &&
+              status != 'HALF_DAY') {
+            continue;
+          }
+
+          // Make sure the date exists.
+          final dateStr = day['dateStr']?.toString();
+
+          if (dateStr == null || dateStr.isEmpty) {
+            continue;
+          }
+
+          recentDays.add(day);
+        }
+      }
+
+      // ============================================================
+      // Sort newest first.
+      // ============================================================
+
+      recentDays.sort((a, b) {
+        final dateA = DateTime.tryParse(a['dateStr']?.toString() ?? '');
+
+        final dateB = DateTime.tryParse(b['dateStr']?.toString() ?? '');
+
+        if (dateA == null && dateB == null) {
+          return 0;
+        }
+
+        if (dateA == null) {
+          return 1;
+        }
+
+        if (dateB == null) {
+          return -1;
+        }
+
+        return dateB.compareTo(dateA);
+      });
+
+      // Keep only the latest 10 qualifying attendance days.
+      final latestTen = recentDays.take(10).toList();
 
       if (!mounted) return;
 
       setState(() {
-        _data = data;
+        _data = currentMonthData;
+        _recentAttendanceDays = latestTen;
+        _expandedDays.clear();
         _loading = false;
       });
     } catch (e) {
@@ -56,6 +166,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
     }
   }
 
+  // ============================================================
+  // OLD CALENDAR MONTH NAVIGATION
+  //
+  // Kept commented so the calendar can be restored later.
+  // ============================================================
+
+  /*
   void _previousMonth() {
     setState(() {
       _selectedMonth = DateTime(_selectedMonth.year, _selectedMonth.month - 1);
@@ -71,6 +188,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
     _loadAttendance();
   }
+  */
 
   String _statusLabel(String status) {
     switch (status.toUpperCase()) {
@@ -115,6 +233,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   // Added only for calendar cell colors.
+  // Kept because the old calendar code is preserved below.
   Color _statusColor(String status) {
     switch (status.toUpperCase()) {
       case 'PRESENT':
@@ -146,6 +265,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
     }
   }
 
+  // ============================================================
+  // OLD CALENDAR DAY DETAILS
+  //
+  // Kept commented so it can be restored together with the
+  // calendar in the future.
+  // ============================================================
+
+  /*
   void _showDayDetails(Map<String, dynamic> day) {
     final status = day['status']?.toString() ?? 'UNKNOWN';
     final dateStr = day['dateStr']?.toString();
@@ -299,6 +426,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
       },
     );
   }
+  */
 
   Widget _timeCard({
     required IconData icon,
@@ -342,6 +470,198 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 
+  // ============================================================
+  // NEW: EXPANDABLE ATTENDANCE ROW
+  // ============================================================
+
+  Widget _buildRecentAttendanceRow(Map<String, dynamic> day) {
+    final status = day['status']?.toString().toUpperCase() ?? '';
+
+    final dateStr = day['dateStr']?.toString() ?? '';
+
+    final date = DateTime.tryParse(dateStr);
+
+    final rowKey = dateStr.isNotEmpty
+        ? dateStr
+        : '${day['day']?.toString() ?? ''}-$status';
+
+    final expanded = _expandedDays.contains(rowKey);
+
+    final isHalfDay = status == 'HALF_DAY';
+
+    final statusColor = isHalfDay ? Colors.orange : Colors.green;
+
+    final statusText = isHalfDay ? 'Half Day' : 'Present';
+
+    final statusCode = isHalfDay ? 'H' : 'P';
+
+    final dateText = date != null
+        ? DateFormat('EEE, d MMM yyyy').format(date)
+        : dateStr;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: statusColor.withOpacity(0.18)),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () {
+            setState(() {
+              if (expanded) {
+                _expandedDays.remove(rowKey);
+              } else {
+                _expandedDays.add(rowKey);
+              }
+            });
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: statusColor.withOpacity(0.10),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        statusCode,
+                        style: TextStyle(
+                          color: statusColor,
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(width: 12),
+
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            dateText,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            statusText,
+                            style: TextStyle(
+                              color: statusColor,
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    Icon(
+                      expanded
+                          ? Icons.keyboard_arrow_up
+                          : Icons.keyboard_arrow_down,
+                      color: Colors.grey.shade600,
+                    ),
+                  ],
+                ),
+
+                // ==================================================
+                // EXPANDED CLOCK IN / CLOCK OUT SECTION
+                // ==================================================
+                if (expanded) ...[
+                  const SizedBox(height: 14),
+
+                  Divider(height: 1, color: Colors.grey.shade200),
+
+                  const SizedBox(height: 14),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _timeCard(
+                          icon: Icons.login,
+                          title: 'Clock In',
+                          value: _formatTime(day['timeIn']),
+                        ),
+                      ),
+
+                      const SizedBox(width: 10),
+
+                      Expanded(
+                        child: _timeCard(
+                          icon: Icons.logout,
+                          title: 'Clock Out',
+                          value: _formatTime(day['timeOut']),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRecentAttendance() {
+    if (_recentAttendanceDays.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: Colors.black.withOpacity(0.05)),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              Icons.event_busy_outlined,
+              size: 38,
+              color: Colors.grey.shade400,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'No recent attendance records',
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      children: _recentAttendanceDays.map(_buildRecentAttendanceRow).toList(),
+    );
+  }
+
+  // ============================================================
+  // OLD CALENDAR UI
+  //
+  // Entire calendar is kept commented out for future restoration.
+  // ============================================================
+
+  /*
   Widget _buildLegendItem(String code, String label) {
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -419,10 +739,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
           child: Container(
             margin: const EdgeInsets.all(3),
             decoration: BoxDecoration(
-              // Only added status-based background color.
               color: hasStatus ? statusColor.withOpacity(0.08) : Colors.white,
               borderRadius: BorderRadius.circular(10),
-              // Only added status-based border color.
               border: Border.all(
                 color: hasStatus
                     ? statusColor.withOpacity(0.25)
@@ -489,6 +807,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
       ],
     );
   }
+  */
 
   Widget _buildSummary() {
     final attendance = _data?['attendance'];
@@ -531,7 +850,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final monthName = DateFormat('MMMM yyyy').format(_selectedMonth);
+    // ============================================================
+    // OLD CALENDAR MONTH NAME
+    //
+    // Kept commented for future restoration.
+    // ============================================================
+
+    // final monthName = DateFormat('MMMM yyyy').format(_selectedMonth);
 
     return Scaffold(
       backgroundColor: _pageBg,
@@ -582,6 +907,42 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // ==================================================
+                    // NEW: RECENT ATTENDANCE
+                    // ==================================================
+                    const Text(
+                      'RECENT ATTENDANCE',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1,
+                        color: Colors.black87,
+                      ),
+                    ),
+
+                    const SizedBox(height: 6),
+
+                    Text(
+                      'Last 10 days you were present or worked half day',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+
+                    const SizedBox(height: 14),
+
+                    _buildRecentAttendance(),
+
+                    const SizedBox(height: 20),
+
+                    // ==================================================
+                    // OLD CALENDAR UI
+                    //
+                    // KEPT COMMENTED FOR FUTURE RESTORATION.
+                    // ==================================================
+
+                    /*
                     // Month selector
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -653,7 +1014,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     ),
 
                     const SizedBox(height: 20),
+                    */
 
+                    // ==================================================
+                    // MONTHLY SUMMARY
+                    // Existing functionality preserved.
+                    // ==================================================
                     const Text(
                       'MONTHLY SUMMARY',
                       style: TextStyle(

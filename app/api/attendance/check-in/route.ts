@@ -2,7 +2,10 @@ import { getTodayIndiaDateString } from "@/lib/attendanceAutomation";
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getWeeklyOffSettings, isWeeklyOff } from "@/lib/attendanceUtils";
+import {
+    getWeeklyOffConfigForEmployeeType,
+    isWeeklyOff,
+} from "@/lib/attendanceUtils";
 import { isWithinOfficeRadius } from "@/lib/distanceUtils";
 import { reverseGeocode } from "@/lib/reverseGeocode";
 
@@ -309,8 +312,11 @@ export async function POST(request: NextRequest) {
         // ==========================================================
 
         // Weekly off applies normally.
+        // Weekly off applies according to the employee type.
         const weeklyOffConfig =
-            await getWeeklyOffSettings();
+            await getWeeklyOffConfigForEmployeeType(
+                employee.employeeTypeId
+            );
 
         const isDateWeeklyOff =
             isWeeklyOff(

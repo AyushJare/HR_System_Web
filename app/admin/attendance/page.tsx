@@ -101,6 +101,11 @@ export default function AttendancePage() {
   // Search is only used for admin/full attendance management view.
   const [searchTerm, setSearchTerm] = useState("");
 
+  /*
+   * ============================================================
+   * LOAD ATTENDANCE
+   * ============================================================
+   */
   const load = async (d: string) => {
     setLoading(true);
 
@@ -179,6 +184,103 @@ export default function AttendancePage() {
         [field]: value,
       },
     }));
+  };
+
+  /*
+   * ============================================================
+   * EXPORT TODAY'S ATTENDANCE
+   * ============================================================
+   *
+   * Export permission is checked by the backend.
+   *
+   * ADMIN:
+   *   Allowed automatically.
+   *
+   * EMPLOYEE:
+   *   Allowed only when Attendance -> Export permission
+   *   has been enabled through Access Control.
+   *
+   * The backend always exports today's attendance.
+   */
+  const handleExport = async () => {
+    try {
+      toast.loading(
+        "Preparing attendance export...",
+        {
+          id: "attendance-export",
+        }
+      );
+
+      const res = await fetch(
+        "/api/attendance?export=true"
+      );
+
+      if (!res.ok) {
+        let message =
+          "Failed to export attendance";
+
+        try {
+          const data = await res.json();
+
+          message =
+            data?.error ||
+            data?.message ||
+            message;
+        } catch {
+          // Keep the default error message if the
+          // response is not JSON.
+        }
+
+        throw new Error(message);
+      }
+
+      const blob =
+        await res.blob();
+
+      const url =
+        window.URL.createObjectURL(
+          blob
+        );
+
+      const link =
+        document.createElement("a");
+
+      link.href = url;
+
+      link.download =
+        `Daily_Attendance_${getLocalDateString()}.xlsx`;
+
+      document.body.appendChild(link);
+
+      link.click();
+
+      link.remove();
+
+      window.URL.revokeObjectURL(url);
+
+      toast.dismiss(
+        "attendance-export"
+      );
+
+      toast.success(
+        "Attendance exported successfully"
+      );
+    } catch (error) {
+      toast.dismiss(
+        "attendance-export"
+      );
+
+      console.error(
+        "Attendance export error:",
+        error
+      );
+
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to export attendance"
+      );
+    }
   };
 
   /*
@@ -407,16 +509,41 @@ export default function AttendancePage() {
   return (
     <PermissionGate moduleName="Attendance" action="view">
       <div className="p-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-slate-950 tracking-tight">
-            Daily Attendance
-          </h1>
+        <div className="mb-8 flex items-start justify-between gap-6">
+          <div>
+            <h1 className="text-4xl font-bold text-slate-950 tracking-tight">
+              Daily Attendance
+            </h1>
 
-          <p className="text-slate-500 mt-2 font-normal text-sm">
-            {isEmployee
-              ? "Log in and log out for your attendance."
-              : "Mark or update attendance for a specific date."}
-          </p>
+            <p className="text-slate-500 mt-2 font-normal text-sm">
+              {isEmployee
+                ? "Log in and log out for your attendance."
+                : "Mark or update attendance for a specific date."}
+            </p>
+          </div>
+
+          {/* ===================================================
+              EXPORT BUTTON
+              ===================================================
+
+              PermissionGate checks:
+                Attendance -> export
+
+              Admin is allowed automatically by the backend.
+              Employees need Export permission from Access Control.
+              =================================================== */}
+          <PermissionGate
+            moduleName="Attendance"
+            action="export"
+          >
+            <button
+              type="button"
+              onClick={handleExport}
+              className="rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition-colors duration-200"
+            >
+              Export XLSX
+            </button>
+          </PermissionGate>
         </div>
 
         {/* =====================================================

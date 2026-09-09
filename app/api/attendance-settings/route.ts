@@ -14,13 +14,16 @@ async function getOrCreateSettings() {
   return prisma.attendanceSettings.create({
     data: {
       weeklyOffDays: {
-        "0": [1, 2, 3, 4, 5],
-        "1": [],
-        "2": [],
-        "3": [],
-        "4": [],
-        "5": [],
-        "6": []
+        default: {
+          "0": [1, 2, 3, 4, 5],
+          "1": [],
+          "2": [],
+          "3": [],
+          "4": [],
+          "5": [],
+          "6": [],
+        },
+        employeeTypes: {},
       },
     },
   });
@@ -109,46 +112,207 @@ export async function PUT(request: Request) {
 
     const { weeklyOffDays } = body;
 
-    // Validate new format
-    if (typeof weeklyOffDays !== "object" || Array.isArray(weeklyOffDays)) {
+    // weeklyOffDays must be an object.
+    if (
+      typeof weeklyOffDays !== "object" ||
+      weeklyOffDays === null ||
+      Array.isArray(weeklyOffDays)
+    ) {
       return NextResponse.json(
         {
-          error: "weeklyOffDays must be an object with day keys (0-6) mapping to week arrays",
+          error: "weeklyOffDays must be an object",
         },
         { status: 400 }
       );
     }
 
-    // Validate structure: each day key should map to array of week numbers
-    const validDays = new Set(["0", "1", "2", "3", "4", "5", "6"]);
+    const validDays = new Set([
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+    ]);
 
-    for (const [day, weeks] of Object.entries(weeklyOffDays)) {
-      if (!validDays.has(day)) {
+    // Validate a single weekly-off configuration.
+    // A configuration contains day keys (0-6), each mapping
+    // to week numbers 1-5.
+    const validateWeeklyOffConfig = (
+      config: unknown,
+      configName: string
+    ) => {
+      if (
+        typeof config !== "object" ||
+        config === null ||
+        Array.isArray(config)
+      ) {
+        return `Configuration "${configName}" must be an object with day keys (0-6) mapping to week arrays`;
+      }
+
+      for (const [day, weeks] of Object.entries(config)) {
+        if (!validDays.has(day)) {
+          return `Invalid day key "${day}" in configuration "${configName}". Must be 0-6`;
+        }
+
+        if (!Array.isArray(weeks)) {
+          return `Day ${day} in configuration "${configName}" must be an array`;
+        }
+
+        // Validate each week number.
+        for (const week of weeks) {
+          if (
+            typeof week !== "number" ||
+            !Number.isInteger(week) ||
+            week < 1 ||
+            week > 5
+          ) {
+            return `Invalid week number: ${week} in configuration "${configName}". Must be 1-5`;
+          }
+        }
+      }
+
+      return null;
+    };
+
+    /*
+     * Backwards compatibility:
+     *
+     * Old format:
+     * {
+     *   "0": [1, 2, 3, 4, 5],
+     *   "1": [],
+     *   ...
+     * }
+     *
+     * Keep accepting this format.
+     */
+    const hasNewFormat =
+      Object.prototype.hasOwnProperty.call(
+        weeklyOffDays,
+        "default"
+      ) ||
+      Object.prototype.hasOwnProperty.call(
+        weeklyOffDays,
+        "employeeTypes"
+      );
+
+    if (!hasNewFormat) {
+      const oldFormatError = validateWeeklyOffConfig(
+        weeklyOffDays,
+        "default"
+      );
+
+      if (oldFormatError) {
         return NextResponse.json(
-          { error: `Invalid day key: ${day}. Must be 0-6` },
+          { error: oldFormatError },
+          { status: 400 }
+        );
+      }
+    } else {
+      // New format:
+      //
+      // {
+      //   default: {
+      //     "0": [...],
+      //     ...
+      //   },
+      //   employeeTypes: {
+      //     "employee-type-id": {
+      //       "5": [2, 4]
+      //     }
+      //   }
+      // }
+
+      if (
+        weeklyOffDays.default === undefined ||
+        weeklyOffDays.default === null
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              'New weeklyOffDays format requires a "default" configuration',
+          },
           { status: 400 }
         );
       }
 
-      if (!Array.isArray(weeks)) {
+      const defaultError = validateWeeklyOffConfig(
+        weeklyOffDays.default,
+        "default"
+      );
+
+      if (defaultError) {
         return NextResponse.json(
-          { error: `Day ${day} weeks must be an array` },
+          { error: defaultError },
           { status: 400 }
         );
       }
 
-      // Validate each week number
-      for (const week of weeks) {
-        if (typeof week !== "number" || !Number.isInteger(week) || week < 1 || week > 5) {
+      // Employee-type-specific configurations are optional.
+      if (weeklyOffDays.employeeTypes !== undefined) {
+        if (
+          typeof weeklyOffDays.employeeTypes !== "object" ||
+          weeklyOffDays.employeeTypes === null ||
+          Array.isArray(weeklyOffDays.employeeTypes)
+        ) {
           return NextResponse.json(
-            { error: `Invalid week number: ${week}. Must be 1-5` },
+            {
+              error:
+                '"employeeTypes" must be an object containing employee type IDs',
+            },
             { status: 400 }
           );
+        }
+
+        for (const [
+          employeeTypeId,
+          employeeTypeConfig,
+        ] of Object.entries(
+          weeklyOffDays.employeeTypes
+        )) {
+          if (!employeeTypeId.trim()) {
+            return NextResponse.json(
+              {
+                error:
+                  "Employee type configuration contains an invalid employee type ID",
+              },
+              { status: 400 }
+            );
+          }
+
+          const employeeTypeError =
+            validateWeeklyOffConfig(
+              employeeTypeConfig,
+              `employeeTypes.${employeeTypeId}`
+            );
+
+          if (employeeTypeError) {
+            return NextResponse.json(
+              { error: employeeTypeError },
+              { status: 400 }
+            );
+          }
         }
       }
     }
 
     const existing = await getOrCreateSettings();
+
+    /*
+     * If the old format was sent, keep it exactly as the old
+     * format so existing data remains compatible.
+     *
+     * If the new format was sent, save default + employeeTypes.
+     */
+    const dataToSave = hasNewFormat
+      ? {
+        default: weeklyOffDays.default,
+        employeeTypes:
+          weeklyOffDays.employeeTypes || {},
+      }
+      : weeklyOffDays;
 
     const updated =
       await prisma.attendanceSettings.update({
@@ -156,7 +320,7 @@ export async function PUT(request: Request) {
           id: existing.id,
         },
         data: {
-          weeklyOffDays,
+          weeklyOffDays: dataToSave,
         },
       });
 
@@ -167,7 +331,7 @@ export async function PUT(request: Request) {
         entity: "AttendanceSettings",
         entityId: updated.id,
         metadata: {
-          weeklyOffDays,
+          weeklyOffDays: dataToSave,
         },
       },
     });

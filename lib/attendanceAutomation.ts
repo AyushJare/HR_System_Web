@@ -127,7 +127,7 @@ export function calculateWorkedMinutes(
  * Rules:
  *
  * Weekly off / holiday
- *     -> do nothing
+ *     -> do nothing FOR THAT EMPLOYEE
  *
  * Open attendance without checkout
  *     -> automatically checkout at 11:59:59.999 PM
@@ -141,6 +141,11 @@ export function calculateWorkedMinutes(
  *
  * No attendance
  *     -> ABSENT
+ *
+ * IMPORTANT:
+ * Weekly offs are employee-type dependent.
+ * Therefore one employee may have a weekly off while
+ * another employee works on the same calendar date.
  */
 export async function finalizeAttendanceForDate(
     dateString: string
@@ -148,26 +153,15 @@ export async function finalizeAttendanceForDate(
     const date = toDateOnlyUTC(dateString);
 
     /*
-     * Do not create attendance on holidays / weekly offs.
-     */
-    const dateOffInfo =
-        await checkIfDateIsOff(date);
-
-    if (dateOffInfo.isOff) {
-        return {
-            date: dateString,
-            skipped: true,
-            reason: "WEEKLY_OFF_OR_HOLIDAY",
-            absentCreated: 0,
-            leaveCreated: 0,
-        };
-    }
-
-    /*
-     * Find all active employees.
+     * ============================================================
+     * FIND ALL ACTIVE EMPLOYEES
+     * ============================================================
      *
-     * createdAt prevents employees from being marked
-     * absent for dates before they joined the system.
+     * Weekly-off configuration is now employee-type dependent.
+     *
+     * Therefore we MUST NOT check checkIfDateIsOff() here before
+     * loading employees, because doing so would incorrectly skip
+     * the entire date for every employee.
      */
     const endOfAttendanceDate = new Date(
         `${dateString}T23:59:59.999+05:30`
@@ -185,6 +179,12 @@ export async function finalizeAttendanceForDate(
             select: {
                 id: true,
                 fullName: true,
+
+                /*
+                 * Required to determine the employee-specific
+                 * weekly-off configuration and holidays.
+                 */
+                employeeTypeId: true,
             },
         });
 
@@ -235,7 +235,47 @@ export async function finalizeAttendanceForDate(
 
     for (const employee of employees) {
         /*
-         * Check whether attendance already exists.
+         * ========================================================
+         * EMPLOYEE-SPECIFIC WEEKLY OFF / HOLIDAY
+         * ========================================================
+         *
+         * IMPORTANT:
+         *
+         * checkIfDateIsOff() now receives employeeTypeId so that
+         * weekly offs and employee-type-specific holidays are
+         * evaluated for THIS employee.
+         *
+         * Example:
+         *
+         * Office employee:
+         *   2nd + 4th Saturday = weekly off
+         *
+         * Peon:
+         *   Saturday = working day
+         *
+         * Therefore we cannot perform one global date check
+         * before the employee loop.
+         */
+        const dateOffInfo =
+            await checkIfDateIsOff(
+                date,
+                employee.employeeTypeId
+            );
+
+        /*
+         * Do not create/modify automatic attendance for an
+         * employee whose own calendar says the date is off.
+         *
+         * This does NOT affect other employee types.
+         */
+        if (dateOffInfo.isOff) {
+            continue;
+        }
+
+        /*
+         * ========================================================
+         * CHECK WHETHER ATTENDANCE ALREADY EXISTS
+         * ========================================================
          */
         const existing =
             await prisma.attendance.findUnique({
@@ -347,7 +387,9 @@ export async function finalizeAttendanceForDate(
         }
 
         /*
-         * Approved leave.
+         * ========================================================
+         * APPROVED LEAVE
+         * ========================================================
          */
         if (
             employeesOnLeave.has(employee.id)
@@ -391,9 +433,14 @@ export async function finalizeAttendanceForDate(
         }
 
         /*
-         * No attendance and no approved leave.
+         * ========================================================
+         * NO ATTENDANCE AND NO APPROVED LEAVE
+         * ========================================================
          *
          * Therefore this employee was absent.
+         *
+         * This will now correctly happen for employees whose
+         * employee type considers this date a working day.
          */
         await prisma.attendance.upsert({
             where: {

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { hashPassword, verifyPassword } from "@/lib/password";
-import { validatePassword } from "@/lib/validators/password";
+import { hashPassword } from "@/lib/password";
+// import { verifyPassword } from "@/lib/password";
+// import { validatePassword } from "@/lib/validators/password";
 import { rateLimit } from "@/lib/middleware/rateLimit";
 
 const checkRateLimit = rateLimit(10, 15 * 60 * 1000);
@@ -94,12 +95,11 @@ export async function POST(request: NextRequest) {
         }
 
         // ---------------------------------------------------------
-        // PASSWORD VALIDATION
+        // PASSWORD VALIDATION DISABLED
         // ---------------------------------------------------------
-        // Employee information is verified first.
-        // Therefore, if the employee details are wrong,
-        // the user receives the employee-account error above
-        // instead of a password-policy error.
+
+        /*
+        // Password policy validation has been disabled.
 
         const passwordValidation = validatePassword(newPassword);
 
@@ -112,11 +112,14 @@ export async function POST(request: NextRequest) {
                 { status: 400 }
             );
         }
+        */
 
         // ---------------------------------------------------------
-        // CHECK THAT THE NEW PASSWORD IS NOT THE SAME
-        // AS THE CURRENT PASSWORD
+        // SAME PASSWORD CHECK DISABLED
         // ---------------------------------------------------------
+
+        /*
+        // Same-as-current-password validation has been disabled.
 
         if (employee.passwordHash) {
             const isSamePassword = await verifyPassword(
@@ -134,11 +137,13 @@ export async function POST(request: NextRequest) {
                 );
             }
         }
+        */
 
         // ---------------------------------------------------------
         // UPDATE PASSWORD
         // ---------------------------------------------------------
 
+        // Password is still securely hashed before being stored.
         const passwordHash = await hashPassword(newPassword);
 
         await prisma.employee.update({

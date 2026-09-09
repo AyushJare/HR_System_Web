@@ -2,7 +2,6 @@ import {
   NextRequest,
   NextResponse,
 } from "next/server";
-import { getWeeklyOffSettings } from "@/lib/attendanceUtils";
 
 import { prisma } from "@/lib/prisma";
 
@@ -13,6 +12,11 @@ import {
 import {
   finalizeAttendanceForDate,
 } from "@/lib/attendanceAutomation";
+
+import {
+  getWeeklyOffConfigForEmployeeType,
+  isWeeklyOff,
+} from "@/lib/attendanceUtils";
 
 function getTodayIndiaDateString(): string {
   return new Intl.DateTimeFormat(
@@ -160,18 +164,6 @@ export async function GET(
      * LOAD DATA
      * ============================================================
      */
-    const weeklyOffSettings = await getWeeklyOffSettings();
-
-    const isWeeklyOff = (date: Date) => {
-      const dayOfWeek = date.getUTCDay();
-      const weekOfMonth = Math.ceil(date.getUTCDate() / 7);
-
-      const offWeeks =
-        weeklyOffSettings?.[dayOfWeek.toString()] ?? [];
-
-      return Array.isArray(offWeeks)
-        && offWeeks.includes(weekOfMonth);
-    };
 
     const employees =
       await prisma.employee.findMany(
@@ -189,6 +181,7 @@ export async function GET(
             id: true,
             employeeCode: true,
             fullName: true,
+            employeeTypeId: true,
 
             attendances: {
               where: {
@@ -226,60 +219,107 @@ export async function GET(
     };
 
     const rows =
-      employees.map(
-        (emp) => {
-          const dayMap: Record<number, string> = {};
+      await Promise.all(
+        employees.map(
+          async (emp) => {
+            const dayMap: Record<number, string> = {};
 
-          const attendanceTimes: Record<
-            number,
-            {
-              checkIn: string | null;
-              checkOut: string | null;
+            const attendanceTimes: Record<
+              number,
+              {
+                checkIn: string | null;
+                checkOut: string | null;
+              }
+            > = {};
+
+            emp.attendances.forEach((attendance) => {
+              const day =
+                new Date(
+                  attendance.date
+                ).getUTCDate();
+
+              dayMap[day] =
+                statusCode[
+                attendance.status
+                ] ?? "-";
+
+              attendanceTimes[day] = {
+                checkIn:
+                  attendance.checkInTime
+                    ? attendance.checkInTime.toISOString()
+                    : null,
+
+                checkOut:
+                  attendance.checkOutTime
+                    ? attendance.checkOutTime.toISOString()
+                    : null,
+              };
+            });
+
+            /*
+             * ======================================================
+             * EMPLOYEE-TYPE WEEKLY OFF CONFIG
+             * ======================================================
+             *
+             * Each employee gets the weekly-off configuration
+             * belonging to their employee type.
+             *
+             * Example:
+             * Office employee -> 2nd / 4th Saturday OFF
+             * Peon            -> Saturday can remain WORKING DAY
+             * ======================================================
+             */
+
+            const weeklyOffConfig =
+              await getWeeklyOffConfigForEmployeeType(
+                emp.employeeTypeId
+              );
+
+            const days: string[] = [];
+
+            for (
+              let day = 1;
+              day <= daysInMonth;
+              day++
+            ) {
+              const date = new Date(
+                Date.UTC(
+                  year,
+                  mon - 1,
+                  day
+                )
+              );
+
+              if (
+                isWeeklyOff(
+                  date,
+                  weeklyOffConfig
+                )
+              ) {
+                days.push("WO");
+              } else {
+                days.push(
+                  dayMap[day] ?? "-"
+                );
+              }
             }
-          > = {};
 
-          emp.attendances.forEach((attendance) => {
-            const day = new Date(attendance.date).getUTCDate();
+            return {
+              employeeId:
+                emp.id,
 
-            dayMap[day] =
-              statusCode[attendance.status] ?? "-";
+              employeeCode:
+                emp.employeeCode,
 
-            attendanceTimes[day] = {
-              checkIn: attendance.checkInTime
-                ? attendance.checkInTime.toISOString()
-                : null,
-              checkOut: attendance.checkOutTime
-                ? attendance.checkOutTime.toISOString()
-                : null,
+              fullName:
+                emp.fullName,
+
+              days,
+
+              attendanceTimes,
             };
-          });
-
-          const days: string[] = [];
-
-          for (
-            let day = 1;
-            day <= daysInMonth;
-            day++
-          ) {
-            const date = new Date(
-              Date.UTC(year, mon - 1, day)
-            );
-
-            if (isWeeklyOff(date)) {
-              days.push("WO");
-            } else {
-              days.push(dayMap[day] ?? "-");
-            }
           }
-
-          return {
-            employeeId: emp.id,
-            employeeCode: emp.employeeCode,
-            fullName: emp.fullName,
-            days,
-            attendanceTimes,
-          };
-        }
+        )
       );
 
     return NextResponse.json({
@@ -296,6 +336,7 @@ export async function GET(
       {
         error:
           "Failed to load consolidated report",
+
         details:
           error instanceof Error
             ? error.message

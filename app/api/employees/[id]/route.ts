@@ -190,12 +190,15 @@ export async function PUT(
     } = body;
 
     // =====================================================
-    // PASSWORD CHECK
+    // PASSWORD CHECKS DISABLED
     // =====================================================
 
     let passwordHash: string | undefined = undefined;
 
     if (password && password.trim() !== "") {
+      /*
+      // Password validation checks have been disabled.
+
       const existingEmployee = await prisma.employee.findUnique({
         where: { id },
         select: {
@@ -211,13 +214,13 @@ export async function PUT(
         );
       }
 
-      // Compare entered password with current hashed password
+      // Same-password check has been disabled.
       const isSamePassword = await verifyPassword(
         password,
         existingEmployee.passwordHash
       );
 
-      // STOP THE UPDATE COMPLETELY IF PASSWORD IS THE SAME
+      // Same-password error has been disabled.
       if (isSamePassword) {
         return NextResponse.json(
           {
@@ -227,8 +230,9 @@ export async function PUT(
           { status: 400 }
         );
       }
+      */
 
-      // Only hash password if it is genuinely different
+      // Password is still hashed before being stored.
       passwordHash = await hashPassword(password);
     }
 

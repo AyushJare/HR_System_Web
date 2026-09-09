@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { checkPermission } from "@/lib/permissions";
-import { isWeeklyOff, getWeekNumberOfMonth } from "@/lib/attendanceUtils";
+import {
+  isWeeklyOff,
+  getWeeklyOffConfigForEmployeeType,
+} from "@/lib/attendanceUtils";
 
 type Params = { id: string };
 
@@ -10,7 +13,17 @@ type DayEntry = {
   day: number;
   dateStr: string;
   dayOfWeek: number;
-  status: "FUTURE" | "WEEK_OFF" | "HOLIDAY" | "PRESENT" | "ABSENT" | "HALF_DAY" | "ON_LEAVE" | "ON_LEAVE_SCHEDULED" | "NOT_MARKED"; timeIn: string | null;
+  status:
+  | "FUTURE"
+  | "WEEK_OFF"
+  | "HOLIDAY"
+  | "PRESENT"
+  | "ABSENT"
+  | "HALF_DAY"
+  | "ON_LEAVE"
+  | "ON_LEAVE_SCHEDULED"
+  | "NOT_MARKED";
+  timeIn: string | null;
   timeOut: string | null;
   reason: string | null;
   holidayName: string | null;
@@ -64,7 +77,10 @@ export async function GET(
   const month = searchParams.get("month");
 
   if (!month) {
-    return NextResponse.json({ error: "month is required (YYYY-MM)" }, { status: 400 });
+    return NextResponse.json(
+      { error: "month is required (YYYY-MM)" },
+      { status: 400 }
+    );
   }
 
   const [year, mon] = month.split("-").map(Number);
@@ -73,61 +89,143 @@ export async function GET(
   const daysInMonth = endDate.getUTCDate();
 
   const today = new Date();
-  const todayUTC = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+  const todayUTC = new Date(
+    Date.UTC(
+      today.getUTCFullYear(),
+      today.getUTCMonth(),
+      today.getUTCDate()
+    )
+  );
 
-  const [employee, settings, holidays, attendances] = await Promise.all([
-    prisma.employee.findUnique({
-      where: { id },
-      select: {
-        fullName: true,
-        employeeCode: true,
-        email: true,
-        department: { select: { name: true } },
-        designation: { select: { name: true } },
-      },
-    }),
-    prisma.attendanceSettings.findFirst(),
-    prisma.holiday.findMany({
-      where: { date: { gte: startDate, lte: endDate } },
-    }),
-    prisma.attendance.findMany({
-      where: { employeeId: id, date: { gte: startDate, lte: endDate } },
-    }),
-  ]);
+  const [employee, settings, holidays, attendances] =
+    await Promise.all([
+      prisma.employee.findUnique({
+        where: { id },
+        select: {
+          fullName: true,
+          employeeCode: true,
+          email: true,
+
+          /*
+           * Required to determine the employee-specific
+           * weekly-off configuration and applicable holidays.
+           */
+          employeeTypeId: true,
+
+          department: { select: { name: true } },
+          designation: { select: { name: true } },
+        },
+      }),
+      prisma.attendanceSettings.findFirst(),
+      prisma.holiday.findMany({
+        where: {
+          date: {
+            gte: startDate,
+            lte: endDate,
+          },
+        },
+
+        /*
+         * Holiday assignments are used to determine whether
+         * a holiday applies to this employee type.
+         */
+        include: {
+          employeeTypeAssignments: {
+            select: {
+              employeeTypeId: true,
+            },
+          },
+        },
+      }),
+      prisma.attendance.findMany({
+        where: {
+          employeeId: id,
+          date: {
+            gte: startDate,
+            lte: endDate,
+          },
+        },
+      }),
+    ]);
 
   if (!employee) {
-    return NextResponse.json({ error: "Employee not found" }, { status: 404 });
+    return NextResponse.json(
+      { error: "Employee not found" },
+      { status: 404 }
+    );
   }
 
-  // Handle both old and new format for backward compatibility
-  let weeklyOffConfig: Record<string, number[]> = {
-    "0": [], "1": [], "2": [], "3": [], "4": [], "5": [], "6": []
-  };
+  /*
+   * ============================================================
+   * EMPLOYEE-TYPE-SPECIFIC WEEKLY OFF CONFIGURATION
+   * ============================================================
+   *
+   * If this employee type has its own weekly-off configuration,
+   * use it.
+   *
+   * Otherwise the default configuration is used.
+   *
+   * Old attendance-settings format is also handled by the
+   * helper for backward compatibility.
+   */
+  const weeklyOffConfig =
+    await getWeeklyOffConfigForEmployeeType(
+      employee.employeeTypeId
+    );
 
-  if (settings?.weeklyOffDays) {
-    if (typeof settings.weeklyOffDays === "object" && !Array.isArray(settings.weeklyOffDays)) {
-      // New format (object)
-      weeklyOffConfig = settings.weeklyOffDays as Record<string, number[]>;
-    } else if (Array.isArray(settings.weeklyOffDays)) {
-      // Old format (array) - convert to new format
-      const oldDaysArray = settings.weeklyOffDays as number[];
-      for (const day of oldDaysArray) {
-        weeklyOffConfig[day.toString()] = [1, 2, 3, 4, 5];
-      }
+  /*
+   * ============================================================
+   * EMPLOYEE-TYPE-SPECIFIC HOLIDAYS
+   * ============================================================
+   *
+   * A holiday with employee-type assignments applies only to
+   * employees belonging to one of those assigned types.
+   *
+   * If a holiday has no assignments, it remains applicable
+   * to everyone for backward compatibility.
+   */
+  const applicableHolidays = holidays.filter((holiday) => {
+    const assignments =
+      holiday.employeeTypeAssignments;
+
+    if (!assignments || assignments.length === 0) {
+      return true;
     }
-  }
 
-  const holidayByDay = new Map<number, string>();
-  holidays.forEach((h) => {
-    holidayByDay.set(new Date(h.date).getUTCDate(), h.name);
+    if (!employee.employeeTypeId) {
+      return false;
+    }
+
+    return assignments.some(
+      (assignment) =>
+        assignment.employeeTypeId ===
+        employee.employeeTypeId
+    );
   });
 
-  const attendanceByDay = new Map<number, (typeof attendances)[number]>();
+  const holidayByDay = new Map<number, string>();
+
+  applicableHolidays.forEach((h) => {
+    holidayByDay.set(
+      new Date(h.date).getUTCDate(),
+      h.name
+    );
+  });
+
+  const attendanceByDay = new Map<
+    number,
+    (typeof attendances)[number]
+  >();
+
   attendances.forEach((a) => {
-    attendanceByDay.set(new Date(a.date).getUTCDate(), a);
+    attendanceByDay.set(
+      new Date(a.date).getUTCDate(),
+      a
+    );
   });
 
   const days: DayEntry[] = [];
+
   const counts = {
     present: 0,
     absent: 0,
@@ -139,29 +237,59 @@ export async function GET(
   };
 
   for (let d = 1; d <= daysInMonth; d++) {
-    const dateObj = new Date(Date.UTC(year, mon - 1, d));
+    const dateObj = new Date(
+      Date.UTC(year, mon - 1, d)
+    );
+
     const dayOfWeek = dateObj.getUTCDay();
-    const dateStr = dateObj.toISOString().slice(0, 10);
+
+    const dateStr =
+      dateObj.toISOString().slice(0, 10);
+
     const record = attendanceByDay.get(d);
 
     let status: DayEntry["status"];
     let timeIn: string | null = null;
     let timeOut: string | null = null;
-    let reason: string | null = record?.reason ?? null;
+    let reason: string | null =
+      record?.reason ?? null;
     let holidayName: string | null = null;
 
-    if (record && record.status === "ON_LEAVE") {
+    if (
+      record &&
+      record.status === "ON_LEAVE"
+    ) {
       // An approved leave always shows through, whether past or scheduled ahead
-      status = dateObj > todayUTC ? "ON_LEAVE_SCHEDULED" : "ON_LEAVE";
+      status =
+        dateObj > todayUTC
+          ? "ON_LEAVE_SCHEDULED"
+          : "ON_LEAVE";
+
       counts.onLeave++;
     } else if (dateObj > todayUTC) {
       status = "FUTURE";
-    } else if (isWeeklyOff(dateObj, weeklyOffConfig)) {
+    } else if (
+      isWeeklyOff(
+        dateObj,
+        weeklyOffConfig
+      )
+    ) {
+      /*
+       * Weekly off is now based on THIS employee's
+       * employee type.
+       *
+       * Example:
+       * Office employee -> 2nd/4th Saturday off
+       * Peon             -> Saturday can be working day
+       */
       status = "WEEK_OFF";
       counts.weekOff++;
     } else if (holidayByDay.has(d)) {
       status = "HOLIDAY";
-      holidayName = holidayByDay.get(d)!;
+
+      holidayName =
+        holidayByDay.get(d)!;
+
       counts.holiday++;
     } else if (record) {
       if (isAttendanceStatus(record.status)) {
@@ -177,16 +305,39 @@ export async function GET(
       timeOut = record.checkOutTime
         ? record.checkOutTime.toISOString()
         : null;
-      if (status === "PRESENT") counts.present++;
-      if (status === "ABSENT") counts.absent++;
-      if (status === "HALF_DAY") counts.halfDay++;
+
+      if (status === "PRESENT") {
+        counts.present++;
+      }
+
+      if (status === "ABSENT") {
+        counts.absent++;
+      }
+
+      if (status === "HALF_DAY") {
+        counts.halfDay++;
+      }
     } else {
       status = "NOT_MARKED";
       counts.notMarked++;
     }
 
-    days.push({ day: d, dateStr, dayOfWeek, status, timeIn, timeOut, reason, holidayName });
+    days.push({
+      day: d,
+      dateStr,
+      dayOfWeek,
+      status,
+      timeIn,
+      timeOut,
+      reason,
+      holidayName,
+    });
   }
 
-  return NextResponse.json({ employee, daysInMonth, days, counts });
+  return NextResponse.json({
+    employee,
+    daysInMonth,
+    days,
+    counts,
+  });
 }
