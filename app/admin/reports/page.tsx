@@ -62,6 +62,33 @@ function formatAttendanceTime(value: string | null) {
   });
 }
 
+// ============================================================
+// CALCULATE WORKED DURATION
+// ============================================================
+function calculateWorkedDuration(
+  checkIn: string | null,
+  checkOut: string | null
+) {
+  if (!checkIn || !checkOut) return "--";
+
+  const start = new Date(checkIn);
+  const end = new Date(checkOut);
+
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+    return "--";
+  }
+
+  const durationMs = end.getTime() - start.getTime();
+
+  if (durationMs < 0) return "--";
+
+  const totalMinutes = Math.floor(durationMs / (1000 * 60));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  return `${hours}h ${String(minutes).padStart(2, "0")}m`;
+}
+
 export default function ReportsPage() {
   const [tab, setTab] = useState<"summary" | "consolidated">("summary");
   const [month, setMonth] = useState(currentMonth());
@@ -310,12 +337,17 @@ export default function ReportsPage() {
                             times?.checkOut ?? null
                           );
 
+                          const workedFor = calculateWorkedDuration(
+                            times?.checkIn ?? null,
+                            times?.checkOut ?? null
+                          );
+
                           return (
                             <td
                               key={i}
                               title={
                                 showTime
-                                  ? `${statusLabel[code] ?? code}\nClock In: ${checkIn}\nClock Out: ${checkOut}`
+                                  ? `${statusLabel[code] ?? code}\nClock In: ${checkIn}\nClock Out: ${checkOut}\nWorked for: ${workedFor}`
                                   : statusLabel[code] ?? code
                               }
                               className="px-1.5 py-2 text-center"
@@ -349,6 +381,12 @@ export default function ReportsPage() {
                                 {showTime && (
                                   <span className="whitespace-nowrap text-[9px] font-medium leading-tight text-slate-400">
                                     {checkOut}
+                                  </span>
+                                )}
+
+                                {showTime && (
+                                  <span className="whitespace-nowrap text-[8px] font-semibold leading-tight text-slate-500">
+                                    Worked for {workedFor}
                                   </span>
                                 )}
                               </div>

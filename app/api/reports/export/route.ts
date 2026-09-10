@@ -233,6 +233,8 @@ export async function GET(
                             select: {
                                 date: true,
                                 status: true,
+                                checkInTime: true,
+                                checkOutTime: true,
                             },
                         },
                     },
@@ -323,6 +325,71 @@ export async function GET(
             ON_LEAVE: "L",
         };
 
+        /*
+         * Format attendance time in India time.
+         */
+        const formatExportTime = (
+            value: Date | null
+        ): string => {
+            if (!value) {
+                return "--:--";
+            }
+
+            return new Intl.DateTimeFormat(
+                "en-IN",
+                {
+                    timeZone:
+                        "Asia/Kolkata",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: true,
+                }
+            ).format(value);
+        };
+
+        /*
+         * Calculate total worked duration.
+         */
+        const calculateWorkedDuration = (
+            checkIn: Date | null,
+            checkOut: Date | null
+        ): string => {
+            if (
+                !checkIn ||
+                !checkOut
+            ) {
+                return "--";
+            }
+
+            const durationMs =
+                checkOut.getTime() -
+                checkIn.getTime();
+
+            if (
+                durationMs < 0
+            ) {
+                return "--";
+            }
+
+            const totalMinutes =
+                Math.floor(
+                    durationMs /
+                    (1000 * 60)
+                );
+
+            const hours =
+                Math.floor(
+                    totalMinutes / 60
+                );
+
+            const minutes =
+                totalMinutes % 60;
+
+            return `${hours}h ${String(
+                minutes
+            ).padStart(2, "0")}m`;
+        };
+
         const consolidatedRows =
             employees.map(
                 (emp) => {
@@ -330,6 +397,17 @@ export async function GET(
                         Record<
                             number,
                             string
+                        > = {};
+
+                    const attendanceTimes:
+                        Record<
+                            number,
+                            {
+                                checkIn:
+                                Date | null;
+                                checkOut:
+                                Date | null;
+                            }
                         > = {};
 
                     emp.attendances.forEach(
@@ -343,11 +421,33 @@ export async function GET(
                                 statusCode[
                                 attendance.status
                                 ] ?? "-";
+
+                            attendanceTimes[
+                                day
+                            ] = {
+                                checkIn:
+                                    attendance.checkInTime ??
+                                    null,
+
+                                checkOut:
+                                    attendance.checkOutTime ??
+                                    null,
+                            };
                         }
                     );
 
                     const days: string[] =
                         [];
+
+                    const times: Record<
+                        number,
+                        {
+                            checkIn:
+                            Date | null;
+                            checkOut:
+                            Date | null;
+                        }
+                    > = {};
 
                     for (
                         let day = 1;
@@ -359,6 +459,16 @@ export async function GET(
                             dayMap[day] ??
                             "-"
                         );
+
+                        times[day] =
+                            attendanceTimes[
+                            day
+                            ] ?? {
+                                checkIn:
+                                    null,
+                                checkOut:
+                                    null,
+                            };
                     }
 
                     return {
@@ -372,6 +482,8 @@ export async function GET(
                             emp.fullName,
 
                         days,
+
+                        times,
                     };
                 }
             );
@@ -542,7 +654,7 @@ export async function GET(
                     String(day),
                 key:
                     `day${day}`,
-                width: 8,
+                width: 24,
             });
         }
 
@@ -565,15 +677,77 @@ export async function GET(
 
             row.days.forEach(
                 (code, index) => {
-                    excelRow[
-                        `day${index + 1}`
-                    ] = code;
+                    const day =
+                        index + 1;
+
+                    const time =
+                        row.times[day];
+
+                    const showTime =
+                        code === "P" ||
+                        code === "H";
+
+                    if (
+                        showTime
+                    ) {
+                        const checkIn =
+                            formatExportTime(
+                                time.checkIn
+                            );
+
+                        const checkOut =
+                            formatExportTime(
+                                time.checkOut
+                            );
+
+                        const workedFor =
+                            calculateWorkedDuration(
+                                time.checkIn,
+                                time.checkOut
+                            );
+
+                        excelRow[
+                            `day${day}`
+                        ] =
+                            `${code}\nClock In: ${checkIn}\nClock Out: ${checkOut}\nWorked for ${workedFor}`;
+                    } else {
+                        excelRow[
+                            `day${day}`
+                        ] = code;
+                    }
                 }
             );
 
-            consolidatedSheet.addRow(
-                excelRow
+            const addedRow =
+                consolidatedSheet.addRow(
+                    excelRow
+                );
+
+            addedRow.eachCell(
+                (
+                    cell,
+                    columnNumber
+                ) => {
+                    if (
+                        columnNumber >
+                        2
+                    ) {
+                        cell.alignment = {
+                            vertical:
+                                "middle",
+
+                            horizontal:
+                                "center",
+
+                            wrapText:
+                                true,
+                        };
+                    }
+                }
             );
+
+            addedRow.height =
+                72;
         }
 
         styleHeader(
@@ -622,6 +796,7 @@ export async function GET(
             {
                 error:
                     "Failed to export report",
+
                 details:
                     error instanceof Error
                         ? error.message

@@ -4,7 +4,21 @@ import '../../services/leave_service.dart';
 class LeaveScreen extends StatefulWidget {
   final bool openAttendanceCorrection;
 
-  const LeaveScreen({super.key, this.openAttendanceCorrection = false});
+  // Date passed from My Attendance when Raise Query is
+  // clicked for a particular attendance day.
+  final DateTime? initialCorrectionDate;
+  // Times passed from My Attendance when Raise Query is
+  // clicked for a particular attendance day.
+  final TimeOfDay? initialCorrectionTimeIn;
+  final TimeOfDay? initialCorrectionTimeOut;
+
+  const LeaveScreen({
+    super.key,
+    this.openAttendanceCorrection = false,
+    this.initialCorrectionDate,
+    this.initialCorrectionTimeIn,
+    this.initialCorrectionTimeOut,
+  });
 
   @override
   State<LeaveScreen> createState() => _LeaveScreenState();
@@ -30,6 +44,20 @@ class _LeaveScreenState extends State<LeaveScreen> {
   void initState() {
     super.initState();
     isAttendanceCorrection = widget.openAttendanceCorrection;
+
+    // If Raise Query was opened from a particular attendance day,
+    // automatically use that exact date.
+    if (widget.initialCorrectionDate != null) {
+      correctionDate = widget.initialCorrectionDate;
+    }
+
+    if (widget.initialCorrectionTimeIn != null) {
+      correctionTimeIn = widget.initialCorrectionTimeIn;
+    }
+
+    if (widget.initialCorrectionTimeOut != null) {
+      correctionTimeOut = widget.initialCorrectionTimeOut;
+    }
   }
 
   @override

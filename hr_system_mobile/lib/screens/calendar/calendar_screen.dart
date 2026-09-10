@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../services/attendance_service.dart';
-// import '../leave/leave_screen.dart';
+import '../leave/leave_screen.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -609,6 +609,75 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         ),
                       ),
                     ],
+                  ),
+
+                  // ==================================================
+                  // NEW: RAISE QUERY FOR THIS SPECIFIC DATE
+                  // ==================================================
+                  const SizedBox(height: 14),
+
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: date == null
+                          ? null
+                          : () {
+                              // ==================================================
+                              // NEW: PASS CLOCK IN / CLOCK OUT TIMES
+                              // TO THE RAISE QUERY PAGE
+                              // ==================================================
+
+                              TimeOfDay? timeIn;
+                              TimeOfDay? timeOut;
+
+                              try {
+                                if (day['timeIn'] != null) {
+                                  final parsed = DateTime.parse(
+                                    day['timeIn'].toString(),
+                                  ).toLocal();
+
+                                  timeIn = TimeOfDay(
+                                    hour: parsed.hour,
+                                    minute: parsed.minute,
+                                  );
+                                }
+
+                                if (day['timeOut'] != null) {
+                                  final parsed = DateTime.parse(
+                                    day['timeOut'].toString(),
+                                  ).toLocal();
+
+                                  timeOut = TimeOfDay(
+                                    hour: parsed.hour,
+                                    minute: parsed.minute,
+                                  );
+                                }
+                              } catch (_) {}
+
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => LeaveScreen(
+                                    openAttendanceCorrection: true,
+                                    initialCorrectionDate: date,
+                                    initialCorrectionTimeIn: timeIn,
+                                    initialCorrectionTimeOut: timeOut,
+                                  ),
+                                ),
+                              );
+                            },
+                      icon: const Icon(Icons.edit_note_outlined, size: 20),
+                      label: const Text('Raise Query'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.red,
+                        side: const BorderSide(color: Colors.red),
+                        minimumSize: const Size.fromHeight(46),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        textStyle: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
                   ),
                 ],
               ],
