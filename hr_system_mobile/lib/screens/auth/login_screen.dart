@@ -33,6 +33,12 @@ class _LoginScreenState extends State<LoginScreen> {
   String? forgotError;
   String? forgotSuccess;
 
+  // ============================================================
+  // PASSWORD VISIBILITY
+  // ============================================================
+
+  bool showPassword = false;
+
   @override
   void initState() {
     super.initState();
@@ -483,10 +489,32 @@ class _LoginScreenState extends State<LoginScreen> {
                     // ==================================================
                     TextField(
                       controller: passwordController,
-                      obscureText: true,
-                      decoration: const InputDecoration(
+                      obscureText: !showPassword,
+                      decoration: InputDecoration(
                         labelText: 'Password',
-                        border: OutlineInputBorder(),
+                        border: const OutlineInputBorder(),
+                        suffixIcon: GestureDetector(
+                          onTapDown: (_) {
+                            setState(() {
+                              showPassword = true;
+                            });
+                          },
+                          onTapUp: (_) {
+                            setState(() {
+                              showPassword = false;
+                            });
+                          },
+                          onTapCancel: () {
+                            setState(() {
+                              showPassword = false;
+                            });
+                          },
+                          child: Icon(
+                            showPassword
+                                ? Icons.visibility
+                                : Icons.visibility_outlined,
+                          ),
+                        ),
                       ),
                     ),
 

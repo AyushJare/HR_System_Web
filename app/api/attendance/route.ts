@@ -25,6 +25,40 @@ function getTodayIndiaDate(): string {
   }).format(new Date());
 }
 
+/*
+ * Creates a human-readable timestamp for exported filenames.
+ *
+ * Example:
+ * 10-Sep-2026_06-19-32-PM
+ */
+function getExportTimestamp(): string {
+  const now = new Date();
+
+  const parts = new Intl.DateTimeFormat("en-IN", {
+    timeZone: "Asia/Kolkata",
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+  }).formatToParts(now);
+
+  const getPart = (type: string): string =>
+    parts.find((part) => part.type === type)?.value ?? "";
+
+  const day = getPart("day");
+  const month = getPart("month");
+  const year = getPart("year");
+  const hour = getPart("hour");
+  const minute = getPart("minute");
+  const second = getPart("second");
+  const dayPeriod = getPart("dayPeriod").toUpperCase();
+
+  return `${day}-${month}-${year}_${hour}-${minute}-${second}-${dayPeriod}`;
+}
+
 function isValidDateString(value: unknown): value is string {
   if (typeof value !== "string") {
     return false;
@@ -338,6 +372,15 @@ export async function GET(request: NextRequest) {
       const buffer =
         await workbook.xlsx.writeBuffer();
 
+      /*
+       * Human-readable export filename.
+       *
+       * Example:
+       * Daily_Attendance_10-Sep-2026_06-19-32-PM.xlsx
+       */
+      const exportTimestamp =
+        getExportTimestamp();
+
       return new NextResponse(buffer, {
         status: 200,
 
@@ -346,7 +389,7 @@ export async function GET(request: NextRequest) {
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 
           "Content-Disposition":
-            `attachment; filename="Daily_Attendance_${todayIndiaDate}.xlsx"`,
+            `attachment; filename="Daily_Attendance_${exportTimestamp}.xlsx"`,
 
           "Cache-Control":
             "no-store",

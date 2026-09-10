@@ -237,6 +237,25 @@ export default function AttendancePage() {
       const blob =
         await res.blob();
 
+      const contentDisposition =
+        res.headers.get(
+          "Content-Disposition"
+        );
+
+      let fileName =
+        `Daily_Attendance_${getLocalDateString()}.xlsx`;
+
+      if (contentDisposition) {
+        const fileNameMatch =
+          contentDisposition.match(
+            /filename="([^"]+)"/i
+          );
+
+        if (fileNameMatch?.[1]) {
+          fileName = fileNameMatch[1];
+        }
+      }
+
       const url =
         window.URL.createObjectURL(
           blob
@@ -247,8 +266,7 @@ export default function AttendancePage() {
 
       link.href = url;
 
-      link.download =
-        `Daily_Attendance_${getLocalDateString()}.xlsx`;
+      link.download = fileName;
 
       document.body.appendChild(link);
 

@@ -52,9 +52,11 @@ function EmployeeTypeDropdown({
     <details className="relative">
       <summary className="flex min-w-56 cursor-pointer list-none items-center justify-between rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700">
         <span className="truncate">
-          {selectedNames.length > 0
-            ? selectedNames.join(", ")
-            : "Select Employee Types"}
+          {selectedNames.length === 0
+            ? "Select Employee Types"
+            : selectedNames.length === 1
+              ? selectedNames[0]
+              : `${selectedNames.length} Employee Types Selected`}
         </span>
 
         <span className="ml-2 text-slate-400">▼</span>
