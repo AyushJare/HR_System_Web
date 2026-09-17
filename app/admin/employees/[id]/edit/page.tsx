@@ -274,10 +274,16 @@ export default function EditEmployeePage() {
 
   const validateEmailField = (value: string): string => {
     try {
-      if (!validateRequired(value, "Email")) {
-        return "Email is required";
+      // =====================================================
+      // EMAIL IS OPTIONAL
+      // =====================================================
+
+      // If email is empty, do not show "Email is required".
+      if (!value || !value.trim()) {
+        return "";
       }
 
+      // If an email is entered, keep format validation.
       if (!validateEmailFormat(value)) {
         return "Please enter a valid email address";
       }
@@ -319,7 +325,9 @@ export default function EditEmployeePage() {
 
   const validateMobileField = (value: string): string[] => {
     try {
-      if (!value) return [];
+      if (!value || !value.trim()) {
+        return ["Phone number is required"];
+      }
 
       const cleaned = value.replace(/\D/g, "");
       const errors: string[] = [];
@@ -336,12 +344,15 @@ export default function EditEmployeePage() {
         );
       }
 
+      // Indian mobile numbers start with 6, 7, 8, or 9.
+      // Same rule as the Add Employee screen and as
+      // validatePhoneNumber() in lib/validators/phone.ts.
       if (
         cleaned.length > 0 &&
-        !cleaned.startsWith("9")
+        !/^[6-9]/.test(cleaned)
       ) {
         errors.push(
-          "Phone number must start with 9"
+          "Phone number must start with 6, 7, 8, or 9"
         );
       }
 
@@ -460,10 +471,11 @@ export default function EditEmployeePage() {
                 validateFullName(value),
             }));
           } else if (name === "email") {
+            // Email validation happens on blur and submit,
+            // not on every key press.
             setErrors((prevErrors) => ({
               ...prevErrors,
-              email:
-                validateEmailField(value),
+              email: "",
             }));
             // } else if (name === "password") {
             //   // Password validation has been disabled.
@@ -474,12 +486,11 @@ export default function EditEmployeePage() {
             //     password: [],
             //   }));
           } else if (name === "mobile") {
-            const mobileErrors =
-              validateMobileField(value);
-
+            // Mobile validation happens on blur and submit,
+            // not on every key press.
             setErrors((prevErrors) => ({
               ...prevErrors,
-              mobile: mobileErrors,
+              mobile: [],
             }));
           } else if (name === "gender") {
             setErrors((prevErrors) => ({
@@ -510,6 +521,27 @@ export default function EditEmployeePage() {
     }
   };
 
+  const handleBlur = (
+    e: React.FocusEvent<HTMLInputElement>
+  ) => {
+    try {
+      const { name, value } = e.target;
+
+      if (name === "email") {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          email: validateEmailField(value),
+        }));
+      } else if (name === "mobile") {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          mobile: validateMobileField(value),
+        }));
+      }
+    } catch (error) {
+      handleApiError(error, "Field Validation");
+    }
+  };
   const handleSubmit = async (
     e: React.FormEvent
   ) => {
@@ -519,6 +551,12 @@ export default function EditEmployeePage() {
       const fullNameError =
         validateFullName(formData.fullName);
 
+      // =====================================================
+      // EMAIL IS OPTIONAL
+      // =====================================================
+
+      // An empty email is allowed.
+      // If entered, validate its format.
       const emailError =
         validateEmailField(formData.email);
 
@@ -585,11 +623,12 @@ export default function EditEmployeePage() {
         fullName:
           formData.fullName.trim(),
 
+        // Empty email is sent as null.
         email:
-          formData.email.trim(),
+          formData.email.trim() || null,
 
         mobile:
-          formData.mobile || null,
+          formData.mobile.trim(),
 
         gender:
           formData.gender || null,
@@ -793,7 +832,7 @@ export default function EditEmployeePage() {
           {/* EMAIL */}
           <div>
             <label className="block text-sm font-semibold text-slate-900 mb-2">
-              Email *
+              Email
             </label>
 
             <input
@@ -801,6 +840,7 @@ export default function EditEmployeePage() {
               name="email"
               value={formData.email}
               onChange={handleChange}
+              onBlur={handleBlur}
               placeholder="Enter email address"
               className={`w-full rounded-lg border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200 ${errors.email
                 ? "border-red-500"
@@ -868,13 +908,14 @@ export default function EditEmployeePage() {
           {/* MOBILE */}
           <div>
             <label className="block text-sm font-semibold text-slate-900 mb-2">
-              Mobile
+              Mobile *
             </label>
 
             <input
               name="mobile"
               value={formData.mobile}
               onChange={handleChange}
+              onBlur={handleBlur}
               inputMode="numeric"
               placeholder="Enter 10-digit phone number"
               className={`w-full rounded-lg border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition-all duration-200 ${errors.mobile.length > 0

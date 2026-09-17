@@ -63,6 +63,18 @@ export async function GET() {
                             name: true,
                         },
                     },
+
+                    userType: {
+                        select: {
+                            name: true,
+                        },
+                    },
+
+                    office: {
+                        select: {
+                            name: true,
+                        },
+                    },
                 },
             });
 
@@ -129,6 +141,16 @@ export async function GET() {
                 header: "Role",
                 key: "role",
                 width: 14,
+            },
+            {
+                header: "User Type",
+                key: "userType",
+                width: 22,
+            },
+            {
+                header: "Office",
+                key: "office",
+                width: 25,
             },
             {
                 header: "Status",
@@ -210,6 +232,12 @@ export async function GET() {
                 role:
                     employee.role,
 
+                userType:
+                    employee.userType?.name ?? "",
+
+                office:
+                    employee.office?.name ?? "",
+
                 status:
                     employee.isActive
                         ? "Active"
@@ -242,7 +270,7 @@ export async function GET() {
         if (employees.length > 0) {
             worksheet.autoFilter = {
                 from: "A1",
-                to: `K${employees.length + 1}`,
+                to: `M${employees.length + 1}`,
             };
         }
 

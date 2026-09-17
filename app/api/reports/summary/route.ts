@@ -13,6 +13,11 @@ import {
   finalizeAttendanceForDate,
 } from "@/lib/attendanceAutomation";
 
+import {
+  getWeeklyOffConfigForEmployeeType,
+  isWeeklyOff,
+} from "@/lib/attendanceUtils";
+
 function getTodayIndiaDateString(): string {
   return new Intl.DateTimeFormat(
     "en-CA",
@@ -167,110 +172,240 @@ export async function GET(
      * ============================================================
      */
 
-    const employees =
-      await prisma.employee.findMany(
-        {
-          where: {
-            isActive: true,
-          },
-
-          orderBy: {
-            employeeCode:
-              "asc",
-          },
-
-          select: {
-            id: true,
-            employeeCode: true,
-            fullName: true,
-
-            department: {
-              select: {
-                name: true,
-              },
+    const [
+      employees,
+      holidays,
+    ] =
+      await Promise.all([
+        prisma.employee.findMany(
+          {
+            where: {
+              isActive: true,
             },
 
-            attendances: {
-              where: {
-                date: {
-                  gte:
-                    startDate,
-                  lte:
-                    endDate,
+            orderBy: {
+              employeeCode:
+                "asc",
+            },
+
+            select: {
+              id: true,
+              employeeCode: true,
+              fullName: true,
+              employeeTypeId: true,
+
+              department: {
+                select: {
+                  name: true,
+                },
+              },
+
+              attendances: {
+                where: {
+                  date: {
+                    gte:
+                      startDate,
+                    lte:
+                      endDate,
+                  },
+
+                  deletedAt:
+                    null,
                 },
 
-                deletedAt:
-                  null,
+                select: {
+                  date: true,
+                  status: true,
+                },
               },
+            },
+          }
+        ),
 
+        prisma.holiday.findMany({
+          where: {
+            date: {
+              gte:
+                startDate,
+              lte:
+                endDate,
+            },
+          },
+
+          include: {
+            employeeTypeAssignments: {
               select: {
-                status: true,
+                employeeTypeId:
+                  true,
               },
             },
           },
-        }
-      );
+        }),
+      ]);
 
     const summary =
-      employees.map(
-        (emp) => {
-          const counts = {
-            PRESENT: 0,
-            ABSENT: 0,
-            HALF_DAY: 0,
-            ON_LEAVE: 0,
-          };
+      await Promise.all(
+        employees.map(
+          async (emp) => {
+            const counts = {
+              PRESENT: 0,
+              ABSENT: 0,
+              HALF_DAY: 0,
+              ON_LEAVE: 0,
+            };
 
-          emp.attendances.forEach(
-            (attendance) => {
-              if (
-                attendance.status ===
-                "PRESENT" ||
-                attendance.status ===
-                "ABSENT" ||
-                attendance.status ===
-                "HALF_DAY" ||
-                attendance.status ===
-                "ON_LEAVE"
-              ) {
+            /*
+             * Get the weekly-off configuration for this
+             * employee's employee type.
+             */
+            const weeklyOffConfig =
+              await getWeeklyOffConfigForEmployeeType(
+                emp.employeeTypeId
+              );
+
+            /*
+             * Build the set of holidays that actually
+             * apply to this employee.
+             *
+             * No employee-type assignments means the
+             * holiday applies to everyone.
+             */
+            const holidayDays =
+              new Set<number>();
+
+            holidays.forEach(
+              (holiday) => {
+                const assignments =
+                  holiday.employeeTypeAssignments;
+
+                const appliesToEmployee =
+                  assignments.length ===
+                  0 ||
+                  (
+                    emp.employeeTypeId !==
+                    null &&
+                    assignments.some(
+                      (assignment) =>
+                        assignment.employeeTypeId ===
+                        emp.employeeTypeId
+                    )
+                  );
+
+                if (
+                  appliesToEmployee
+                ) {
+                  holidayDays.add(
+                    new Date(
+                      holiday.date
+                    ).getUTCDate()
+                  );
+                }
+              }
+            );
+
+            /*
+             * Count only actual working-day
+             * attendance records.
+             *
+             * If an attendance record exists on a
+             * weekly-off or holiday, it must NOT be
+             * counted as Present/Absent/etc. in the
+             * monthly summary.
+             *
+             * The detailed attendance report follows
+             * the same calendar precedence.
+             */
+            emp.attendances.forEach(
+              (attendance) => {
+                if (
+                  attendance.status !==
+                  "PRESENT" &&
+                  attendance.status !==
+                  "ABSENT" &&
+                  attendance.status !==
+                  "HALF_DAY" &&
+                  attendance.status !==
+                  "ON_LEAVE"
+                ) {
+                  return;
+                }
+
+                const attendanceDate =
+                  new Date(
+                    attendance.date
+                  );
+
+                const isOffDay =
+                  isWeeklyOff(
+                    attendanceDate,
+                    weeklyOffConfig
+                  );
+
+                const isHoliday =
+                  holidayDays.has(
+                    attendanceDate.getUTCDate()
+                  );
+
+                /*
+                 * If an actual attendance record exists,
+                 * count it even when the date is a weekly
+                 * off or holiday.
+                 *
+                 * Clock-in is currently allowed on those
+                 * dates, so Reports Summary must match the
+                 * actual attendance record.
+                 */
+                if (
+                  isOffDay ||
+                  isHoliday
+                ) {
+                  counts[
+                    attendance.status
+                  ] += 1;
+
+                  return;
+                }
+
                 counts[
                   attendance.status
                 ] += 1;
               }
-            }
-          );
+            );
 
-          return {
-            employeeId:
-              emp.id,
+            return {
+              employeeId:
+                emp.id,
 
-            employeeCode:
-              emp.employeeCode,
+              employeeCode:
+                emp.employeeCode,
 
-            fullName:
-              emp.fullName,
+              fullName:
+                emp.fullName,
 
-            department:
-              emp.department?.name ??
-              "-",
+              department:
+                emp.department?.name ??
+                "-",
 
-            present:
-              counts.PRESENT,
+              present:
+                counts.PRESENT,
 
-            absent:
-              counts.ABSENT,
+              absent:
+                counts.ABSENT,
 
-            halfDay:
-              counts.HALF_DAY,
+              halfDay:
+                counts.HALF_DAY,
 
-            onLeave:
-              counts.ON_LEAVE,
+              onLeave:
+                counts.ON_LEAVE,
 
-            totalMarked:
-              emp.attendances
-                .length,
-          };
-        }
+              totalMarked:
+                counts.PRESENT +
+                counts.ABSENT +
+                counts.HALF_DAY +
+                counts.ON_LEAVE,
+            };
+          }
+        )
       );
 
     return NextResponse.json(

@@ -12,7 +12,6 @@ import { reverseGeocode } from "@/lib/reverseGeocode";
 export async function POST(request: NextRequest) {
     try {
         const session = await getSession(request);
-
         if (!session) {
             return NextResponse.json(
                 { error: "Unauthorized" },
@@ -311,19 +310,30 @@ export async function POST(request: NextRequest) {
         // WEEKLY OFF / HOLIDAY CHECK
         // ==========================================================
 
+        /*
+         * TEMPORARILY DISABLED:
+         *
+         * Weekly off and holiday checks are commented out so
+         * employees can clock in on weekly offs and holidays.
+         *
+         * Keep this code commented for now so it can be restored
+         * later without changing the original logic.
+         */
+
+        /*
         // Weekly off applies normally.
         // Weekly off applies according to the employee type.
         const weeklyOffConfig =
             await getWeeklyOffConfigForEmployeeType(
                 employee.employeeTypeId
             );
-
+    
         const isDateWeeklyOff =
             isWeeklyOff(
                 serverDate,
                 weeklyOffConfig
             );
-
+    
         // Holiday applies only when it is assigned
         // to this employee's employee type.
         const applicableHoliday =
@@ -345,7 +355,7 @@ export async function POST(request: NextRequest) {
                     },
                 })
                 : null;
-
+    
         if (
             isDateWeeklyOff ||
             applicableHoliday
@@ -354,32 +364,33 @@ export async function POST(request: NextRequest) {
                 applicableHoliday
                     ? "holiday"
                     : "weekly off";
-
+    
             const details =
                 applicableHoliday
                     ? applicableHoliday.name
                     : "Today is a weekly off";
-
+    
             return NextResponse.json(
                 {
                     error:
                         `Cannot check in on ${reason}: ${details}`,
-
+    
                     isOff: true,
-
+    
                     offReason:
                         applicableHoliday
                             ? "HOLIDAY"
                             : "WEEKLY_OFF",
-
+    
                     offDetails: details,
-
+    
                     holiday:
                         applicableHoliday,
                 },
                 { status: 422 }
             );
         }
+        */
 
         // ==========================================================
         // CHECK IF ALREADY CHECKED IN TODAY
@@ -486,11 +497,13 @@ export async function POST(request: NextRequest) {
                             .toISOString()
                             .split("T")[0],
 
-                    isWeeklyOff:
-                        isDateWeeklyOff,
-
                     attendanceTime:
-                        attendance.checkInTime,
+                        attendance.checkInTime
+                            ? attendance.checkInTime.toISOString()
+                            : null,
+
+                    // Weekly-off/holiday blocking is temporarily
+                    // disabled for clock-in.
 
                     // --------------------------------------------------
                     // CLOCK-IN LOCATION INFORMATION
@@ -538,9 +551,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
             {
                 ...attendance,
-
-                isWeeklyOff:
-                    isDateWeeklyOff,
 
                 message:
                     "Checked in successfully",

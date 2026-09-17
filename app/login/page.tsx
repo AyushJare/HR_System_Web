@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 export default function LoginPage() {
   const router = useRouter();
 
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
 
   // ============================================================
@@ -104,7 +104,7 @@ export default function LoginPage() {
           },
 
           body: JSON.stringify({
-            email: email.trim(),
+            identifier: identifier.trim(),
             password,
           }),
         }
@@ -601,24 +601,28 @@ export default function LoginPage() {
           >
 
             {/* ================================================== */}
-            {/* EMAIL */}
+            {/* EMAIL OR PHONE NUMBER */}
             {/* ================================================== */}
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
-                Email
+                Email or Phone Number
               </label>
 
               <input
-                type="email"
+                // type="email" would trigger the browser's built-in email
+                // format check, which blocks submission for a valid phone
+                // number. This field now accepts either, so it stays plain
+                // text and format is validated server-side instead.
+                type="text"
                 required
-                value={email}
+                value={identifier}
                 onChange={(e) =>
-                  setEmail(e.target.value)
+                  setIdentifier(e.target.value)
                 }
                 className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="admin@company.com"
-                autoComplete="email"
+                placeholder="admin@company.com or 9876543210"
+                autoComplete="username"
               />
             </div>
 

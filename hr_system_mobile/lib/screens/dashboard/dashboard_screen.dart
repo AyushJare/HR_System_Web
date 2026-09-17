@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 import '../../services/user_service.dart';
+import '../../services/api_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -11,6 +12,8 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   Map<String, dynamic>? user;
+  Map<String, dynamic>? dashboardData;
+
   bool loading = true;
   String? error;
 
@@ -27,10 +30,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
     try {
       final data = await UserService.getCurrentUser();
 
+      final dashboardResponse = await ApiService.get('/api/dashboard');
+
       if (!mounted) return;
 
       setState(() {
         user = data;
+
+        if (dashboardResponse is Map<String, dynamic>) {
+          dashboardData = dashboardResponse;
+        } else {
+          dashboardData = null;
+        }
+
         loading = false;
         error = null;
       });
@@ -130,6 +142,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       'Saturday',
       'Sunday',
     ];
+
     const months = [
       'January',
       'February',
@@ -150,6 +163,79 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final month = months[now.month - 1];
 
     return '$weekday, $month ${now.day}, ${now.year}';
+  }
+
+  Widget _buildTodayStatusMessage() {
+    final todayStatus = dashboardData?['todayStatus']?.toString();
+
+    final holidayName = dashboardData?['todayHolidayName']?.toString();
+
+    if (todayStatus == 'HOLIDAY') {
+      final name =
+          holidayName != null && holidayName.isNotEmpty && holidayName != 'null'
+          ? holidayName
+          : 'Holiday';
+
+      return Container(
+        width: double.infinity,
+        margin: const EdgeInsets.only(bottom: 20),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF7E6),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.25)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('🎉', style: TextStyle(fontSize: 24)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Today is a holiday: $name',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (todayStatus == 'WEEK_OFF') {
+      return Container(
+        width: double.infinity,
+        margin: const EdgeInsets.only(bottom: 20),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF1F5F9),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.black12),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('📅', style: TextStyle(fontSize: 24)),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Today is a weekly off',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return const SizedBox.shrink();
   }
 
   @override
@@ -211,10 +297,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     final fullName = user?['fullName']?.toString() ?? 'User';
+
     final employeeCode = user?['employeeCode']?.toString() ?? '';
+
     final userType = user?['userType']?.toString() ?? 'Employee';
+
     final role = user?['role']?.toString() ?? 'EMPLOYEE';
+
     final permissions = user?['permissions'];
+
     final canViewApprovals =
         permissions is Map &&
         permissions['Approvals'] is Map &&
@@ -247,8 +338,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Eyebrow label, like the web dashboard's "DAILY SUMMARY"
-              Text(
+              const Text(
                 'DAILY SUMMARY',
                 style: TextStyle(
                   fontSize: 12,
@@ -279,7 +369,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
               const SizedBox(height: 20),
 
-              // Profile summary card, restyled with a brand gradient
+              // TODAY HOLIDAY / WEEKLY OFF MESSAGE
+              _buildTodayStatusMessage(),
+
+              // PROFILE SUMMARY CARD
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
@@ -338,7 +431,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               color: Colors.white,
                             ),
                           ),
+
                           const SizedBox(height: 4),
+
                           Text(
                             role == 'ADMIN' ? 'Administrator' : userType,
                             style: TextStyle(
@@ -346,6 +441,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               fontSize: 13,
                             ),
                           ),
+
                           if (employeeCode.isNotEmpty) ...[
                             const SizedBox(height: 6),
                             Container(
@@ -402,8 +498,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
               const SizedBox(height: 14),
 
-              // Quick action rows: compact, color-coded options
-              // (not big tiles) matching the web app's accent colors.
               _ActionCard(
                 icon: Icons.login,
                 title: 'Mark Attendance',
@@ -427,6 +521,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
 
               const SizedBox(height: 12),
+
               _ActionCard(
                 icon: Icons.event_note_outlined,
                 title: 'Raise Query',
@@ -436,6 +531,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Navigator.pushNamed(context, '/leave');
                 },
               ),
+
               if (canViewApprovals) ...[
                 const SizedBox(height: 12),
                 _ActionCard(
@@ -448,7 +544,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   },
                 ),
               ],
+
               const SizedBox(height: 12),
+
               _ActionCard(
                 icon: Icons.person_outline,
                 title: 'My Profile',
@@ -514,7 +612,9 @@ class _ActionCard extends StatelessWidget {
                 alignment: Alignment.center,
                 child: Icon(icon, color: accentColor, size: 20),
               ),
+
               const SizedBox(width: 14),
+
               Expanded(
                 child: Text(
                   title,
@@ -525,6 +625,7 @@ class _ActionCard extends StatelessWidget {
                   ),
                 ),
               ),
+
               Icon(Icons.chevron_right, color: accentColor, size: 22),
             ],
           ),

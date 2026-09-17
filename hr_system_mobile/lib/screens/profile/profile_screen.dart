@@ -46,10 +46,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (!mounted) return;
 
       setState(() {
-        error = e.toString().replaceFirst(
-              'Exception: ',
-              '',
-            );
+        error = e.toString().replaceFirst('Exception: ', '');
         loading = false;
       });
     }
@@ -65,11 +62,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       if (!mounted) return;
 
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        '/',
-        (route) => false,
-      );
+      Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
     } catch (e) {
       if (!mounted) return;
 
@@ -78,14 +71,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            e.toString().replaceFirst(
-              'Exception: ',
-              '',
-            ),
-          ),
-        ),
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
       );
     }
   }
@@ -137,7 +123,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 child: Column(
                   children: [
-                    Icon(Icons.error_outline, color: Colors.red.shade400, size: 32),
+                    Icon(
+                      Icons.error_outline,
+                      color: Colors.red.shade400,
+                      size: 32,
+                    ),
                     const SizedBox(height: 12),
                     Text(
                       error!,
@@ -172,20 +162,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
     }
 
-    final fullName =
-        user?['fullName']?.toString() ?? 'User';
+    final fullName = user?['fullName']?.toString() ?? 'User';
 
-    final email =
-        user?['email']?.toString() ?? '';
+    final email = user?['email']?.toString() ?? '';
 
-    final employeeCode =
-        user?['employeeCode']?.toString() ?? '';
+    final employeeCode = user?['employeeCode']?.toString() ?? '';
 
-    final userType =
-        user?['userType']?.toString() ?? 'Employee';
+    final userType = user?['userType']?.toString() ?? 'Employee';
 
-    final role =
-        user?['role']?.toString() ?? 'EMPLOYEE';
+    final role = user?['role']?.toString() ?? 'EMPLOYEE';
+
+    // ============================================================
+    // ADDITIONAL EMPLOYEE PROFILE DETAILS
+    // ============================================================
+
+    final phone =
+        user?['phone']?.toString() ??
+        user?['phoneNumber']?.toString() ??
+        user?['mobile']?.toString() ??
+        '';
+
+    final office = user?['office']?.toString() ?? '';
+
+    final department = user?['department']?.toString() ?? '';
+
+    final designation = user?['designation']?.toString() ?? '';
 
     final initial = fullName.isNotEmpty
         ? fullName.substring(0, 1).toUpperCase()
@@ -326,9 +327,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             _InfoTile(
               title: 'Email',
-              value: email.isEmpty
-                  ? 'Not available'
-                  : email,
+              value: email.isEmpty ? 'Not available' : email,
               icon: Icons.email_outlined,
               accentColor: const Color(0xFF2563EB),
               backgroundColor: const Color(0xFFEAF1FE),
@@ -337,13 +336,51 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 10),
 
             _InfoTile(
+              title: 'Phone Number',
+              value: phone.isEmpty ? 'Not available' : phone,
+              icon: Icons.phone_outlined,
+              accentColor: const Color(0xFF16A34A),
+              backgroundColor: const Color(0xFFEAF8EF),
+            ),
+
+            const SizedBox(height: 10),
+
+            _InfoTile(
               title: 'Employee Code',
-              value: employeeCode.isEmpty
-                  ? 'Not available'
-                  : employeeCode,
+              value: employeeCode.isEmpty ? 'Not available' : employeeCode,
               icon: Icons.badge_outlined,
               accentColor: const Color(0xFF9333EA),
               backgroundColor: const Color(0xFFF3E9FD),
+            ),
+
+            const SizedBox(height: 10),
+
+            _InfoTile(
+              title: 'Office',
+              value: office.isEmpty ? 'Not available' : office,
+              icon: Icons.business_outlined,
+              accentColor: const Color(0xFF0891B2),
+              backgroundColor: const Color(0xFFE6F7FA),
+            ),
+
+            const SizedBox(height: 10),
+
+            _InfoTile(
+              title: 'Department',
+              value: department.isEmpty ? 'Not available' : department,
+              icon: Icons.apartment_outlined,
+              accentColor: const Color(0xFF7C3AED),
+              backgroundColor: const Color(0xFFF0EAFE),
+            ),
+
+            const SizedBox(height: 10),
+
+            _InfoTile(
+              title: 'Designation',
+              value: designation.isEmpty ? 'Not available' : designation,
+              icon: Icons.work_outline,
+              accentColor: const Color(0xFFEA580C),
+              backgroundColor: const Color(0xFFFFF0E6),
             ),
 
             const SizedBox(height: 10),
@@ -390,9 +427,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       )
                     : const Icon(Icons.logout),
                 label: Text(
-                  loggingOut
-                      ? 'Signing Out...'
-                      : 'Sign Out',
+                  loggingOut ? 'Signing Out...' : 'Sign Out',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -459,10 +494,7 @@ class _InfoTile extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: TextStyle(
-                    color: Colors.grey.shade600,
-                    fontSize: 12.5,
-                  ),
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5),
                 ),
                 const SizedBox(height: 2),
                 Text(

@@ -24,26 +24,25 @@ export async function reverseGeocode(
             return data?.display_name ?? null;
         }
 
-        const area =
-            address.suburb ||
-            address.neighbourhood ||
-            address.city_district ||
-            address.town ||
-            address.city ||
-            address.village;
-
-        const city =
+        // Most specific location details first
+        const parts = [
+            address.house_number,
+            address.road,
+            address.neighbourhood,
+            address.suburb,
+            address.city_district,
             address.city ||
             address.town ||
             address.municipality ||
-            address.county;
-
-        const state = address.state;
-
-        const parts = [area, city, state].filter(
-            (value, index, array) =>
-                value && array.indexOf(value) === index
-        );
+            address.village,
+            address.state,
+            address.postcode,
+        ]
+            .filter(Boolean)
+            .filter(
+                (value, index, array) =>
+                    array.indexOf(value) === index
+            );
 
         return parts.length > 0
             ? parts.join(", ")

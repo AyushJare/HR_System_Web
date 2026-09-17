@@ -9,8 +9,10 @@ interface Employee {
   id: string;
   employeeCode: number;
   fullName: string;
-  email: string;
-  mobile?: string;
+  // Email is optional at creation (see POST /api/employees), so the
+  // API can return null here — this type must reflect that.
+  email: string | null;
+  mobile?: string | null;
   role: "ADMIN" | "EMPLOYEE";
   isActive: boolean;
   department?: { name: string } | null;
@@ -188,11 +190,29 @@ export default function EmployeesPage() {
     );
   }
 
-  const filteredEmployees = employees.filter(
-    (emp) =>
-      emp.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      emp.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+
+  const filteredEmployees = employees.filter((emp) => {
+    if (!normalizedSearch) {
+      return true;
+    }
+
+    // fullName, email, designation, and department can all be
+    // null/undefined for a given employee — none of these are
+    // guaranteed to be set — so every field is guarded before
+    // calling string methods on it.
+    const fullName = emp.fullName?.toLowerCase() ?? "";
+    const email = emp.email?.toLowerCase() ?? "";
+    const designation = emp.designation?.name?.toLowerCase() ?? "";
+    const department = emp.department?.name?.toLowerCase() ?? "";
+
+    return (
+      fullName.includes(normalizedSearch) ||
+      email.includes(normalizedSearch) ||
+      designation.includes(normalizedSearch) ||
+      department.includes(normalizedSearch)
+    );
+  });
 
   const paginatedEmployees = filteredEmployees.slice(
     (page - 1) * itemsPerPage,
@@ -318,7 +338,7 @@ export default function EmployeesPage() {
       <div className="mb-6">
         <input
           type="text"
-          placeholder="Search by name or email..."
+          placeholder="Search by name, email, designation, or department..."
           value={searchTerm}
           onChange={(e) => {
             setSearchTerm(e.target.value);
@@ -400,7 +420,7 @@ export default function EmployeesPage() {
                     </td>
 
                     <td className="px-6 py-4 text-sm text-slate-600">
-                      {emp.email}
+                      {emp.email || "—"}
                     </td>
 
                     <td className="px-6 py-4 text-sm text-slate-600">

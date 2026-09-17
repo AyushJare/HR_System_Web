@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'services/auth_service.dart';
+
 import 'screens/auth/login_screen.dart';
 import 'screens/dashboard/dashboard_screen.dart';
 import 'screens/attendance/attendance_screen.dart';
@@ -27,7 +29,7 @@ class HRSystemApp extends StatelessWidget {
         useMaterial3: true,
       ),
 
-      home: const LoginScreen(),
+      home: const SessionCheckScreen(),
 
       routes: {
         '/dashboard': (context) => const DashboardScreen(),
@@ -40,5 +42,39 @@ class HRSystemApp extends StatelessWidget {
         '/audit': (context) => const AuditLogScreen(),
       },
     );
+  }
+}
+
+class SessionCheckScreen extends StatefulWidget {
+  const SessionCheckScreen({super.key});
+
+  @override
+  State<SessionCheckScreen> createState() => _SessionCheckScreenState();
+}
+
+class _SessionCheckScreenState extends State<SessionCheckScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _checkSession();
+  }
+
+  Future<void> _checkSession() async {
+    final isLoggedIn = await AuthService.restoreSession();
+
+    if (!mounted) return;
+
+    if (isLoggedIn) {
+      Navigator.of(context).pushReplacementNamed('/dashboard');
+    } else {
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const LoginScreen()));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(body: Center(child: CircularProgressIndicator()));
   }
 }

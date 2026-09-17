@@ -105,13 +105,7 @@ export async function GET(
           fullName: true,
           employeeCode: true,
           email: true,
-
-          /*
-           * Required to determine the employee-specific
-           * weekly-off configuration and applicable holidays.
-           */
           employeeTypeId: true,
-
           department: { select: { name: true } },
           designation: { select: { name: true } },
         },
@@ -124,11 +118,6 @@ export async function GET(
             lte: endDate,
           },
         },
-
-        /*
-         * Holiday assignments are used to determine whether
-         * a holiday applies to this employee type.
-         */
         include: {
           employeeTypeAssignments: {
             select: {
@@ -155,35 +144,11 @@ export async function GET(
     );
   }
 
-  /*
-   * ============================================================
-   * EMPLOYEE-TYPE-SPECIFIC WEEKLY OFF CONFIGURATION
-   * ============================================================
-   *
-   * If this employee type has its own weekly-off configuration,
-   * use it.
-   *
-   * Otherwise the default configuration is used.
-   *
-   * Old attendance-settings format is also handled by the
-   * helper for backward compatibility.
-   */
   const weeklyOffConfig =
     await getWeeklyOffConfigForEmployeeType(
       employee.employeeTypeId
     );
 
-  /*
-   * ============================================================
-   * EMPLOYEE-TYPE-SPECIFIC HOLIDAYS
-   * ============================================================
-   *
-   * A holiday with employee-type assignments applies only to
-   * employees belonging to one of those assigned types.
-   *
-   * If a holiday has no assignments, it remains applicable
-   * to everyone for backward compatibility.
-   */
   const applicableHolidays = holidays.filter((holiday) => {
     const assignments =
       holiday.employeeTypeAssignments;
@@ -259,38 +224,20 @@ export async function GET(
       record &&
       record.status === "ON_LEAVE"
     ) {
-      // An approved leave always shows through, whether past or scheduled ahead
       status =
         dateObj > todayUTC
           ? "ON_LEAVE_SCHEDULED"
           : "ON_LEAVE";
 
       counts.onLeave++;
-    } else if (dateObj > todayUTC) {
-      status = "FUTURE";
-    } else if (
-      isWeeklyOff(
-        dateObj,
-        weeklyOffConfig
-      )
-    ) {
-      /*
-       * Weekly off is now based on THIS employee's
-       * employee type.
-       *
-       * Example:
-       * Office employee -> 2nd/4th Saturday off
-       * Peon             -> Saturday can be working day
-       */
-      status = "WEEK_OFF";
-      counts.weekOff++;
-    } else if (holidayByDay.has(d)) {
-      status = "HOLIDAY";
 
-      holidayName =
-        holidayByDay.get(d)!;
+      timeIn = record.checkInTime
+        ? record.checkInTime.toISOString()
+        : null;
 
-      counts.holiday++;
+      timeOut = record.checkOutTime
+        ? record.checkOutTime.toISOString()
+        : null;
     } else if (record) {
       if (isAttendanceStatus(record.status)) {
         status = record.status;
@@ -317,6 +264,21 @@ export async function GET(
       if (status === "HALF_DAY") {
         counts.halfDay++;
       }
+    } else if (dateObj > todayUTC) {
+      status = "FUTURE";
+    } else if (
+      isWeeklyOff(
+        dateObj,
+        weeklyOffConfig
+      )
+    ) {
+      status = "WEEK_OFF";
+      counts.weekOff++;
+    } else if (holidayByDay.has(d)) {
+      status = "HOLIDAY";
+      holidayName =
+        holidayByDay.get(d)!;
+      counts.holiday++;
     } else {
       status = "NOT_MARKED";
       counts.notMarked++;

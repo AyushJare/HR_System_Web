@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
@@ -12,15 +14,22 @@ class AttendanceScreen extends StatefulWidget {
   State<AttendanceScreen> createState() => _AttendanceScreenState();
 }
 
-class _AttendanceScreenState extends State<AttendanceScreen> {
+class _AttendanceScreenState extends State<AttendanceScreen>
+    with WidgetsBindingObserver {
   Map<String, dynamic>? summary;
+
   bool loading = true;
   bool actionLoading = false;
   String? error;
+
   bool _isCheckedIn = false;
   bool _isCheckedOut = false;
+
   DateTime? _checkInTime;
   DateTime? _checkOutTime;
+
+  Timer? _attendanceRefreshTimer;
+  bool _refreshingAttendance = false;
 
   static const Color _brandGreen = Color(0xFF16A34A);
   static const Color _pageBg = Color(0xFFF4F6FB);
@@ -28,34 +37,75 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   @override
   void initState() {
     super.initState();
+
+    WidgetsBinding.instance.addObserver(this);
+
     _initScreen();
+
+    // Automatically refresh attendance while this screen is open.
+    // This allows Web changes to appear in Mobile without restarting
+    // the application.
+    _attendanceRefreshTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+      if (mounted && !actionLoading && !_refreshingAttendance) {
+        loadAttendance(showLoading: false);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _attendanceRefreshTimer?.cancel();
+
+    WidgetsBinding.instance.removeObserver(this);
+
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed &&
+        mounted &&
+        !actionLoading &&
+        !_refreshingAttendance) {
+      loadAttendance(showLoading: false);
+    }
   }
 
   Future<void> _initScreen() async {
     await loadAttendance();
   }
 
-  Future<void> loadAttendance() async {
-    setState(() {
-      loading = true;
-      error = null;
-    });
+  Future<void> loadAttendance({bool showLoading = true}) async {
+    if (_refreshingAttendance) return;
+
+    _refreshingAttendance = true;
+
+    if (showLoading) {
+      if (mounted) {
+        setState(() {
+          loading = true;
+          error = null;
+        });
+      }
+    }
 
     try {
       final now = DateTime.now();
+
       final month =
           '${now.year.toString().padLeft(4, '0')}-'
           '${now.month.toString().padLeft(2, '0')}';
 
       final data = await AttendanceService.getAttendanceSummary(month);
+
       print('FULL ATTENDANCE SUMMARY: $data');
+
       final todayData = data['todayAttendance'] is Map
           ? Map<String, dynamic>.from(data['todayAttendance'])
           : null;
 
       if (!mounted) return;
 
-      // Extract today's attendance
       final checkInTime = todayData?['timeIn'] != null
           ? DateTime.parse(todayData!['timeIn'].toString()).toLocal()
           : null;
@@ -66,32 +116,49 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
       setState(() {
         summary = data;
+
         _checkInTime = checkInTime;
         _checkOutTime = checkOutTime;
+
         _isCheckedIn = checkInTime != null;
         _isCheckedOut = checkOutTime != null;
+
         loading = false;
+        error = null;
       });
     } catch (e) {
       if (!mounted) return;
+
       setState(() {
         error = e.toString().replaceFirst('Exception: ', '');
-        loading = false;
+
+        // During background refresh, keep the existing
+        // attendance visible.
+        if (summary == null) {
+          loading = false;
+        }
       });
+    } finally {
+      _refreshingAttendance = false;
     }
   }
 
   Map<String, dynamic>? _getTodayAttendance(Map<String, dynamic> data) {
     final daily = data['dailyAttendance'];
+
     if (daily is! List) return null;
 
     final now = DateTime.now();
+
     for (final item in daily) {
       if (item is! Map) continue;
+
       final dateString = item['date']?.toString();
+
       if (dateString == null) continue;
 
       final date = DateTime.tryParse(dateString);
+
       if (date == null) continue;
 
       if (date.year == now.year &&
@@ -100,16 +167,19 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         return Map<String, dynamic>.from(item);
       }
     }
+
     return null;
   }
 
   Future<Position> _getLocation() async {
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+
     if (!serviceEnabled) {
       throw Exception('Please turn on location services.');
     }
 
     LocationPermission permission = await Geolocator.checkPermission();
+
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
     }
@@ -150,26 +220,30 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       if (!mounted) return;
 
       if (result['success']) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('✓ Checked in successfully!'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✓ Checked in successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        // IMPORTANT:
+        // Immediately reload attendance after clock-in.
         await loadAttendance();
       } else {
         setState(() {
           error = result['message'] ?? 'Check-in failed';
         });
+
         _showError(error!);
       }
     } catch (e) {
       if (!mounted) return;
+
       setState(() {
         error = e.toString().replaceFirst('Exception: ', '');
       });
+
       _showError(error!);
     } finally {
       if (mounted) {
@@ -231,9 +305,11 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       await loadAttendance();
     } catch (e) {
       if (!mounted) return;
+
       setState(() {
         error = e.toString().replaceFirst('Exception: ', '');
       });
+
       _showError(error!);
     } finally {
       if (mounted) {
@@ -251,7 +327,10 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   }
 
   String _formatTime(DateTime? dateTime) {
-    if (dateTime == null) return '--:--';
+    if (dateTime == null) {
+      return '--:--';
+    }
+
     return DateFormat('hh:mm a').format(dateTime);
   }
 
@@ -259,53 +338,196 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     if (_checkInTime == null || _checkOutTime == null) {
       if (_checkInTime != null) {
         final duration = DateTime.now().difference(_checkInTime!);
+
         final hours = duration.inHours;
+
         final minutes = duration.inMinutes % 60;
+
         return '$hours h $minutes m';
       }
+
       return '--:--';
     }
 
     final duration = _checkOutTime!.difference(_checkInTime!);
+
     final hours = duration.inHours;
+
     final minutes = duration.inMinutes % 60;
+
     return '$hours h $minutes m';
   }
 
   Map<String, dynamic> get attendanceData {
     final data = summary?['attendance'];
+
     if (data is Map) {
       return Map<String, dynamic>.from(data);
     }
+
     return {};
   }
 
   Map<String, dynamic> get calculations {
     final data = summary?['calculations'];
+
     if (data is Map) {
       return Map<String, dynamic>.from(data);
     }
+
     return {};
   }
 
   Map<String, dynamic> get period {
     final data = summary?['period'];
+
     if (data is Map) {
       return Map<String, dynamic>.from(data);
     }
+
     return {};
   }
 
   Map<String, dynamic> get summaryData {
     final data = summary?['summary'];
+
     if (data is Map) {
       return Map<String, dynamic>.from(data);
     }
+
     return {};
   }
 
   String _value(Map<String, dynamic> data, String key) {
     return data[key]?.toString() ?? '0';
+  }
+
+  // ============================================================
+  // MOBILE FALLBACK CALCULATION
+  // ============================================================
+  //
+  // Backend values are used first in the UI.
+  // This calculation remains as a fallback so that if the
+  // backend summary fields are temporarily unavailable,
+  // the mobile screen can still calculate the monthly data
+  // from the returned daily attendance records.
+  //
+  Map<String, dynamic> _calculateMobileAttendance() {
+    final daily = summary?['days'];
+
+    if (daily is! List) {
+      return {
+        'presentDays': 0,
+        'halfDays': 0,
+        'absentDays': 0,
+        'weeklyOffDays': 0,
+        'holidayDays': 0,
+        'totalWorkingDays': 0,
+        'attendancePercentage': 0,
+      };
+    }
+
+    int presentDays = 0;
+    int halfDays = 0;
+    int absentDays = 0;
+    int weeklyOffDays = 0;
+    int holidayDays = 0;
+
+    final Set<String> offDates = {};
+
+    final now = DateTime.now();
+
+    for (final item in daily) {
+      if (item is! Map) continue;
+
+      final status = item['status']?.toString().toUpperCase() ?? '';
+
+      final dateString = item['date']?.toString();
+
+      DateTime? date;
+
+      if (dateString != null) {
+        date = DateTime.tryParse(dateString);
+      }
+
+      if (date != null) {
+        if (date.year > now.year ||
+            (date.year == now.year && date.month > now.month) ||
+            (date.year == now.year &&
+                date.month == now.month &&
+                date.day > now.day)) {
+          continue;
+        }
+      }
+
+      if (status == 'WEEKLY_OFF') {
+        weeklyOffDays++;
+
+        if (dateString != null) {
+          offDates.add(dateString);
+        }
+
+        continue;
+      }
+
+      if (status == 'HOLIDAY') {
+        holidayDays++;
+
+        if (dateString != null) {
+          offDates.add(dateString);
+        }
+
+        continue;
+      }
+
+      // Actual attendance has priority.
+      if (status == 'PRESENT' || status == 'WORKED') {
+        presentDays++;
+        continue;
+      }
+
+      if (status == 'HALF_DAY') {
+        halfDays++;
+        continue;
+      }
+
+      if (status == 'ABSENT') {
+        absentDays++;
+        continue;
+      }
+
+      if (status == 'ON_LEAVE') {
+        continue;
+      }
+
+      // A working day without attendance
+      // becomes absent only when it is already past.
+      if (date != null &&
+          date.isBefore(DateTime(now.year, now.month, now.day))) {
+        absentDays++;
+      }
+    }
+
+    final daysInMonth = daily.length;
+
+    final totalWorkingDays = daysInMonth - offDates.length;
+
+    final safeWorkingDays = totalWorkingDays < 0 ? 0 : totalWorkingDays;
+
+    final attendancePercentage = safeWorkingDays > 0
+        ? ((presentDays + (halfDays * 0.5)) / safeWorkingDays * 100)
+              .toStringAsFixed(1)
+        : '0';
+
+    return {
+      'presentDays': presentDays,
+      'halfDays': halfDays,
+      'absentDays': absentDays,
+      'weeklyOffDays': weeklyOffDays,
+      'holidayDays': holidayDays,
+      'totalWorkingDays': safeWorkingDays,
+      'attendancePercentage': attendancePercentage,
+    };
   }
 
   PreferredSizeWidget _buildAppBar() {
@@ -321,7 +543,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       ),
       actions: [
         IconButton(
-          onPressed: loading ? null : loadAttendance,
+          onPressed: loading || _refreshingAttendance
+              ? null
+              : () => loadAttendance(),
           icon: const Icon(Icons.refresh, color: Colors.black54),
         ),
       ],
@@ -360,7 +584,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       appBar: _buildAppBar(),
       body: RefreshIndicator(
         color: _brandGreen,
-        onRefresh: loadAttendance,
+        onRefresh: () => loadAttendance(),
         child: _buildBody(),
       ),
     );
@@ -397,7 +621,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              onPressed: loadAttendance,
+              onPressed: () => loadAttendance(),
               child: const Text('Retry'),
             ),
           ),
@@ -405,15 +629,76 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       );
     }
 
-    final present = _value(attendanceData, 'presentDays');
-    final halfDays = _value(attendanceData, 'halfDays');
-    final absent = _value(attendanceData, 'absentDays');
-    final leave = _value(attendanceData, 'onLeaveDays');
-    final weeklyOff = _value(attendanceData, 'weeklyOffDays');
-    final holidays = _value(attendanceData, 'holidayDays');
-    final workingDays = _value(calculations, 'totalWorkingDays');
-    final percentage = _value(calculations, 'attendancePercentage');
+    // ============================================================
+    // BACKEND SYNCHRONIZED VALUES
+    // ============================================================
+    //
+    // Use the backend values first so Mobile and Web use the
+    // same server-side attendance information.
+    //
+    // The mobile calculation is retained as a fallback only.
+    //
+
+    final mobileCalculation = _calculateMobileAttendance();
+
+    String synchronizedValue(
+      String key,
+      Map<String, dynamic> source,
+      Map<String, dynamic> fallback,
+    ) {
+      final value = source[key];
+
+      if (value != null) {
+        return value.toString();
+      }
+
+      return fallback[key]?.toString() ?? '0';
+    }
+
+    final present = synchronizedValue(
+      'presentDays',
+      attendanceData,
+      mobileCalculation,
+    );
+
+    final halfDays = synchronizedValue(
+      'halfDays',
+      attendanceData,
+      mobileCalculation,
+    );
+
+    final absent = synchronizedValue(
+      'absentDays',
+      attendanceData,
+      mobileCalculation,
+    );
+
+    final weeklyOff = synchronizedValue(
+      'weeklyOffDays',
+      attendanceData,
+      mobileCalculation,
+    );
+
+    final holidays = synchronizedValue(
+      'holidayDays',
+      attendanceData,
+      mobileCalculation,
+    );
+
+    final workingDays = synchronizedValue(
+      'totalWorkingDays',
+      calculations,
+      mobileCalculation,
+    );
+
+    final percentage = synchronizedValue(
+      'attendancePercentage',
+      calculations,
+      mobileCalculation,
+    );
+
     final status = summaryData['attendanceStatus']?.toString() ?? 'UNKNOWN';
+
     final monthName = period['monthName']?.toString() ?? 'This Month';
 
     return ListView(
@@ -444,13 +729,19 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
         ),
         const SizedBox(height: 20),
+
         if (error != null) ...[_errorCard(error!), const SizedBox(height: 16)],
 
+        // ========================================================
         // TODAY'S ATTENDANCE CARD
+        // ========================================================
         _buildTodayAttendanceCard(),
+
         const SizedBox(height: 24),
 
+        // ========================================================
         // ATTENDANCE PERCENTAGE
+        // ========================================================
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(24),
@@ -516,11 +807,16 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             ],
           ),
         ),
+
         const SizedBox(height: 28),
 
         _sectionLabel('MONTHLY SUMMARY'),
+
         const SizedBox(height: 14),
 
+        // ========================================================
+        // ROW 1: PRESENT + HALF DAYS
+        // ========================================================
         Row(
           children: [
             Expanded(
@@ -544,8 +840,12 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             ),
           ],
         ),
+
         const SizedBox(height: 10),
 
+        // ========================================================
+        // ROW 2: ABSENT + HOLIDAYS
+        // ========================================================
         Row(
           children: [
             Expanded(
@@ -560,17 +860,21 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             const SizedBox(width: 10),
             Expanded(
               child: _SummaryCard(
-                title: 'On Leave',
-                value: leave,
-                icon: Icons.beach_access_outlined,
-                accentColor: const Color(0xFF2563EB),
-                backgroundColor: const Color(0xFFEAF1FE),
+                title: 'Holidays',
+                value: holidays,
+                icon: Icons.celebration_outlined,
+                accentColor: const Color(0xFFDB2777),
+                backgroundColor: const Color(0xFFFCE7F1),
               ),
             ),
           ],
         ),
+
         const SizedBox(height: 10),
 
+        // ========================================================
+        // ROW 3: WEEKLY OFF + WORKING DAYS
+        // ========================================================
         Row(
           children: [
             Expanded(
@@ -585,23 +889,14 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             const SizedBox(width: 10),
             Expanded(
               child: _SummaryCard(
-                title: 'Holidays',
-                value: holidays,
-                icon: Icons.celebration_outlined,
-                accentColor: const Color(0xFFDB2777),
-                backgroundColor: const Color(0xFFFCE7F1),
+                title: 'Working Days',
+                value: workingDays,
+                icon: Icons.work_outline,
+                accentColor: const Color(0xFF0D9488),
+                backgroundColor: const Color(0xFFE6F6F4),
               ),
             ),
           ],
-        ),
-        const SizedBox(height: 10),
-
-        _SummaryCard(
-          title: 'Working Days',
-          value: workingDays,
-          icon: Icons.work_outline,
-          accentColor: const Color(0xFF0D9488),
-          backgroundColor: const Color(0xFFE6F6F4),
         ),
       ],
     );
@@ -682,7 +977,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
               color: statusColor,
             ),
           ),
+
           const SizedBox(height: 14),
+
           Text(
             _isCheckedOut
                 ? 'Checked out'
@@ -696,7 +993,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             ),
             textAlign: TextAlign.center,
           ),
+
           const SizedBox(height: 6),
+
           if (!_isCheckedIn)
             Text(
               'Use your current location to check in.',
@@ -716,7 +1015,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
               style: TextStyle(color: Colors.grey.shade700),
             ),
 
+          // ======================================================
           // TIMES
+          // ======================================================
           if (_isCheckedIn) ...[
             const SizedBox(height: 18),
             _TimeRow(
@@ -752,7 +1053,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
           const SizedBox(height: 18),
 
+          // ======================================================
           // BUTTONS
+          // ======================================================
           if (!_isCheckedIn)
             SizedBox(
               width: double.infinity,

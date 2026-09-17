@@ -12,7 +12,9 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
     with SingleTickerProviderStateMixin {
   late final TabController tabController;
 
-  List<Map<String, dynamic>> loginApprovals = [];
+  // Login approvals have been removed.
+  // List<Map<String, dynamic>> loginApprovals = [];
+
   // List<Map<String, dynamic>> leaveApprovals = [];
   List<Map<String, dynamic>> attendanceApprovals = [];
   // List<Map<String, dynamic>> leaveTypes = [];
@@ -27,9 +29,10 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
   void initState() {
     super.initState();
 
+    // Login approvals have been removed.
     // Leave approvals have been disabled.
-    // Only Login and Attendance Correction approvals are active.
-    tabController = TabController(length: 2, vsync: this);
+    // Only Attendance Correction approvals are active.
+    tabController = TabController(length: 1, vsync: this);
 
     loadApprovals();
   }
@@ -49,7 +52,8 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
     }
 
     try {
-      final loginData = await ApprovalService.getLoginApprovals();
+      // Login approvals removed.
+      // final loginData = await ApprovalService.getLoginApprovals();
 
       // Leave approvals disabled.
       // final leaveData = await ApprovalService.getLeaveApprovals();
@@ -60,7 +64,8 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
       if (!mounted) return;
 
       setState(() {
-        loginApprovals = loginData;
+        // Login approvals removed.
+        // loginApprovals = loginData;
 
         // Leave approvals disabled.
         // leaveApprovals = leaveData;
@@ -90,16 +95,18 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
     }
 
     try {
-      if (type == 'LOGIN') {
-        await ApprovalService.approveLogin(id);
-      }
+      // Login approval system removed.
+      // if (type == 'LOGIN') {
+      //   await ApprovalService.approveLogin(id);
+      // }
+
       // Leave approvals disabled.
       // else if (type == 'LEAVE') {
       //   await ApprovalService.approveLeave(id);
       // }
-      else {
-        await ApprovalService.approveAttendanceCorrection(id);
-      }
+
+      // Attendance approval remains active.
+      await ApprovalService.approveAttendanceCorrection(id);
 
       if (!mounted) return;
 
@@ -127,16 +134,18 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
     if (reason == null) return;
 
     try {
-      if (type == 'LOGIN') {
-        await ApprovalService.rejectLogin(id, reason);
-      }
+      // Login approval system removed.
+      // if (type == 'LOGIN') {
+      //   await ApprovalService.rejectLogin(id, reason);
+      // }
+
       // Leave approvals disabled.
       // else if (type == 'LEAVE') {
       //   await ApprovalService.rejectLeave(id, reason);
       // }
-      else {
-        await ApprovalService.rejectAttendanceCorrection(id, reason);
-      }
+
+      // Attendance approval remains active.
+      await ApprovalService.rejectAttendanceCorrection(id, reason);
 
       if (!mounted) return;
 
@@ -246,13 +255,20 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
           indicatorColor: _brandGreen,
           indicatorWeight: 3,
           tabs: const [
-            Tab(text: 'Login', icon: Icon(Icons.location_on_outlined)),
+            // Login tab removed.
+
+            // Tab(
+            //   text: 'Login',
+            //   icon: Icon(Icons.location_on_outlined),
+            // ),
 
             // Leave approvals disabled.
             // Tab(
             //   text: 'Leaves',
             //   icon: Icon(Icons.event_note),
             // ),
+
+            // Only Attendance remains.
             Tab(text: 'Attendance', icon: Icon(Icons.access_time)),
           ],
         ),
@@ -264,10 +280,13 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
           : TabBarView(
               controller: tabController,
               children: [
-                _buildLoginApprovals(),
+                // Login approvals removed.
+                // _buildLoginApprovals(),
 
                 // Leave approvals disabled.
                 // _buildLeaveApprovals(),
+
+                // Attendance approvals remain.
                 _buildAttendanceApprovals(),
               ],
             ),
@@ -326,22 +345,28 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
     );
   }
 
-  Widget _buildLoginApprovals() {
-    if (loginApprovals.isEmpty) {
-      return _emptyView('No pending login approvals');
-    }
+  // ================================================================
+  // LOGIN APPROVALS REMOVED
+  // ================================================================
 
-    return _approvalList(
-      loginApprovals,
-      'LOGIN',
-      Icons.location_on_outlined,
-      const Color(0xFF2563EB),
-      const Color(0xFFEAF1FE),
-    );
-  }
-
-  // Leave approvals disabled.
+  // Widget _buildLoginApprovals() {
+  //   if (loginApprovals.isEmpty) {
+  //     return _emptyView('No pending login approvals');
+  //   }
   //
+  //   return _approvalList(
+  //     loginApprovals,
+  //     'LOGIN',
+  //     Icons.location_on_outlined,
+  //     const Color(0xFF2563EB),
+  //     const Color(0xFFEAF1FE),
+  //   );
+  // }
+
+  // ================================================================
+  // LEAVE APPROVALS DISABLED
+  // ================================================================
+
   // Widget _buildLeaveApprovals() {
   //   if (leaveApprovals.isEmpty) {
   //     return _emptyView('No pending leave approvals');
@@ -473,9 +498,10 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
   String _requestType(Map<String, dynamic> item, String fallbackType) {
     final type = item['type']?.toString();
 
-    if (type == 'LOCATION_BASED_LOGIN') {
-      return 'Location Login';
-    }
+    // Login approval type removed.
+    // if (type == 'LOCATION_BASED_LOGIN') {
+    //   return 'Location Login';
+    // }
 
     if (type == 'ATTENDANCE_CORRECTION') {
       return 'Attendance Correction';
@@ -486,9 +512,10 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
     //   return 'Leave';
     // }
 
-    if (fallbackType == 'LOGIN') {
-      return 'Location Login';
-    }
+    // Login fallback removed.
+    // if (fallbackType == 'LOGIN') {
+    //   return 'Location Login';
+    // }
 
     if (fallbackType == 'ATTENDANCE') {
       return 'Attendance Correction';
@@ -516,25 +543,48 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
 
     final result = <MapEntry<String, String>>[];
 
-    if (type == 'LOGIN') {
-      _addDetail(result, 'Date', details['date']);
+    // ============================================================
+    // LOGIN APPROVAL DETAILS REMOVED
+    // ============================================================
 
-      _addDetail(result, 'Latitude', details['latitude']);
-
-      _addDetail(result, 'Longitude', details['longitude']);
-
-      _addDetail(result, 'GPS Accuracy', details['gpsAccuracy']);
-
-      _addDetail(result, 'Distance from Office', details['distanceFromOffice']);
-
-      _addDetail(result, 'Allowed Radius', details['allowedRadius']);
-
-      _addDetail(result, 'Location Mode', details['locationMode']);
-
-      _addDetail(result, 'Approval Required', details['approvalRequired']);
-    }
-    // Leave approval details disabled.
+    // if (type == 'LOGIN') {
+    //   _addDetail(result, 'Date', details['date']);
     //
+    //   _addDetail(result, 'Latitude', details['latitude']);
+    //
+    //   _addDetail(result, 'Longitude', details['longitude']);
+    //
+    //   _addDetail(result, 'GPS Accuracy', details['gpsAccuracy']);
+    //
+    //   _addDetail(
+    //     result,
+    //     'Distance from Office',
+    //     details['distanceFromOffice'],
+    //   );
+    //
+    //   _addDetail(
+    //     result,
+    //     'Allowed Radius',
+    //     details['allowedRadius'],
+    //   );
+    //
+    //   _addDetail(
+    //     result,
+    //     'Location Mode',
+    //     details['locationMode'],
+    //   );
+    //
+    //   _addDetail(
+    //     result,
+    //     'Approval Required',
+    //     details['approvalRequired'],
+    //   );
+    // }
+
+    // ============================================================
+    // LEAVE APPROVAL DETAILS DISABLED
+    // ============================================================
+
     // else if (type == 'LEAVE') {
     //   _addDetail(
     //     result,
@@ -552,29 +602,28 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
     //
     //   _addDetail(result, 'Leave Type ID', details['leaveTypeId']);
     // }
-    else {
-      _addDetail(result, 'Date', details['date']);
 
-      _addDetail(
-        result,
-        'Time In',
-        details['timeIn'] ?? details['checkInTime'],
-      );
+    // ============================================================
+    // ATTENDANCE CORRECTION DETAILS
+    // ============================================================
 
-      _addDetail(
-        result,
-        'Time Out',
-        details['timeOut'] ?? details['checkOutTime'],
-      );
+    _addDetail(result, 'Date', details['date']);
 
-      _addDetail(
-        result,
-        'Status',
-        details['status'] ?? details['attendanceStatus'],
-      );
+    _addDetail(result, 'Time In', details['timeIn'] ?? details['checkInTime']);
 
-      _addDetail(result, 'Reason', details['reason']);
-    }
+    _addDetail(
+      result,
+      'Time Out',
+      details['timeOut'] ?? details['checkOutTime'],
+    );
+
+    _addDetail(
+      result,
+      'Status',
+      details['status'] ?? details['attendanceStatus'],
+    );
+
+    _addDetail(result, 'Reason', details['reason']);
 
     return result;
   }

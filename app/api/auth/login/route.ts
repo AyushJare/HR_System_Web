@@ -1,11 +1,71 @@
 ﻿import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@/lib/generated/prisma/client";
 import { verifyPassword } from "@/lib/password";
 import { signToken } from "@/lib/jwt";
 import { rateLimit } from "@/lib/middleware/rateLimit";
 import { logLoginAttempt } from "@/lib/audit";
 
+type EmployeeWithUserType = Prisma.EmployeeGetPayload<{
+  include: { userType: true };
+}>;
+
 const checkRateLimit = rateLimit(30, 60000);
+
+// A generic, unchanging message for every "this credential is wrong" case.
+// It intentionally does not distinguish "no such account", "wrong password",
+// or "this phone number matches more than one account" - anything more
+// specific would tell an attacker which part of their guess was correct.
+const INVALID_CREDENTIALS_RESPONSE = NextResponse.json(
+  { error: "Invalid credentials" },
+  { status: 401 }
+);
+
+type LoginIdentifier =
+  | { type: "email"; value: string }
+  | { type: "mobile"; candidates: string[] }
+  | { type: "invalid" };
+
+/**
+ * Build every representation of a 10-digit mobile number that may be
+ * present in the database.
+ *
+ * `mobile` has never been written consistently across the app: the Add
+ * and Edit employee forms store the raw digits (e.g. "9876543210"), while
+ * bulk upload stores the dash-formatted version (e.g. "98765-43210"). A
+ * login lookup has to check both, or employees created through one path
+ * would be unable to sign in with the phone number they were told to use.
+ */
+function buildMobileCandidates(digitsOnly: string): string[] {
+  const formatted = `${digitsOnly.slice(0, 5)}-${digitsOnly.slice(5)}`;
+  return [digitsOnly, formatted];
+}
+
+/**
+ * Decide whether the submitted login identifier is an email address or a
+ * phone number, without touching the database.
+ *
+ * An "@" is treated as unambiguously email. Otherwise the value is
+ * stripped to digits and accepted only if it matches a valid Indian
+ * mobile number (10 digits, starting 6-9) - the same rule enforced when
+ * the number was first saved. Anything else is rejected before it ever
+ * reaches a query.
+ */
+function resolveLoginIdentifier(raw: string): LoginIdentifier {
+  const trimmed = raw.trim();
+
+  if (trimmed.includes("@")) {
+    return { type: "email", value: trimmed.toLowerCase() };
+  }
+
+  const digitsOnly = trimmed.replace(/\D/g, "");
+
+  if (digitsOnly.length === 10 && /^[6-9]/.test(digitsOnly)) {
+    return { type: "mobile", candidates: buildMobileCandidates(digitsOnly) };
+  }
+
+  return { type: "invalid" };
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,11 +81,24 @@ export async function POST(request: NextRequest) {
     // REQUEST BODY
     // ---------------------------------------------------------
     const body = await request.json();
-    const { email, password } = body;
+    const { identifier, password } = body;
 
-    if (!email || !password) {
+    if (!identifier || !password) {
       return NextResponse.json(
-        { error: "Email and password are required" },
+        { error: "Email or phone number, and password, are required" },
+        { status: 400 }
+      );
+    }
+
+    // ---------------------------------------------------------
+    // RESOLVE IDENTIFIER
+    // ---------------------------------------------------------
+    // This only inspects the shape of the input - no database access yet.
+    const resolvedIdentifier = resolveLoginIdentifier(String(identifier));
+
+    if (resolvedIdentifier.type === "invalid") {
+      return NextResponse.json(
+        { error: "Enter a valid email address or 10-digit phone number" },
         { status: 400 }
       );
     }
@@ -36,25 +109,58 @@ export async function POST(request: NextRequest) {
     // Location is NO LONGER checked during login.
     // Office assignment is still stored on the employee and
     // will be used later when the employee clocks in.
-    const employee = await prisma.employee.findUnique({
-      where: { email: email.toLowerCase().trim() },
-      include: {
-        userType: true,
-      },
-    });
+    let employee: EmployeeWithUserType | null = null;
+
+    if (resolvedIdentifier.type === "email") {
+      // `email` has a unique constraint, so at most one row can ever match.
+      employee = await prisma.employee.findUnique({
+        where: { email: resolvedIdentifier.value },
+        include: { userType: true },
+      });
+    } else {
+      // `mobile` has NO unique constraint at the database level - only
+      // application-level checks discourage duplicates on write. A login
+      // lookup must not silently trust that no duplicate exists.
+      const matches = await prisma.employee.findMany({
+        where: {
+          mobile: { in: resolvedIdentifier.candidates },
+          isActive: true,
+        },
+        include: { userType: true },
+      });
+
+      if (matches.length > 1) {
+        // Data integrity problem, not a normal failed login: two active
+        // employees share a phone number, so this attempt can't be
+        // resolved to a single account. Fail closed exactly like a wrong
+        // password would, but log it distinctly so an admin can find and
+        // fix the duplicate - this should never happen in normal use.
+        console.error(
+          `Login blocked: ${matches.length} active employees share mobile number ${resolvedIdentifier.candidates[0]}`
+        );
+
+        await logLoginAttempt(
+          String(identifier),
+          false,
+          undefined,
+          "Multiple active accounts share this phone number"
+        );
+
+        return INVALID_CREDENTIALS_RESPONSE;
+      }
+
+      employee = matches[0] ?? null;
+    }
 
     if (!employee || !employee.isActive) {
       await logLoginAttempt(
-        email,
+        String(identifier),
         false,
         undefined,
         "User not found or inactive"
       );
 
-      return NextResponse.json(
-        { error: "Invalid credentials" },
-        { status: 401 }
-      );
+      return INVALID_CREDENTIALS_RESPONSE;
     }
 
     // ---------------------------------------------------------
@@ -64,16 +170,13 @@ export async function POST(request: NextRequest) {
 
     if (!isValid) {
       await logLoginAttempt(
-        email,
+        String(identifier),
         false,
         employee.id,
         "Invalid password"
       );
 
-      return NextResponse.json(
-        { error: "Invalid credentials" },
-        { status: 401 }
-      );
+      return INVALID_CREDENTIALS_RESPONSE;
     }
 
     // ---------------------------------------------------------
@@ -145,7 +248,7 @@ export async function POST(request: NextRequest) {
     // LOGIN SUCCESS LOG
     // ---------------------------------------------------------
     await logLoginAttempt(
-      email,
+      String(identifier),
       true,
       employee.id,
       "Login successful. Location check deferred to clock-in."

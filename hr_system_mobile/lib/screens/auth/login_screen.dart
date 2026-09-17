@@ -10,7 +10,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final emailController = TextEditingController();
+  final identifierController = TextEditingController();
   final passwordController = TextEditingController();
 
   bool loading = false;
@@ -58,12 +58,12 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> handleLogin() async {
     FocusScope.of(context).unfocus();
 
-    final email = emailController.text.trim();
+    final identifier = identifierController.text.trim();
     final password = passwordController.text;
 
-    if (email.isEmpty) {
+    if (identifier.isEmpty) {
       setState(() {
-        error = 'Please enter your email.';
+        error = 'Please enter your email or phone number.';
       });
       return;
     }
@@ -81,7 +81,7 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      final result = await AuthService.login(email, password);
+      final result = await AuthService.login(identifier, password);
 
       if (!mounted) return;
 
@@ -236,7 +236,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void dispose() {
-    emailController.dispose();
+    identifierController.dispose();
     passwordController.dispose();
 
     forgotFirstNameController.dispose();
@@ -471,13 +471,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ] else ...[
                     // ==================================================
-                    // EMAIL
+                    // EMAIL OR PHONE NUMBER
                     // ==================================================
                     TextField(
-                      controller: emailController,
-                      keyboardType: TextInputType.emailAddress,
+                      controller: identifierController,
+                      keyboardType: TextInputType.text,
                       decoration: const InputDecoration(
-                        labelText: 'Email',
+                        labelText: 'Email or Phone Number',
+                        hintText: 'admin@company.com or 9876543210',
                         border: OutlineInputBorder(),
                       ),
                     ),

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -11,7 +13,8 @@ class CalendarScreen extends StatefulWidget {
   State<CalendarScreen> createState() => _CalendarScreenState();
 }
 
-class _CalendarScreenState extends State<CalendarScreen> {
+class _CalendarScreenState extends State<CalendarScreen>
+    with WidgetsBindingObserver {
   static const Color _brandGreen = Color(0xFF16A34A);
   static const Color _pageBg = Color(0xFFF4F6FB);
 
@@ -34,19 +37,64 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   List<Map<String, dynamic>> _recentAttendanceDays = [];
 
+  Timer? _attendanceRefreshTimer;
+  bool _refreshingAttendance = false;
+
+  // ============================================================
+  // PAST-MONTH DAYS CACHE
+  // ============================================================
+  //
+  // Only the CURRENT month can gain a new attendance record
+  // between refreshes (e.g. an employee just clocked in), so only
+  // the current month needs to be fetched from the network on
+  // every refresh. Earlier months are fetched once and reused from
+  // here afterward. Cleared on every manual/initial load (see
+  // _loadAttendance) in case a past month was retroactively edited.
+  // ============================================================
+
+  final Map<String, List<Map<String, dynamic>>> _pastMonthDaysCache = {};
+
   @override
   void initState() {
     super.initState();
+
+    WidgetsBinding.instance.addObserver(this);
+
     _loadAttendance();
+
+    // Automatically refresh attendance while this screen is open.
+    // This allows Web changes to appear in Mobile without restarting
+    // the application.
+    _attendanceRefreshTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+      if (mounted && !_refreshingAttendance) {
+        _loadAttendance(showLoading: false);
+      }
+    });
   }
 
-  Future<void> _loadAttendance() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+  Future<void> _loadAttendance({bool showLoading = true}) async {
+    if (_refreshingAttendance) return;
+
+    _refreshingAttendance = true;
+
+    if (mounted) {
+      setState(() {
+        if (showLoading) {
+          _loading = true;
+        }
+        _error = null;
+      });
+    }
 
     try {
+      // A manual/initial load should always be fully fresh, in case
+      // a past month's record was retroactively edited by an admin.
+      // The automatic background refresh (showLoading: false) is
+      // the one that relies on the cache below to stay fast.
+      if (showLoading) {
+        _pastMonthDaysCache.clear();
+      }
+
       // ============================================================
       // NEW ATTENDANCE LIST
       //
@@ -56,6 +104,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
       // This is necessary so that, for example, if the current
       // month only has 6 qualifying attendance days, we can take
       // the remaining 4 from the previous month.
+      //
+      // PERFORMANCE:
+      // Only the current month is fetched from the network on every
+      // refresh; earlier months are fetched once and then reused
+      // from _pastMonthDaysCache. Previously this loop could make
+      // up to 12 sequential network calls on every 3-second
+      // refresh, which is what made a fresh clock-in take far
+      // longer than 3 seconds to actually show up here.
       // ============================================================
 
       final now = DateTime.now();
@@ -80,27 +136,50 @@ class _CalendarScreenState extends State<CalendarScreen> {
             '${month.year.toString().padLeft(4, '0')}-'
             '${month.month.toString().padLeft(2, '0')}';
 
-        final data = await AttendanceService.getAttendanceSummary(monthString);
+        List<Map<String, dynamic>> days;
 
-        // Keep the current month's data for the existing monthly
-        // summary section.
         if (monthOffset == 0) {
+          // Current month: always fetch fresh. This is the only
+          // month a new clock-in can appear in.
+          final data = await AttendanceService.getAttendanceSummary(
+            monthString,
+          );
+
+          // Keep the current month's data for the existing monthly
+          // summary section.
           currentMonthData = data;
+
+          final rawDays = data['days'];
+
+          days = rawDays is List
+              ? rawDays
+                    .whereType<Map>()
+                    .map((item) => Map<String, dynamic>.from(item))
+                    .toList()
+              : <Map<String, dynamic>>[];
+        } else if (_pastMonthDaysCache.containsKey(monthString)) {
+          // Already-elapsed month: reuse what was fetched before
+          // instead of re-hitting the network/backend on every
+          // refresh cycle.
+          days = _pastMonthDaysCache[monthString]!;
+        } else {
+          final data = await AttendanceService.getAttendanceSummary(
+            monthString,
+          );
+
+          final rawDays = data['days'];
+
+          days = rawDays is List
+              ? rawDays
+                    .whereType<Map>()
+                    .map((item) => Map<String, dynamic>.from(item))
+                    .toList()
+              : <Map<String, dynamic>>[];
+
+          _pastMonthDaysCache[monthString] = days;
         }
 
-        final days = data['days'];
-
-        if (days is! List) {
-          continue;
-        }
-
-        for (final item in days) {
-          if (item is! Map) {
-            continue;
-          }
-
-          final day = Map<String, dynamic>.from(item);
-
+        for (final day in days) {
           final status = day['status']?.toString().toUpperCase() ?? '';
 
           // Only Present / Worked / Half Day are displayed.
@@ -161,9 +240,30 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
       setState(() {
         _loading = false;
-        _error = e.toString().replaceFirst('Exception: ', '');
+
+        // During background refresh, keep the existing data visible
+        // if it was already loaded successfully.
+        if (showLoading || _data == null) {
+          _error = e.toString().replaceFirst('Exception: ', '');
+        }
       });
+    } finally {
+      _refreshingAttendance = false;
     }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && mounted) {
+      _loadAttendance(showLoading: false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _attendanceRefreshTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 
   // ============================================================
@@ -200,8 +300,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
         return 'Absent';
       case 'HALF_DAY':
         return 'Half Day';
+
+      // ============================================================
+      // LEAVE COMPONENT COMMENTED OUT
+      // ============================================================
+      /*
       case 'ON_LEAVE':
         return 'On Leave';
+      */
+
       case 'WEEKLY_OFF':
         return 'Weekly Off';
       case 'HOLIDAY':
@@ -221,8 +328,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
         return 'A';
       case 'HALF_DAY':
         return 'H';
+
+      // ============================================================
+      // LEAVE COMPONENT COMMENTED OUT
+      // ============================================================
+      /*
       case 'ON_LEAVE':
         return 'L';
+      */
+
       case 'WEEKLY_OFF':
         return 'WO';
       case 'HOLIDAY':
@@ -243,8 +357,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
         return Colors.red;
       case 'HALF_DAY':
         return Colors.orange;
+
+      // ============================================================
+      // LEAVE COMPONENT COMMENTED OUT
+      // ============================================================
+      /*
       case 'ON_LEAVE':
         return Colors.blue;
+      */
+
       case 'WEEKLY_OFF':
         return Colors.grey;
       case 'HOLIDAY':
@@ -613,6 +734,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
                   // ==================================================
                   // NEW: RAISE QUERY FOR THIS SPECIFIC DATE
+                  //
+                  // This is ATTENDANCE CORRECTION, not Leave.
+                  // Kept active.
                   // ==================================================
                   const SizedBox(height: 14),
 
@@ -879,22 +1003,70 @@ class _CalendarScreenState extends State<CalendarScreen> {
   */
 
   Widget _buildSummary() {
-    final attendance = _data?['attendance'];
+    final daily = _data?['days'];
 
-    if (attendance is! Map) {
+    if (daily is! List) {
       return const SizedBox();
+    }
+
+    int presentDays = 0;
+    int halfDays = 0;
+    int absentDays = 0;
+    int weeklyOffDays = 0;
+    int holidayDays = 0;
+
+    for (final item in daily) {
+      if (item is! Map) continue;
+
+      final status = item['status']?.toString().toUpperCase() ?? '';
+
+      switch (status) {
+        // ============================================================
+        // ACTUAL ATTENDANCE
+        // Actual attendance always takes priority.
+        // ============================================================
+        case 'PRESENT':
+        case 'WORKED':
+          presentDays++;
+          break;
+
+        case 'HALF_DAY':
+          halfDays++;
+          break;
+
+        case 'ABSENT':
+          absentDays++;
+          break;
+
+        // ============================================================
+        // CALENDAR OFF DAYS
+        // ============================================================
+        case 'WEEKLY_OFF':
+          weeklyOffDays++;
+          break;
+
+        case 'HOLIDAY':
+          holidayDays++;
+          break;
+      }
     }
 
     return Wrap(
       spacing: 8,
       runSpacing: 8,
       children: [
-        _summaryChip('Present', attendance['presentDays'], Colors.green),
-        _summaryChip('Half Day', attendance['halfDays'], Colors.orange),
-        _summaryChip('Absent', attendance['absentDays'], Colors.red),
-        _summaryChip('Leave', attendance['onLeaveDays'], Colors.blue),
-        _summaryChip('Weekly Off', attendance['weeklyOffDays'], Colors.grey),
-        _summaryChip('Holiday', attendance['holidayDays'], Colors.purple),
+        _summaryChip('Present', presentDays, Colors.green),
+        _summaryChip('Half Day', halfDays, Colors.orange),
+        _summaryChip('Absent', absentDays, Colors.red),
+
+        // ============================================================
+        // LEAVE COMPONENT COMMENTED OUT
+        // ============================================================
+        /*
+      _summaryChip('Leave', attendance['onLeaveDays'], Colors.blue),
+      */
+        _summaryChip('Weekly Off', weeklyOffDays, Colors.grey),
+        _summaryChip('Holiday', holidayDays, Colors.purple),
       ],
     );
   }

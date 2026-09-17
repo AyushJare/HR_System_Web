@@ -48,7 +48,6 @@ export async function GET(
         "Consolidated Report",
         "view"
       );
-
     if (!auth.ok) {
       return NextResponse.json(
         {
@@ -61,7 +60,6 @@ export async function GET(
         }
       );
     }
-
     const month =
       request.nextUrl.searchParams.get(
         "month"
@@ -207,6 +205,30 @@ export async function GET(
         }
       );
 
+    const holidays =
+      await prisma.holiday.findMany(
+        {
+          where: {
+            date: {
+              gte:
+                startDate,
+              lte:
+                endDate,
+            },
+          },
+
+          select: {
+            date: true,
+
+            employeeTypeAssignments: {
+              select: {
+                employeeTypeId: true,
+              },
+            },
+          },
+        }
+      );
+
     const statusCode: Record<
       string,
       string
@@ -290,16 +312,50 @@ export async function GET(
                 )
               );
 
-              if (
+              const holiday =
+                holidays.find(
+                  (item) =>
+                    new Date(
+                      item.date
+                    ).getUTCDate() ===
+                    day &&
+                    item.employeeTypeAssignments.some(
+                      (assignment) =>
+                        assignment.employeeTypeId ===
+                        emp.employeeTypeId
+                    )
+                );
+
+              /*
+               * If an attendance record exists, always use the
+               * actual attendance status.
+               *
+               * This means an employee who clocks in on a
+               * holiday or weekly off will be shown as P
+               * instead of H or WO.
+               */
+              if (dayMap[day]) {
+                days.push(
+                  dayMap[day]
+                );
+              } else if (
+                holiday
+              ) {
+                days.push(
+                  "H"
+                );
+              } else if (
                 isWeeklyOff(
                   date,
                   weeklyOffConfig
                 )
               ) {
-                days.push("WO");
+                days.push(
+                  "WO"
+                );
               } else {
                 days.push(
-                  dayMap[day] ?? "-"
+                  "-"
                 );
               }
             }
@@ -331,12 +387,10 @@ export async function GET(
       "GET /api/reports/consolidated error:",
       error
     );
-
     return NextResponse.json(
       {
         error:
           "Failed to load consolidated report",
-
         details:
           error instanceof Error
             ? error.message

@@ -348,8 +348,15 @@ export default function AddEmployeePage() {
   const validateEmailField = (
     value: string
   ): string => {
+    // ========================================================
+    // EMAIL REQUIRED VALIDATION DISABLED
+    //
+    // Email is now optional.
+    // An empty email field is allowed.
+    // ========================================================
+
     if (!value || !value.trim()) {
-      return "Email is required";
+      return "";
     }
 
     const email = value.trim();
@@ -430,6 +437,15 @@ export default function AddEmployeePage() {
     if (mobile.length !== 10) {
       mobileErrors.push(
         "Phone number must be exactly 10 digits"
+      );
+    }
+
+    // Indian mobile numbers start with 6, 7, 8, or 9.
+    // Checked here so the rule is caught before the request
+    // instead of coming back as a 422 from the server.
+    if (!/^[6-9]/.test(mobile)) {
+      mobileErrors.push(
+        "Phone number must start with 6, 7, 8, or 9"
       );
     }
 
@@ -757,6 +773,13 @@ export default function AddEmployeePage() {
     const fullNameError =
       validateFullName(formData.fullName);
 
+    // ========================================================
+    // EMAIL REQUIRED VALIDATION DISABLED
+    //
+    // Email is optional.
+    // If provided, it is still checked for valid format.
+    // ========================================================
+
     const emailError =
       validateEmailField(formData.email);
 
@@ -813,6 +836,7 @@ export default function AddEmployeePage() {
 
     const hasErrors =
       Boolean(fullNameError) ||
+      // Email is optional, so an empty email does not cause validation failure.
       Boolean(emailError) ||
       // Password policy validation excluded.
       Boolean(confirmPasswordError) ||
@@ -856,8 +880,11 @@ export default function AddEmployeePage() {
             fullName:
               formData.fullName.trim(),
 
+            // Email is optional.
+            // Send null when no email is entered.
             email:
-              formData.email.trim(),
+              formData.email.trim() ||
+              null,
 
             password:
               formData.password,
@@ -1132,7 +1159,7 @@ export default function AddEmployeePage() {
           {/* EMAIL */}
           <div>
             <label className="block text-sm font-semibold text-slate-900 mb-2">
-              Email *
+              Email
             </label>
 
             <input

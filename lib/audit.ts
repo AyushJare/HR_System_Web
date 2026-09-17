@@ -66,9 +66,14 @@ export async function logAudit(
 
 /**
  * Log a login attempt.
+ *
+ * `identifier` is whatever the employee typed into the login field -
+ * an email address or a phone number, since login now accepts either.
+ * It is stored under that name (not `email`) so audit logs stay accurate
+ * for phone-based attempts.
  */
 export async function logLoginAttempt(
-    email: string,
+    identifier: string,
     success: boolean,
     employeeId?: string,
     reason?: string
@@ -77,7 +82,7 @@ export async function logLoginAttempt(
         success ? "LOGIN_SUCCESS" : "LOGIN_FAILED",
         employeeId || null,
         {
-            email,
+            identifier,
             success,
             reason: reason || null,
             timestamp: new Date().toISOString(),

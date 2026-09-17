@@ -277,10 +277,12 @@ export const validatePhoneFormat = (
         return false;
     }
 
-    if (!cleaned.startsWith("9")) {
+    // Indian mobile numbers start with 6, 7, 8, or 9.
+    // Matches validatePhoneNumber() in lib/validators/phone.ts.
+    if (!/^[6-9]/.test(cleaned)) {
         showErrorToast(
             "Phone Invalid",
-            "Phone must start with 9"
+            "Phone must start with 6, 7, 8, or 9"
         );
 
         return false;

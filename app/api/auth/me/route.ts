@@ -31,6 +31,9 @@ export async function GET(request: Request) {
     },
     include: {
       userType: true,
+      department: true,
+      designation: true,
+      office: true,
     },
   });
 
@@ -54,8 +57,14 @@ export async function GET(request: Request) {
       id: employee.id,
       fullName: employee.fullName,
       email: employee.email,
+      mobile: employee.mobile ?? null,
       role: employee.role,
       employeeCode: employee.employeeCode,
+
+      department: employee.department?.name ?? null,
+      designation: employee.designation?.name ?? null,
+      office: employee.office?.name ?? null,
+
       userType: employee.userType?.name ?? null,
       permissions: employee.userType?.permissions ?? null,
     },

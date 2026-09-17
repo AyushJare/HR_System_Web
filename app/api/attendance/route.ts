@@ -836,9 +836,15 @@ export async function POST(request: NextRequest) {
        * Don't allow login/logout on weekly off
        * or holiday.
        *
-       * Weekly off is now based on the employee's
-       * employee type.
+       * TEMPORARILY DISABLED:
+       * Weekly off and holiday checks are commented out
+       * so employees can clock in/out on those dates.
+       *
+       * Keep this code commented for now so it can be
+       * restored later without changing the original logic.
        */
+
+      /*
       const dateOffInfo =
         await checkIfDateIsOff(
           attendanceDate,
@@ -891,6 +897,7 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
+      */
 
       /*
        * Don't allow employees to login/logout when

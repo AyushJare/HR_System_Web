@@ -1,35 +1,173 @@
 "use client";
-import { useState } from "react";
+
+import { useCallback, useEffect, useRef, useState } from "react";
+
+interface UploadError {
+    row?: number;
+    field?: string;
+    message: string;
+}
+
+interface UploadResult {
+    success: number;
+    failed: number;
+    errors?: UploadError[];
+    createdEmployees?: Array<{
+        id: string;
+        email: string;
+        temporaryPassword: string;
+    }>;
+}
 
 export default function BulkUploadPage() {
     const [file, setFile] = useState<File | null>(null);
     const [loading, setLoading] = useState(false);
-    const [result, setResult] = useState<any>(null);
-    const [errors, setErrors] = useState<any[]>([]);
+    const [result, setResult] = useState<UploadResult | null>(null);
+    const [errors, setErrors] = useState<UploadError[]>([]);
+    const [fatalError, setFatalError] = useState<string | null>(null);
 
-    const handleUpload = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!file) return;
+    // Single-flight guard.
+    //
+    // `loading` cannot be used for this: state updates are asynchronous, so two
+    // clicks dispatched in the same tick would both observe `loading === false`
+    // and both POST the file. A ref is updated synchronously, so the second
+    // click is rejected before it can reach the network.
+    //
+    // This matters because a duplicated upload creates the employees on the
+    // first request and then reports them as "already exists" on the second.
+    const uploadInProgress = useRef(false);
 
-        setLoading(true);
-        const formData = new FormData();
-        formData.append("file", file);
+    // Identifies the most recent request. Responses from superseded requests
+    // are discarded instead of overwriting fresher state.
+    const requestId = useRef(0);
+
+    // Aborts any in-flight request when the component unmounts.
+    const abortController = useRef<AbortController | null>(null);
+
+    useEffect(() => {
+        return () => {
+            abortController.current?.abort();
+        };
+    }, []);
+
+    const handleUpload = useCallback(
+        async (event: React.FormEvent) => {
+            event.preventDefault();
+
+            if (!file || uploadInProgress.current) {
+                return;
+            }
+
+            uploadInProgress.current = true;
+
+            const currentRequest = requestId.current + 1;
+            requestId.current = currentRequest;
+
+            const controller = new AbortController();
+            abortController.current = controller;
+
+            // Clear the previous outcome so a stale result can never be read as
+            // the result of this upload.
+            setLoading(true);
+            setResult(null);
+            setErrors([]);
+            setFatalError(null);
+
+            const formData = new FormData();
+            formData.append("file", file);
+
+            try {
+                const response = await fetch("/api/employees/bulk-upload", {
+                    method: "POST",
+                    body: formData,
+                    signal: controller.signal
+                });
+
+                const data = await response.json().catch(() => null);
+
+                // A newer upload started while this one was in flight.
+                if (requestId.current !== currentRequest) {
+                    return;
+                }
+
+                if (!data) {
+                    setFatalError(
+                        `Server returned an unreadable response (HTTP ${response.status}).`
+                    );
+                    return;
+                }
+
+                // The API returns a top-level `error` for requests that were
+                // rejected before any row was processed.
+                if (!response.ok || typeof data.error === "string") {
+                    setFatalError(
+                        data.error ??
+                        `Upload failed with HTTP ${response.status}.`
+                    );
+                    return;
+                }
+
+                setResult(data);
+                setErrors(Array.isArray(data.errors) ? data.errors : []);
+            } catch (error) {
+                if ((error as Error).name === "AbortError") {
+                    return;
+                }
+
+                if (requestId.current !== currentRequest) {
+                    return;
+                }
+
+                setFatalError(
+                    "Upload failed. Check your connection and try again."
+                );
+            } finally {
+                if (requestId.current === currentRequest) {
+                    setLoading(false);
+                }
+
+                uploadInProgress.current = false;
+            }
+        },
+        [file]
+    );
+
+    const handleDownloadTemplate = useCallback(async () => {
+        let objectUrl: string | null = null;
 
         try {
-            const res = await fetch("/api/employees/bulk-upload", {
-                method: "POST",
-                body: formData
-            });
+            const response = await fetch("/api/templates/employees");
 
-            const data = await res.json();
-            setResult(data);
-            setErrors(data.errors || []);
-        } catch (err) {
-            setErrors([{ message: "Upload failed" }]);
+            if (!response.ok) {
+                setFatalError(
+                    `Could not download the template (HTTP ${response.status}).`
+                );
+                return;
+            }
+
+            const blob = await response.blob();
+
+            objectUrl = window.URL.createObjectURL(blob);
+
+            const link = document.createElement("a");
+            link.href = objectUrl;
+            link.download = "employee_template.xlsx";
+
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch {
+            setFatalError("Could not download the template. Please try again.");
         } finally {
-            setLoading(false);
+            // Release the blob: object URLs are held until the document is
+            // discarded, so every download would otherwise leak memory.
+            if (objectUrl) {
+                window.URL.revokeObjectURL(objectUrl);
+            }
         }
-    };
+    }, []);
+
+    const isSubmitDisabled = !file || loading;
 
     return (
         <div
@@ -127,21 +265,14 @@ export default function BulkUploadPage() {
                                     color: "#64748b"
                                 }}
                             >
-                                Download the template and fill in the employee details.
+                                Download the template and fill in the employee
+                                details.
                             </p>
                         </div>
 
                         <button
                             type="button"
-                            onClick={async () => {
-                                const res = await fetch("/api/templates/employees");
-                                const blob = await res.blob();
-                                const url = window.URL.createObjectURL(blob);
-                                const a = document.createElement("a");
-                                a.href = url;
-                                a.download = "employee_template.xlsx";
-                                a.click();
-                            }}
+                            onClick={handleDownloadTemplate}
                             style={{
                                 flexShrink: 0,
                                 padding: "10px 16px",
@@ -210,9 +341,13 @@ export default function BulkUploadPage() {
                             <input
                                 type="file"
                                 accept=".xlsx"
-                                onChange={(e) =>
-                                    setFile(e.target.files?.[0] || null)
-                                }
+                                disabled={loading}
+                                onChange={(event) => {
+                                    setFile(event.target.files?.[0] || null);
+                                    setResult(null);
+                                    setErrors([]);
+                                    setFatalError(null);
+                                }}
                                 required
                                 style={{
                                     display: "block",
@@ -250,35 +385,53 @@ export default function BulkUploadPage() {
                             <div style={{ marginTop: "22px" }}>
                                 <button
                                     type="submit"
-                                    disabled={!file || loading}
+                                    disabled={isSubmitDisabled}
                                     style={{
                                         minWidth: "140px",
                                         padding: "11px 20px",
                                         border: "none",
                                         borderRadius: "8px",
-                                        background:
-                                            !file || loading
-                                                ? "#cbd5e1"
-                                                : "#2563eb",
+                                        background: isSubmitDisabled
+                                            ? "#cbd5e1"
+                                            : "#2563eb",
                                         color: "#ffffff",
-                                        cursor:
-                                            !file || loading
-                                                ? "not-allowed"
-                                                : "pointer",
+                                        cursor: isSubmitDisabled
+                                            ? "not-allowed"
+                                            : "pointer",
                                         fontSize: "14px",
                                         fontWeight: 600,
-                                        boxShadow:
-                                            !file || loading
-                                                ? "none"
-                                                : "0 2px 6px rgba(37, 99, 235, 0.25)"
+                                        boxShadow: isSubmitDisabled
+                                            ? "none"
+                                            : "0 2px 6px rgba(37, 99, 235, 0.25)"
                                     }}
                                 >
-                                    {loading ? "Uploading..." : "Upload Employees"}
+                                    {loading
+                                        ? "Uploading..."
+                                        : "Upload Employees"}
                                 </button>
                             </div>
                         </div>
                     </form>
                 </div>
+
+                {/* Request-level failure */}
+                {fatalError && (
+                    <div
+                        role="alert"
+                        style={{
+                            marginTop: "24px",
+                            padding: "16px 18px",
+                            background: "#fef2f2",
+                            border: "1px solid #fecaca",
+                            borderRadius: "12px",
+                            color: "#991b1b",
+                            fontSize: "14px",
+                            fontWeight: 500
+                        }}
+                    >
+                        {fatalError}
+                    </div>
+                )}
 
                 {/* Results */}
                 {result && (
@@ -306,7 +459,8 @@ export default function BulkUploadPage() {
                         <div
                             style={{
                                 display: "grid",
-                                gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                                gridTemplateColumns:
+                                    "repeat(2, minmax(0, 1fr))",
                                 gap: "16px",
                                 marginBottom: "24px"
                             }}
@@ -397,11 +551,7 @@ export default function BulkUploadPage() {
                                         }}
                                     >
                                         <thead>
-                                            <tr
-                                                style={{
-                                                    background: "#f8fafc"
-                                                }}
-                                            >
+                                            <tr style={{ background: "#f8fafc" }}>
                                                 <th
                                                     style={{
                                                         padding: "12px 14px",
@@ -444,8 +594,11 @@ export default function BulkUploadPage() {
                                         </thead>
 
                                         <tbody>
-                                            {errors.map((err, i) => (
-                                                <tr key={i}>
+                                            {errors.map((error, index) => (
+                                                <tr
+                                                    key={`${error.row ?? "na"}-${error.field ?? "na"
+                                                        }-${index}`}
+                                                >
                                                     <td
                                                         style={{
                                                             padding: "12px 14px",
@@ -454,7 +607,7 @@ export default function BulkUploadPage() {
                                                                 "1px solid #f1f5f9"
                                                         }}
                                                     >
-                                                        {err.row}
+                                                        {error.row ?? "—"}
                                                     </td>
 
                                                     <td
@@ -465,7 +618,7 @@ export default function BulkUploadPage() {
                                                                 "1px solid #f1f5f9"
                                                         }}
                                                     >
-                                                        {err.field}
+                                                        {error.field ?? "—"}
                                                     </td>
 
                                                     <td
@@ -476,7 +629,7 @@ export default function BulkUploadPage() {
                                                                 "1px solid #f1f5f9"
                                                         }}
                                                     >
-                                                        {err.message}
+                                                        {error.message}
                                                     </td>
                                                 </tr>
                                             ))}

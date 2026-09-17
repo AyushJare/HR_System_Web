@@ -115,7 +115,7 @@ export default function DashboardPage() {
           )}
 
           {/* KPI Section - Glass Cards */}
-          <div className="grid grid-cols-5 gap-6 mb-10">
+          <div className="grid grid-cols-4 gap-6 mb-10">
             {/* Total Employees */}
             <div className="group relative">
               <div className="absolute -inset-0.5 bg-gradient-to-r from-slate-200 to-slate-300 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-300"></div>
@@ -160,7 +160,7 @@ export default function DashboardPage() {
             </div>
 
             {/* On Leave */}
-            <div className="group relative">
+            {/* <div className="group relative">
               <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-300 to-cyan-400 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-300"></div>
               <div className="relative bg-white/50 backdrop-blur-md rounded-2xl p-6 border border-white/70 shadow-lg hover:shadow-xl transition-all duration-300">
                 <div className="text-xs font-semibold text-blue-700 uppercase tracking-wider mb-3">Leave</div>
@@ -172,7 +172,7 @@ export default function DashboardPage() {
                   <div className="h-full w-1/4 bg-gradient-to-r from-blue-500 to-cyan-500"></div>
                 </div>
               </div>
-            </div>
+            </div> */}
 
             {/* Pending Approvals */}
             <button

@@ -6,10 +6,18 @@ import {
   isWeeklyOff,
 } from "@/lib/attendanceUtils";
 
-export async function GET() {
-  const auth = await requirePermissionOrAdmin("Dashboard", "view");
+export async function GET(request: Request) {
+  const auth = await requirePermissionOrAdmin(
+    "Dashboard",
+    "view",
+    request
+  );
+
   if (!auth.ok) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+    return NextResponse.json(
+      { error: auth.error },
+      { status: auth.status }
+    );
   }
 
   const indiaToday = new Intl.DateTimeFormat("en-CA", {
@@ -23,8 +31,6 @@ export async function GET() {
   const todayUTC = new Date(
     Date.UTC(year, month - 1, day)
   );
-
-  const dayOfWeek = todayUTC.getUTCDay();
 
   const [
     activeEmployees,
@@ -102,16 +108,6 @@ export async function GET() {
    * ==========================================================
    * EMPLOYEE-TYPE-AWARE WEEKLY OFF / HOLIDAY CHECK
    * ==========================================================
-   *
-   * Different employee types can have different weekly offs.
-   *
-   * Example:
-   * - Office employee -> 2nd / 4th Saturday OFF
-   * - Peon -> Saturday is a working day
-   *
-   * Therefore the dashboard cannot use one global weekly-off
-   * value for the entire company.
-   * ==========================================================
    */
 
   const employeeWorkStatus = new Map<
@@ -119,6 +115,7 @@ export async function GET() {
     {
       isWeekOff: boolean;
       isHoliday: boolean;
+      holidayName: string | null;
     }
   >();
 
@@ -132,15 +129,14 @@ export async function GET() {
         employee.employeeTypeId
       );
 
-    const employeeIsWeekOff =
-      isWeeklyOff(
-        todayUTC,
-        weeklyOffConfig
-      );
+    const employeeIsWeekOff = isWeeklyOff(
+      todayUTC,
+      weeklyOffConfig
+    );
 
-    const employeeIsHoliday =
+    const applicableHoliday =
       employee.employeeTypeId
-        ? !!(await prisma.holiday.findFirst({
+        ? await prisma.holiday.findFirst({
           where: {
             date: todayUTC,
             employeeTypeAssignments: {
@@ -152,15 +148,21 @@ export async function GET() {
           },
           select: {
             id: true,
+            name: true,
           },
-        }))
-        : false;
+        })
+        : null;
+
+    const employeeIsHoliday =
+      !!applicableHoliday;
 
     employeeWorkStatus.set(
       employee.id,
       {
         isWeekOff: employeeIsWeekOff,
         isHoliday: employeeIsHoliday,
+        holidayName:
+          applicableHoliday?.name ?? null,
       }
     );
 
@@ -178,13 +180,14 @@ export async function GET() {
    * TODAY STATUS
    * ==========================================================
    *
-   * Keep the existing single todayStatus response field.
+   * For an employee account, return the status for THAT
+   * employee instead of using the company-wide status.
    *
-   * If nobody is working today, report WEEK_OFF / HOLIDAY.
-   * If at least one employee is working, report WORKING_DAY.
+   * This is informational only.
+   * It does NOT block clock-in.
    *
-   * This allows mixed employee-type schedules without treating
-   * the entire company as being off.
+   * For ADMIN accounts, keep the existing company-wide
+   * dashboard behavior.
    * ==========================================================
    */
 
@@ -193,49 +196,69 @@ export async function GET() {
     | "HOLIDAY"
     | "WORKING_DAY" = "WORKING_DAY";
 
-  if (workingEmployeeCount === 0) {
-    if (
-      weekOffEmployeeCount > 0 &&
-      holidayEmployeeCount === 0
-    ) {
-      todayStatus = "WEEK_OFF";
-    } else if (
-      holidayEmployeeCount > 0 &&
-      weekOffEmployeeCount === 0
-    ) {
-      todayStatus = "HOLIDAY";
-    } else {
-      todayStatus = "WEEK_OFF";
-    }
-  }
-
-  /*
-   * ==========================================================
-   * TODAY HOLIDAY NAME
-   * ==========================================================
-   *
-   * Keep the existing field.
-   *
-   * Only show a holiday name when the holiday applies to at
-   * least one active employee.
-   * ==========================================================
-   */
-
   let todayHolidayName: string | null = null;
 
-  if (holidayEmployeeCount > 0) {
-    const applicableHoliday =
-      await prisma.holiday.findFirst({
-        where: {
-          date: todayUTC,
-        },
-        select: {
-          name: true,
-        },
-      });
+  const currentEmployee = activeEmployees.find(
+    (employee) =>
+      employee.id === auth.session.sub
+  );
 
-    todayHolidayName =
-      applicableHoliday?.name ?? null;
+  if (currentEmployee) {
+    const currentEmployeeStatus =
+      employeeWorkStatus.get(
+        currentEmployee.id
+      );
+
+    if (currentEmployeeStatus?.isWeekOff) {
+      todayStatus = "WEEK_OFF";
+    } else if (
+      currentEmployeeStatus?.isHoliday
+    ) {
+      todayStatus = "HOLIDAY";
+      todayHolidayName =
+        currentEmployeeStatus.holidayName;
+    } else {
+      todayStatus = "WORKING_DAY";
+    }
+  } else {
+    /*
+     * ADMIN DASHBOARD
+     *
+     * Keep the existing behavior for admin users.
+     * If nobody is working today, show the applicable
+     * company-wide status.
+     */
+
+    if (workingEmployeeCount === 0) {
+      if (
+        weekOffEmployeeCount > 0 &&
+        holidayEmployeeCount === 0
+      ) {
+        todayStatus = "WEEK_OFF";
+      } else if (
+        holidayEmployeeCount > 0 &&
+        weekOffEmployeeCount === 0
+      ) {
+        todayStatus = "HOLIDAY";
+      } else {
+        todayStatus = "WEEK_OFF";
+      }
+    }
+
+    if (holidayEmployeeCount > 0) {
+      const applicableHoliday =
+        await prisma.holiday.findFirst({
+          where: {
+            date: todayUTC,
+          },
+          select: {
+            name: true,
+          },
+        });
+
+      todayHolidayName =
+        applicableHoliday?.name ?? null;
+    }
   }
 
   /*
@@ -243,12 +266,8 @@ export async function GET() {
    * ATTENDANCE COUNTS
    * ==========================================================
    *
-   * Count attendance only for employees whose day is a
-   * working day.
-   *
-   * Employees who are on their own weekly off / holiday are
-   * excluded from PRESENT / ABSENT / HALF_DAY / ON_LEAVE /
-   * NOT_MARKED calculations.
+   * Employees who are on their own weekly off / holiday
+   * are excluded from attendance counts.
    * ==========================================================
    */
 
@@ -281,29 +300,25 @@ export async function GET() {
     );
 
     if (
-      attendance.status ===
-      "PRESENT"
+      attendance.status === "PRESENT"
     ) {
       counts.present++;
     }
 
     if (
-      attendance.status ===
-      "ABSENT"
+      attendance.status === "ABSENT"
     ) {
       counts.absent++;
     }
 
     if (
-      attendance.status ===
-      "HALF_DAY"
+      attendance.status === "HALF_DAY"
     ) {
       counts.halfDay++;
     }
 
     if (
-      attendance.status ===
-      "ON_LEAVE"
+      attendance.status === "ON_LEAVE"
     ) {
       counts.onLeave++;
     }

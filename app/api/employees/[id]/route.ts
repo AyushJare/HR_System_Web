@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth";
 import { checkPermission } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { hashPassword, verifyPassword } from "@/lib/password";
+import { validatePhoneNumber } from "@/lib/validators/phone";
 
 type Params = {
   id: string;
@@ -190,6 +191,154 @@ export async function PUT(
     } = body;
 
     // =====================================================
+    // EMAIL IS OPTIONAL
+    // =====================================================
+
+    /*
+    // Email is optional.
+    // If an email is supplied, it can still be validated
+    // for correct format.
+
+    if (
+      email !== undefined &&
+      email !== null &&
+      email.trim() !== ""
+    ) {
+      const emailValidation = validateEmail(email.trim());
+
+      if (!emailValidation.valid) {
+        return NextResponse.json(
+          {
+            error: "Wrong email format",
+            errors: emailValidation.error,
+          },
+          { status: 422 }
+        );
+      }
+    }
+    */
+
+    // =====================================================
+    // DUPLICATE EMAIL CHECK
+    // =====================================================
+
+    // Only check duplicate email when a non-empty email is provided.
+    if (
+      email !== undefined &&
+      email !== null &&
+      email.trim() !== ""
+    ) {
+      const existingEmail = await prisma.employee.findFirst({
+        where: {
+          email: {
+            equals: email.trim(),
+            mode: "insensitive",
+          },
+          NOT: {
+            id,
+          },
+        },
+      });
+
+      if (existingEmail) {
+        return NextResponse.json(
+          {
+            error: "An employee with this email already exists",
+          },
+          { status: 409 }
+        );
+      }
+    }
+
+    // =====================================================
+    // PHONE VALIDATION - REQUIRED
+    // =====================================================
+
+    if (
+      mobile === undefined ||
+      mobile === null ||
+      String(mobile).trim() === ""
+    ) {
+      return NextResponse.json(
+        {
+          error: "Phone number is required",
+        },
+        { status: 422 }
+      );
+    }
+
+    const phoneValidation = validatePhoneNumber(
+      String(mobile).trim()
+    );
+
+    if (!phoneValidation.valid) {
+      return NextResponse.json(
+        {
+          error: "Enter a correct phone number",
+          errors: phoneValidation.error,
+        },
+        { status: 422 }
+      );
+    }
+
+    // =====================================================
+    // DUPLICATE PHONE NUMBER CHECK
+    // =====================================================
+
+    const existingMobile = await prisma.employee.findFirst({
+      where: {
+        mobile: String(mobile).trim(),
+        NOT: {
+          id,
+        },
+      },
+    });
+
+    if (existingMobile) {
+      return NextResponse.json(
+        {
+          error:
+            "An employee with this phone number already exists",
+        },
+        { status: 409 }
+      );
+    }
+
+    // =====================================================
+    // DUPLICATE FULL NAME CHECK
+    // =====================================================
+
+    // Only runs when a non-empty fullName is submitted, mirroring
+    // the mobile guard above — Edit sends fullName only when it
+    // was actually changed.
+    if (
+      fullName !== undefined &&
+      fullName !== null &&
+      fullName.trim() !== ""
+    ) {
+      const existingFullName = await prisma.employee.findFirst({
+        where: {
+          fullName: {
+            equals: fullName.trim(),
+            mode: "insensitive",
+          },
+          NOT: {
+            id,
+          },
+        },
+      });
+
+      if (existingFullName) {
+        return NextResponse.json(
+          {
+            error: "An employee with this name already exists",
+          },
+          { status: 409 }
+        );
+      }
+    }
+
+    // =====================================================
     // PASSWORD CHECKS DISABLED
     // =====================================================
 
@@ -246,12 +395,16 @@ export async function PUT(
       data: {
         fullName:
           fullName !== undefined
-            ? fullName
+            ? fullName.trim()
             : undefined,
 
+        // Email is optional.
+        // Empty email clears the existing email.
         email:
           email !== undefined
-            ? email
+            ? email && email.trim()
+              ? email.trim()
+              : null
             : undefined,
 
         passwordHash:
@@ -260,9 +413,7 @@ export async function PUT(
             : undefined,
 
         mobile:
-          mobile !== undefined
-            ? mobile || null
-            : undefined,
+          String(mobile).trim(),
 
         gender:
           gender !== undefined
@@ -336,6 +487,17 @@ export async function PUT(
 
     return NextResponse.json(employee);
   } catch (error) {
+    // Safety net for a race condition: two concurrent requests can both
+    // pass the DUPLICATE EMAIL CHECK above before either has committed,
+    // so the database's own unique constraint is what actually catches
+    // it. Same pattern as app/api/holidays/[id]/route.ts.
+    if (error && typeof error === "object" && "code" in error && error.code === "P2002") {
+      return NextResponse.json(
+        { error: "An employee with this email already exists" },
+        { status: 409 }
+      );
+    }
+
     console.error("PUT /api/employees/[id] error:", error);
 
     return NextResponse.json(

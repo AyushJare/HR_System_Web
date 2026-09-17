@@ -16,7 +16,6 @@ export async function GET(request: NextRequest) {
         { status: auth.status }
       );
     }
-
     // Optional filters
     const type = request.nextUrl.searchParams.get("type");
     const status = request.nextUrl.searchParams.get("status");
@@ -88,31 +87,39 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(approvals);
   } catch (error) {
     console.error("GET /api/approvals error:", error);
-
     return NextResponse.json(
       { error: "Failed to load approvals" },
       { status: 500 }
     );
   }
 }
-
 export async function POST(request: NextRequest) {
   try {
-    const auth = await requirePermissionOrAdmin(
-      "Approvals",
-      "view",
-      request
-    );
+    const body = await request.json();
+    const { type, actorId, refId, details } = body ?? {};
+
+    let auth;
+
+    if (type === "ATTENDANCE_CORRECTION") {
+      auth = await requirePermissionOrAdmin(
+        "Attendance Corrections",
+        "add",
+        request
+      );
+    } else {
+      auth = await requirePermissionOrAdmin(
+        "Approvals",
+        "view",
+        request
+      );
+    }
+
     if (!auth.ok) {
       return NextResponse.json(
         { error: auth.error },
         { status: auth.status }
       );
     }
-
-    const body = await request.json();
-
-    const { type, actorId, refId, details } = body ?? {};
 
     if (!type || !details) {
       return NextResponse.json(
@@ -260,7 +267,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(approval, { status: 201 });
   } catch (error) {
     console.error("POST /api/approvals error:", error);
-
     return NextResponse.json(
       { error: "Failed to create approval" },
       { status: 500 }
